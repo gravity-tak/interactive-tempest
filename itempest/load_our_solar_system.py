@@ -47,7 +47,7 @@ sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',
                'Jupiter', 'Satun', 'Uranus', 'Neptune']
 tenats = {}
 for planet in sun_planets:
-    tenant = utils.fgrep(kadmin('tenant-list', dict(name=planet))
+    tenant = utils.fgrep(kadmin('tenant-list'), dict(name=planet))
     if len(tenant) < 1:
         # tenant not exist, create it; default password=itempest
         tenants[planet] = icreds.create_primary_project(planet)
