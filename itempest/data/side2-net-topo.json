@@ -1,0 +1,90 @@
+{
+    "name": "Expo-side2",
+    "networks": [
+        {
+            "name": "acct-network",
+            "subnets": [
+                {
+                    "name": "acct-subnet",
+                    "cidr": "10.168.55.0/24",
+                    "gateway_ip": "10.168.55.1",
+                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "10.168.55.2", "end": "10.168.55.99"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "service-network",
+            "subnets": [
+                {
+                    "name": "service-subnet",
+                    "cidr": "192.168.66.0/24",
+                    "dns_nameservers": ["8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "192.168.66.2", "end": "192.168.66.66"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "guest-network",
+            "subnets": [
+                {
+                    "name": "guest-subnet",
+                    "cidr": "192.168.1.0/24",
+                    "dns_nameservers": ["8.8.8.8"],
+                    "enable_dhcp": true
+                }
+            ]
+        }
+    ],
+    "router-options": {
+    },
+    "routers": [
+        {
+            "name": "expo-router",
+            "gateway": "public",
+            "interfaces": [
+                "acct-network",
+                "service-network",
+                "guest-network"
+            ] 
+        }
+    ],
+    "server-options": {
+        "user_data": "./metadata/itempest-userdata",
+        "image": "cirros-0.3.3-x86_64-disk",
+        "flavor": "m1.tiny"
+    },
+    "servers": [
+        {
+            "name": "acct-acct",
+            "interface": "acct-network",
+            "image": "ubuntu-14.04-x86_64",
+            "flavor": "m1.small"
+        },
+        {
+            "name": "acct-journal",
+            "interface": "acct-network",
+            "image": "ubuntu-14.04-x86_64",
+            "flavor": "m1.small"
+        },
+        {
+            "name": "worker-bee",
+            "interface": "service-network",
+            "image": "cirros-0.3.3-x86_64-disk",
+            "flavor": "m1.tiny"
+        },
+        {
+            "name": "helo-web",
+            "interface": "guest-network",
+            "image": "cirros-0.3.3-x86_64-disk",
+            "flavor": "m1.tiny"
+        }
+    ]
+}
+

@@ -1,0 +1,113 @@
+
+{
+    "name": "Expo-side1",
+    "networks": [
+        {
+            "name": "fin-network",
+            "subnets": [
+                {
+                    "name": "fin-subnet",
+                    "cidr": "10.168.11.0/24",
+                    "gateway_ip": "10.168.11.1",
+                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "10.168.11.2", "end": "10.168.11.99"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "service-network",
+            "subnets": [
+                {
+                    "name": "service-subnet",
+                    "cidr": "192.168.66.0/24",
+                    "dns_nameservers": ["8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "192.168.66.2", "end": "192.168.66.66"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "guest-network",
+            "subnets": [
+                {
+                    "name": "guest-subnet",
+                    "cidr": "192.168.1.0/24",
+                    "dns_nameservers": ["8.8.8.8"],
+                    "enable_dhcp": true
+                }
+            ]
+        }
+    ],
+    "router-options": {
+    },
+    "routers": [
+        {
+            "name": "expo-router",
+            "gateway": "public",
+            "interfaces": [
+                "fin-network",
+                "service-network",
+                "guest-network"
+            ] 
+        }
+    ],
+    "server-options": {
+        "image": "cirros-0.3.3-x86_64-disk",
+        "flavor": "m1.tiny",
+        "user_data": "./metadata/itempest-userdata"
+    },
+    "servers": [
+        {
+            "name": "fin-acct",
+            "interface": "fin-network",
+            "image": "ubuntu-12.04-vt-x86_64",
+            "flavor": "m1.small"
+        },
+        {
+            "name": "fin-journal",
+            "interface": "fin-network",
+            "image": "cirros-0.3.3-x86_64-disk",
+            "flavor": "m1.tiny"
+        },
+        {
+            "name": "worker-bee",
+            "interface": "service-network",
+            "image": "ubuntu-12.04-x86_64",
+            "flavor": "m1.small"
+        },
+        {
+            "name": "helo-web",
+            "interface": "guest-network",
+            "image": "cirros-0.3.3-x86_64-disk",
+            "flavor": "m1.tiny"
+        }
+    ],
+    "security-groups": [
+        {
+            "name": "loginable",
+            "rules": ["ingress-ssh", "ingress-icmp"]
+        }
+    ],
+    "security-group-rules": [
+        {
+            "name": "ingress-ssh",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "tcp",
+            "port_range_min": 22,
+            "port_range_max": 22
+        },
+        {
+            "name": "ingress-icmp",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "icmp"
+        }
+    ]
+}
+

@@ -1,0 +1,29 @@
+This document describes how to install tempest without using devstack.
+
+Linux ubuntu 14.04 LTS
+======================
+
+1. install Ubuntu 14.04.x server
+2. install following packages
+   sudo apt-get install git gcc python-pip python-dev
+   sudo apt-get install libffi-dev libffi6 libssl-dev
+3. cd /opt/stack  # or any directory you like
+4. git clone https://github.com/openstack/tempest.git
+5. sudo pip install virtualenv  # if you don't have
+6. cd tempest
+7. python tools/install_env.py
+
+
+Max OS.X Yosemite
+=================
+
+1. install Xcode
+2. sudo pip install virtualenv
+3. cd <any directory you want to install tempest>
+4. git clone https://github.com/openstack/tempest.git
+5. cd tempest
+6. sudo mkdir -p /usr/include   # if not exist
+7. sudo chmod 777 /usr/include
+8. ln -sf /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/ffi /usr/include/ffi
+9. python tools/install_env.py
+
