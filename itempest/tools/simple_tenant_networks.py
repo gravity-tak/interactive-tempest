@@ -112,8 +112,12 @@ class SimpleTenantNetworks(object):
                 subnets = [network.pop('subnet')]
             elif 'subnets' in network:
                 subnets = network.pop('subnets')
-            self.networks[name] = self.qsvc('net-create',
-                                            name, **network)
+            nets = self.qsvc('net-list', name=name)
+            if len(nets) < 1:
+                net = self.qsvc('net-create',name, **network)
+            else:
+                net = nets[0]
+            self.networks[name] = self.qsvc('net-show', net['id'])
             self.b_subnets(self.networks[name]['id'], subnets)
 
     def b_subnets(self, network_id, subnets=None):
@@ -122,9 +126,12 @@ class SimpleTenantNetworks(object):
                                self.prefix_name, self.suffix_name)
             cidr = subnet.pop('cidr')
             subnet['name'] = name
-            self.subnets[name] = self.qsvc('subnet-create',
-                                           network_id, cidr,
-                                           **subnet)
+            snets = self.qsvc('subnet-list', name=name)
+            if len(snets) < 1:
+                snet = self.qsvc('subnet-create', network_id, cidr, **subnet)
+            else:
+                snet = snets[0]
+            self.subnets[name] = self.qsvc('subnet-show', snet['id'])
 
     def b_routers(self, routers=None):
         self.routers = {}
@@ -226,17 +233,21 @@ def adjust_name(name, prefix_name=None, suffix_name=None):
 
 def c_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
     name = adjust_name(router_cfg.pop('name'), prefix_name, suffix_name)
-    rtr = qsvc('router-create', name)
-    gw_if = router_cfg.get('gateway', None)
-    gw_kwargs = {}
-    if 'enable_snat' in router_cfg:
-        gw_kwargs['enable_snat'] = router_cfg['enable_snat']
-    rtr_set_gateway(qsvc, rtr['id'], gateway_if=gw_if, **gw_kwargs)
-    if_names = router_cfg.get('interfaces', [])
-    rtr = rtr_add_interfaces_by_name(qsvc, rtr['id'], if_names,
-                                     prefix_name=prefix_name,
-                                     suffix_name=suffix_name)
-    return qsvc('router-show', rtr['id'])
+    rtrs = qsvc('router-list', name=name)
+    if len(rtrs) > 0:
+        return qsvc('router-show', rtrs[0]['id'])
+    else:
+        rtr = qsvc('router-create', name)
+        gw_if = router_cfg.get('gateway', None)
+        gw_kwargs = {}
+        if 'enable_snat' in router_cfg:
+            gw_kwargs['enable_snat'] = router_cfg['enable_snat']
+        rtr_set_gateway(qsvc, rtr['id'], gateway_if=gw_if, **gw_kwargs)
+        if_names = router_cfg.get('interfaces', [])
+        rtr = rtr_add_interfaces_by_name(qsvc, rtr['id'], if_names,
+                                         prefix_name=prefix_name,
+                                         suffix_name=suffix_name)
+        return rtr
 
 
 def rtr_set_gateway(qsvc, rtr_id, gateway_if=None):
@@ -275,10 +286,14 @@ def rtr_add_interfaces(qsvc, rtr_id, networks):
 def c_security_groups(qsvc, security_groups_cfg):
     security_groups = {}
     for sg_name, sg_rules_cfg in security_groups_cfg.items():
-        sg = qsvc('security-group-create', sg_name)
-        for rule_cfg in sg_rules_cfg:
-            rule = qsvc('security-group-rule-create',
-                        sg['id'], **rule_cfg)
+        sgs = qsvc('security-group-list', name=sg_name)
+        if len(sgs) < 0:
+            # create this security-group only it does not exist
+            sg = qsvc('security-group-create', sg_name)
+            for rule_cfg in sg_rules_cfg:
+                qsvc('security-group-rule-create', sg['id'], **rule_cfg)
+        else:
+            sg = sgs[0]
         security_groups[sg_name] = qsvc('security-group-show', sg['id'])
     return security_groups
 
