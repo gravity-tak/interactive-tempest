@@ -7,10 +7,16 @@ Refer to docs/Tempest-Installation-Guide.txt to install Tempest without devstack
 # Attention
 Current implemenation required you to source rc files.
 The sample rc files are at itempest/rc directory.
-
 Before you enter python interpreter, you should enter your rc file.
 
 _local and .rc will be ignored by git so you can put your local files there.
+
+
+And because the sample py modules refer to itempest by itempest, it is better that at tmpest directory you do a symblic link to your itempest.
+
+For example, at tempest directory, do
+
+ln -s /opt/devel/interactive-tempest/itempest
 
 # Example of sourcing tempest rc file:
 source _local/rc/sunrc
