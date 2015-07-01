@@ -8,6 +8,9 @@ ChangeLog
 .idea
 .tox
 .venv
+.rc
+.results
 dist
 build
 _results
+_local

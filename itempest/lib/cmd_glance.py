@@ -16,6 +16,7 @@
 from tempest.services.image.v2.json.image_client import ImageClientV2JSON
 
 
+# TODO(akang): which version of client should be used
 def _g_image_v2_client(mgr_or_client):
     if isinstance(mgr_or_client, ImageClientV2JSON):
         return mgr_or_client

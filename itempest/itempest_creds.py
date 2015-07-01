@@ -73,13 +73,17 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
 
     def _create_project_users(self, project,
                               num_of_users=1, is_admin=False, roles=None):
-        user_list = [self._create_user(project, roles=roles, admin=is_admin)]
+        user_list = [self._create_user(project,
+                                       roles=roles, admin=is_admin)]
         for uid in range(1, num_of_users, 1):
-            user_list.append(self._create_user(project, roles, uid, admin=is_admin))
+            user_list.append(self._create_user(project, roles, uid,
+                                               admin=is_admin))
         return user_list
 
-    def _create_user(self, project, roles=None, uid=0, admin=False, group_name=None):
-        username = project['name'] + (("-%s" % group_name) if group_name else "")
+    def _create_user(self, project, roles=None, uid=0, admin=False,
+                     group_name=None):
+        username = (project['name'] +
+                    (("-%s" % group_name) if group_name else ""))
         username = (username + (("-%s" % uid) if uid > 0 else ""))
         email = username + "@itempest.net"
         user = self.creds_client.create_user(

@@ -53,7 +53,8 @@ class DeletableVip(NRS.DeletableVip):
 
 
 # Add/mod methods so we can use it while sustain original functions.
-MSG_BLOCK_BY_ADMIN = "Block %s as router might be owned by ADMIN. Use DeletableRouter instead."
+MSG_BLOCK_BY_ADMIN = "Block %s as router might be owned by ADMIN. " \
+                     "Use DeletableRouter instead."
 
 
 class DeletableSubnet(NRS.DeletableSubnet):

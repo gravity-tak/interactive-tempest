@@ -503,9 +503,6 @@ def router_interface_list(mgr_or_client, router_id, **kwargs):
 
 def router_port_list(mgr_or_client, router_id, *args, **kwargs):
     """List ports that belong to a given tenant, with specified router."""
-    # all_ports = port_list(mgr_or_client, **kwargs)
-    # rp_list = [x for x in all_ports if x['device_id'] == router_id]
-    # return rp_list
     return router_interface_list(mgr_or_client, router_id, **kwargs)
 
 
@@ -557,7 +554,7 @@ def _g_tenant_id(os_client):
         return os_client.rest_client.tenant_id
 
 
-# Handly commands
+# user defined commands
 def c_external_network(mgr_or_client,
                        name=None,
                        shared=True, **kwargs):
@@ -644,6 +641,8 @@ def destroy_myself(mgr_or_client, **kwargs):
     return d_myself(mgr_or_client, **kwargs)
 
 
+# client's tenant_id used to search for resources to be deleted.
+# TODO(akang): extra routes, snat in router's GW
 def d_myself(mgr_or_client, **kwargs):
     skip_fip = kwargs.pop('skip_fip',
                           kwargs.pop('skip_floatingip', False))
@@ -664,10 +663,13 @@ def d_myself(mgr_or_client, **kwargs):
         if mdata.is_in_spattern(router['name'], spattern):
             d_this_router(mgr_or_client, router)
     # rm networks/subnets
-    for network in network_list(mgr_or_client,
-                                tenant_id=net_client.tenant_id):
+    for network in network_list(mgr_or_client, tenant_id=tenant_id):
         if mdata.is_in_spattern(network['name'], spattern):
             network_delete(mgr_or_client, network['id'])
+
+    for sg in security_group_list(mgr_or_client, tenant_id=tenant_id):
+        if mdata.is_in_spattern(sg['name'], spattern):
+            network_delete(mgr_or_client, sg['id'])
 
 
 def g_port_id_ipv4_of_server(mgr_or_client, server_id,
@@ -682,7 +684,7 @@ def g_port_id_ipv4_of_server(mgr_or_client, server_id,
             return (port0['id'], ip)
 
 
-# nova has simplier method
+# nova has method to add security-group to server
 # nova('server-add-security-group', server_id, name_of_security_group)
 def u_server_security_group(mgr_or_client, server_id, security_group_ids,
                             port_id=None):
