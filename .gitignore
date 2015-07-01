@@ -1,0 +1,12 @@
+AUTHORS
+ChangeLog
+*.pyc
+*.log
+*.swp
+*.swo
+*.egg*
+.tox
+.venv
+dist
+build
+_results
