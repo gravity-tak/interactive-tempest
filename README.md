@@ -35,8 +35,7 @@ page1.nova('brief-vserver')
 
 page2.build()
 
-Programing Note:
-================
+# Programing Note:
 Modules are used to code services command, for example, cmd_nova.py for Nova, cmd_neutron.py for Neutron and are at itempest/lib directory. However command modules can be put any places as long as python can access it as part of a package.
 
 The command modules provided to command_wrapper is a list which mean you can create your own command module and be procesed by each service you want to use.

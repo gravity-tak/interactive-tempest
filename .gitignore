@@ -5,6 +5,7 @@ ChangeLog
 *.swp
 *.swo
 *.egg*
+.idea
 .tox
 .venv
 dist
