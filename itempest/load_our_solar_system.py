@@ -45,7 +45,7 @@ kdemo = utils.command_wrapper(demo_mgr, cmd_keystone)
 # our solar system has 8 planets
 sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',
                'Jupiter', 'Satun', 'Uranus', 'Neptune']
-tenats = {}
+tenants = {}
 for planet in sun_planets + ["Page"]:
     tenant = utils.fgrep(kadmin('tenant-list'), dict(name=planet))
     if len(tenant) < 1:
