@@ -676,8 +676,9 @@ def d_myself(mgr_or_client, **kwargs):
             network_delete(mgr_or_client, network['id'])
 
     for sg in security_group_list(mgr_or_client, tenant_id=tenant_id):
-        if mdata.is_in_spattern(sg['name'], spattern):
-            security_group_create()_delete(mgr_or_client, sg['id'])
+        if (mdata.is_in_spattern(sg['name'], spattern) and
+            sg['name'] not in ['default']):
+            security_group_delete(mgr_or_client, sg['id'])
 
 
 def g_port_id_ipv4_of_server(mgr_or_client, server_id,
