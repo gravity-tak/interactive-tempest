@@ -72,7 +72,7 @@ def norm_it(val):
 
 def command_wrapper(client_manager, cmd_module,
                     nova_flavor=False,
-                    log_cmd=None, verbose=None):
+                    log_cmd=None, verbose=True):
     """Usage Examples:
 
         from itempest import itempest_creds as icreds
@@ -95,6 +95,7 @@ def command_wrapper(client_manager, cmd_module,
     module_name_list = [x.__name__ for x in cmd_module_list]
 
     def os_command(cmd_line, *args, **kwargs):
+        halt = kwargs.pop('debug', False)
         cmd, arg_list, kwargs = parse_cmdline(cmd_line, *args, **kwargs)
         if nova_flavor and cmd in NOVA_SERVER_CMDS:
             cmd = 'server_' + cmd
@@ -110,6 +111,8 @@ def command_wrapper(client_manager, cmd_module,
             print(CMD_LOG_MSG % (cmd, str(arg_list), str(kwargs)))
         if log_cmd:
             LOG.info(CMD_LOG_MSG, cmd, str(arg_list), str(kwargs))
+        if halt:
+            import pdb; pdb.set_trace()
         return f_method(client_manager, *arg_list, **kwargs)
 
     return os_command

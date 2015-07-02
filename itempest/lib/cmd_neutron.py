@@ -661,7 +661,7 @@ def d_myself(mgr_or_client, **kwargs):
     if not skip_fip:
         # TODO(akang): no name attributes in floatingip
         # for now, delete fip if it is not ACTIVE status
-        for fip in floatingip_list(mgr_or_client):
+        for fip in floatingip_list(mgr_or_client, tenant_id=tenant_id):
             if fip['status'] != 'ACTIVE':
                 floatingip_delete(mgr_or_client, fip['id'])
     # rm extra routes
@@ -677,7 +677,7 @@ def d_myself(mgr_or_client, **kwargs):
 
     for sg in security_group_list(mgr_or_client, tenant_id=tenant_id):
         if mdata.is_in_spattern(sg['name'], spattern):
-            network_delete(mgr_or_client, sg['id'])
+            security_group_create()_delete(mgr_or_client, sg['id'])
 
 
 def g_port_id_ipv4_of_server(mgr_or_client, server_id,
