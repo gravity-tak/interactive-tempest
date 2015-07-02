@@ -68,7 +68,7 @@ class SimpleTenantNetworks(object):
 
     def build(self):
         t0 = time.time()
-        self.b_security_groups();
+        self.b_security_groups()
         self.b_networks()
         self.b_routers()
         self.b_servers()
@@ -194,8 +194,8 @@ class SimpleTenantNetworks(object):
         sg_rules_cfg = {}
         for rule in sg_rules:
             rule_copy = copy.deepcopy(rule)
-            name = rule.pop('name')
-            sg_rules_cfg[name] = rule
+            name = rule_copy.pop('name')
+            sg_rules_cfg[name] = rule_copy
         security_groups_cfg = {}
         for sg in security_groups:
             name = sg['name']
@@ -287,7 +287,7 @@ def c_security_groups(qsvc, security_groups_cfg):
     security_groups = {}
     for sg_name, sg_rules_cfg in security_groups_cfg.items():
         sgs = qsvc('security-group-list', name=sg_name)
-        if len(sgs) < 0:
+        if len(sgs) < 1:
             # create this security-group only it does not exist
             sg = qsvc('security-group-create', sg_name)
             for rule_cfg in sg_rules_cfg:
