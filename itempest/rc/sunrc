@@ -13,8 +13,8 @@
 #
 
 RC_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-export TEMPEST_CONFIG_DIR=$RC_DIR                   # itempest-sun.conf is at this directory
-export TEMPEST_CONFIG=itempest-sun.conf             # tempest conf name
-export TEMPEST_LOG_NAME=itempest-sun.log            # log name defined at log_file@itempest-sun.conf
-export OS_AUTH_URL=http://10.34.10.172:5000/v2.0    # Openstack SUN auth URL, check the IPADDR is
-                                                    # the same as coded in itempest-sun.conf
+export TEMPEST_CONFIG_DIR=$RC_DIR              # itempest-sun.conf is at this directory
+export TEMPEST_CONFIG=itempest-sun.conf        # tempest conf name
+export TEMPEST_LOG_NAME=itempest-sun.log       # log name defined at log_file@itempest-sun.conf
+export OS_AUTH_URL=http://10.8.3.1:5000/v2.0   # Openstack SUN auth URL, check the IPADDR is
+                                               # the same as coded in itempest-sun.conf
