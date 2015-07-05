@@ -1,0 +1,284 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1348\cocoasubrtf170
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;\f2\fnil\fcharset0 Menlo-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red41\green0\blue130;\red164\green8\blue0;\red32\green0\blue99;
+\red64\green11\blue217;\red180\green36\blue25;}
+\margl1440\margr1440\vieww20580\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\b\fs24 \cf2 This is a running log using tempest managing VMware NSX-v Openstack.\
+You do need to have ADMIN priv credential in rc file and the tempest.conf file as load_our_solar_system.py or load_earth.py will create project & user.
+\b0 \cf0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b \cf3 # you need to source the rc file define tempest\'92s tempest.conf location
+\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f1\fs22 \cf0 \CocoaLigature0 Milky-Way-dhcp205:tempest akang$ 
+\f2\b \cf4 source itempest/_local/rc/earthrc
+\f1\b0 \cf0  \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f2\b \cf3 # run python in virtual environment installed using tools/install_env.py
+\f1\b0 \cf0 \
+Milky-Way-dhcp205:tempest akang$ 
+\f2\b \cf4 tools/with_venv.sh ipython
+\f1\b0 \cf0 \
+WARNING: Attempting to work in a virtualenv. If you encounter problems, please install IPython inside the virtualenv.\
+Python 2.7.6 (default, Sep  9 2014, 15:04:36) \
+Type "copyright", "credits" or "license" for more information.\
+\
+IPython 2.2.0 -- An enhanced Interactive Python.\
+?         -> Introduction and overview of IPython's features.\
+%quickref -> Quick reference.\
+help      -> Python's own help system.\
+object?   -> Details about 'object', use 'object??' for extra details.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf5 In [
+\f2\b 1
+\f1\b0 ]: \cf0 from itempest import itempest_creds as icreds\
+\
+\cf5 In [
+\f2\b 2
+\f1\b0 ]: \cf0 from itempest import load_our_solar_system as osn\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+OSCMD=tenant_list args=[] kwargs=\{\}\
+\
+\cf5 In [
+\f2\b 3
+\f1\b0 ]: \cf0 from itempest.tools import simple_tenant_networks as stn\
+\
+\cf5 In [
+\f2\b 4
+\f1\b0 ]: \cf0 earth_mgr = icreds.get_client_manager(osn.auth_url, 'Earth', 'itempest')        \
+\
+\cf5 In [
+\f2\b 5
+\f1\b0 ]: \cf0 jfile = 'itempest/data/side1-net-topo.json'\
+\
+\cf5 In [
+\f2\b 6
+\f1\b0 ]: \cf0 earth = stn.SimpleTenantNetworks(earth_mgr, jfile, prefix_name=True)\
+\
+\cf5 In [
+\f2\b 7
+\f1\b0 ]: \cf0 earth.build()\
+OSCMD=security_group_list args=[] kwargs=\{'name': u'loginable'\}\
+OSCMD=security_group_create args=[u'loginable'] kwargs=\{\}\
+OSCMD=security_group_rule_create args=[u'2e33f8f8-1fe6-4dff-b8db-b655770bcf89'] kwargs=\{u'ethertype': u'IPv4', u'direction': u'ingress', u'port_range_min': 22, u'port_range_max': 22, u'protocol': u'tcp'\}\
+OSCMD=security_group_rule_create args=[u'2e33f8f8-1fe6-4dff-b8db-b655770bcf89'] kwargs=\{u'ethertype': u'IPv4', u'direction': u'ingress', u'protocol': u'icmp'\}\
+OSCMD=security_group_show args=[u'2e33f8f8-1fe6-4dff-b8db-b655770bcf89'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-fin-network'\}\
+OSCMD=net_create args=[u'Earth-fin-network'] kwargs=\{\}\
+OSCMD=net_show args=[u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1'] kwargs=\{\}\
+OSCMD=subnet_list args=[] kwargs=\{'name': u'Earth-fin-subnet'\}\
+OSCMD=subnet_create args=[u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1', u'10.168.11.0/24'] kwargs=\{u'dns_nameservers': [u'8.8.8.8', u'8.8.4.4'], u'allocation_pools': [\{u'start': u'10.168.11.2', u'end': u'10.168.11.99'\}], u'gateway_ip': u'10.168.11.1', u'name': u'Earth-fin-subnet', u'enable_dhcp': True\}\
+OSCMD=subnet_show args=[u'74caa863-0d3f-4e05-9ad7-e96a424550c6'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-service-network'\}\
+OSCMD=net_create args=[u'Earth-service-network'] kwargs=\{\}\
+OSCMD=net_show args=[u'6039f2ec-eb1a-4f24-ae1e-1f05f5f9f100'] kwargs=\{\}\
+OSCMD=subnet_list args=[] kwargs=\{'name': u'Earth-service-subnet'\}\
+OSCMD=subnet_create args=[u'6039f2ec-eb1a-4f24-ae1e-1f05f5f9f100', u'192.168.11.0/24'] kwargs=\{u'allocation_pools': [\{u'start': u'192.168.11.2', u'end': u'192.168.11.66'\}], u'dns_nameservers': [u'8.8.4.4'], u'name': u'Earth-service-subnet', u'enable_dhcp': True\}\
+OSCMD=subnet_show args=[u'f4da19d7-8a82-4730-8afe-b9d00e854bbc'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-guest-network'\}\
+OSCMD=net_create args=[u'Earth-guest-network'] kwargs=\{\}\
+OSCMD=net_show args=[u'7f520688-e5ca-4d97-96ce-2d73dbc473bf'] kwargs=\{\}\
+OSCMD=subnet_list args=[] kwargs=\{'name': u'Earth-guest-subnet'\}\
+OSCMD=subnet_create args=[u'7f520688-e5ca-4d97-96ce-2d73dbc473bf', u'192.168.1.0/24'] kwargs=\{u'dns_nameservers': [u'8.8.8.8'], u'name': u'Earth-guest-subnet', u'enable_dhcp': True\}\
+OSCMD=subnet_show args=[u'6db883bf-1e41-4fac-8043-a8492ffec4ad'] kwargs=\{\}\
+OSCMD=router_list args=[] kwargs=\{'name': u'Earth-expo-router'\}\
+OSCMD=router_create args=[u'Earth-expo-router'] kwargs=\{\}\
+OSCMD=net_external_list args=[] kwargs=\{'name': u'public'\}\
+OSCMD=router_gateway_set args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5', u'dfbb2194-e226-4928-9825-7e4c2247e18c'] kwargs=\{\}\
+OSCMD=router_show args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-fin-network'\}\
+OSCMD=router_interface_add args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5', u'74caa863-0d3f-4e05-9ad7-e96a424550c6'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-service-network'\}\
+OSCMD=router_interface_add args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5', u'f4da19d7-8a82-4730-8afe-b9d00e854bbc'] kwargs=\{\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-guest-network'\}\
+OSCMD=router_interface_add args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5', u'6db883bf-1e41-4fac-8043-a8492ffec4ad'] kwargs=\{\}\
+OSCMD=router_show args=[u'1b8c7ebf-47f5-4b31-9b25-3699bed06ed5'] kwargs=\{\}\
+OSCMD=image_list args=[] kwargs=\{\}\
+OSCMD=flavor_list args=[] kwargs=\{\}\
+OSCMD=server_list_with_detail args=[] kwargs=\{'name': u'Earth-fin-acct'\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-fin-network'\}\
+OSCMD=c_server_on_interface args=[[\{u'status': u'ACTIVE', u'subnets': [u'74caa863-0d3f-4e05-9ad7-e96a424550c6'], u'name': u'Earth-fin-network', u'router:external': False, u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7', u'admin_state_up': True, u'shared': False, u'port_security_enabled': True, u'id': u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1'\}], u'88bbc564-0415-443d-add3-58ceb3c255ab'] kwargs=\{'wait_on_boot': False, 'flavor': 2, u'user_data': 'IyEvYmluL2Jhc2ggIAoKZWNobyAiaXRlbXBlc3QgdXNlciBkYXRhIiA+PiBpdGVtcGVzdC11c2VyZGF0YSAgCmNobW9kIDc3NyBpdGVtcGVzdC11c2VyZGF0YSAgCmV4cG9ydCBPU19VU0VSTkFNRT1kZW1vCmV4cG9ydCBPU19QQVNTV09SRD1vcGVuc3RhY2sKZXhwb3J0IE9TX1RFTkFOVF9OQU1FPWRlbW8KZXhwb3J0IE9TX0FVVEhfVVJMPSdodHRwOi8vMTAuOC4zLjE6NTAwMC92Mi4wJwpleHBvcnQgTURTRVJWPWh0dHA6Ly8xNjkuMjU0LjE2OS4yNTQvCmV4cG9ydCBPU19NRFNFUlY9aHR0cDovLzE2OS4yNTQuMTY5LjI1NC9vcGVuc3RhY2sK', 'security_groups': None, 'name': u'Earth-fin-acct'\}\
+OSCMD=server_list_with_detail args=[] kwargs=\{'name': u'Earth-fin-journal'\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-fin-network'\}\
+OSCMD=c_server_on_interface args=[[\{u'status': u'ACTIVE', u'subnets': [u'74caa863-0d3f-4e05-9ad7-e96a424550c6'], u'name': u'Earth-fin-network', u'router:external': False, u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7', u'admin_state_up': True, u'shared': False, u'port_security_enabled': True, u'id': u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1'\}], u'4b44662b-1e02-4cbb-bacd-ff07f2d70738'] kwargs=\{'wait_on_boot': False, 'flavor': 1, u'user_data': 'IyEvYmluL2Jhc2ggIAoKZWNobyAiaXRlbXBlc3QgdXNlciBkYXRhIiA+PiBpdGVtcGVzdC11c2VyZGF0YSAgCmNobW9kIDc3NyBpdGVtcGVzdC11c2VyZGF0YSAgCmV4cG9ydCBPU19VU0VSTkFNRT1kZW1vCmV4cG9ydCBPU19QQVNTV09SRD1vcGVuc3RhY2sKZXhwb3J0IE9TX1RFTkFOVF9OQU1FPWRlbW8KZXhwb3J0IE9TX0FVVEhfVVJMPSdodHRwOi8vMTAuOC4zLjE6NTAwMC92Mi4wJwpleHBvcnQgTURTRVJWPWh0dHA6Ly8xNjkuMjU0LjE2OS4yNTQvCmV4cG9ydCBPU19NRFNFUlY9aHR0cDovLzE2OS4yNTQuMTY5LjI1NC9vcGVuc3RhY2sK', 'security_groups': None, 'name': u'Earth-fin-journal'\}\
+OSCMD=server_list_with_detail args=[] kwargs=\{'name': u'Earth-worker-bee'\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-service-network'\}\
+OSCMD=c_server_on_interface args=[[\{u'status': u'ACTIVE', u'subnets': [u'f4da19d7-8a82-4730-8afe-b9d00e854bbc'], u'name': u'Earth-service-network', u'router:external': False, u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7', u'admin_state_up': True, u'shared': False, u'port_security_enabled': True, u'id': u'6039f2ec-eb1a-4f24-ae1e-1f05f5f9f100'\}], u'4b44662b-1e02-4cbb-bacd-ff07f2d70738'] kwargs=\{'wait_on_boot': False, 'flavor': 1, u'user_data': 'IyEvYmluL2Jhc2ggIAoKZWNobyAiaXRlbXBlc3QgdXNlciBkYXRhIiA+PiBpdGVtcGVzdC11c2VyZGF0YSAgCmNobW9kIDc3NyBpdGVtcGVzdC11c2VyZGF0YSAgCmV4cG9ydCBPU19VU0VSTkFNRT1kZW1vCmV4cG9ydCBPU19QQVNTV09SRD1vcGVuc3RhY2sKZXhwb3J0IE9TX1RFTkFOVF9OQU1FPWRlbW8KZXhwb3J0IE9TX0FVVEhfVVJMPSdodHRwOi8vMTAuOC4zLjE6NTAwMC92Mi4wJwpleHBvcnQgTURTRVJWPWh0dHA6Ly8xNjkuMjU0LjE2OS4yNTQvCmV4cG9ydCBPU19NRFNFUlY9aHR0cDovLzE2OS4yNTQuMTY5LjI1NC9vcGVuc3RhY2sK', 'security_groups': None, 'name': u'Earth-worker-bee'\}\
+OSCMD=server_list_with_detail args=[] kwargs=\{'name': u'Earth-helo-web'\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-guest-network'\}\
+OSCMD=c_server_on_interface args=[[\{u'status': u'ACTIVE', u'subnets': [u'6db883bf-1e41-4fac-8043-a8492ffec4ad'], u'name': u'Earth-guest-network', u'router:external': False, u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7', u'admin_state_up': True, u'shared': False, u'port_security_enabled': True, u'id': u'7f520688-e5ca-4d97-96ce-2d73dbc473bf'\}], u'4b44662b-1e02-4cbb-bacd-ff07f2d70738'] kwargs=\{'wait_on_boot': False, 'flavor': 1, u'user_data': 'IyEvYmluL2Jhc2ggIAoKZWNobyAiaXRlbXBlc3QgdXNlciBkYXRhIiA+PiBpdGVtcGVzdC11c2VyZGF0YSAgCmNobW9kIDc3NyBpdGVtcGVzdC11c2VyZGF0YSAgCmV4cG9ydCBPU19VU0VSTkFNRT1kZW1vCmV4cG9ydCBPU19QQVNTV09SRD1vcGVuc3RhY2sKZXhwb3J0IE9TX1RFTkFOVF9OQU1FPWRlbW8KZXhwb3J0IE9TX0FVVEhfVVJMPSdodHRwOi8vMTAuOC4zLjE6NTAwMC92Mi4wJwpleHBvcnQgTURTRVJWPWh0dHA6Ly8xNjkuMjU0LjE2OS4yNTQvCmV4cG9ydCBPU19NRFNFUlY9aHR0cDovLzE2OS4yNTQuMTY5LjI1NC9vcGVuc3RhY2sK', 'security_groups': None, 'name': u'Earth-helo-web'\}\
+OSCMD=server_list_with_detail args=[] kwargs=\{'name': u'Earth-book-web'\}\
+OSCMD=net_list args=[] kwargs=\{'name': u'Earth-guest-network'\}\
+OSCMD=c_server_on_interface args=[[\{u'status': u'ACTIVE', u'subnets': [u'6db883bf-1e41-4fac-8043-a8492ffec4ad'], u'name': u'Earth-guest-network', u'router:external': False, u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7', u'admin_state_up': True, u'shared': False, u'port_security_enabled': True, u'id': u'7f520688-e5ca-4d97-96ce-2d73dbc473bf'\}], u'4b44662b-1e02-4cbb-bacd-ff07f2d70738'] kwargs=\{'wait_on_boot': False, 'flavor': 1, u'user_data': 'IyEvYmluL2Jhc2ggIAoKZWNobyAiaXRlbXBlc3QgdXNlciBkYXRhIiA+PiBpdGVtcGVzdC11c2VyZGF0YSAgCmNobW9kIDc3NyBpdGVtcGVzdC11c2VyZGF0YSAgCmV4cG9ydCBPU19VU0VSTkFNRT1kZW1vCmV4cG9ydCBPU19QQVNTV09SRD1vcGVuc3RhY2sKZXhwb3J0IE9TX1RFTkFOVF9OQU1FPWRlbW8KZXhwb3J0IE9TX0FVVEhfVVJMPSdodHRwOi8vMTAuOC4zLjE6NTAwMC92Mi4wJwpleHBvcnQgTURTRVJWPWh0dHA6Ly8xNjkuMjU0LjE2OS4yNTQvCmV4cG9ydCBPU19NRFNFUlY9aHR0cDovLzE2OS4yNTQuMTY5LjI1NC9vcGVuc3RhY2sK', 'security_groups': None, 'name': u'Earth-book-web'\}\
+\cf6 Out[
+\f2\b \cf6 7
+\f1\b0 \cf6 ]: \cf0 35.54280686378479\
+\
+\cf5 In [
+\f2\b 8
+\f1\b0 ]: \cf0 earth.nova('status-server')\
+OSCMD=status_server args=[] kwargs=\{\}\
+\cf6 Out[
+\f2\b \cf6 8
+\f1\b0 \cf6 ]: \cf0 \
+\{u'BUILD': [[u'ce22ff31-867a-427a-bae0-e2fde385635f',\
+   u'Earth-book-web',\
+   [\{u'name': u'default'\}]],\
+  [u'58985956-2a92-4430-b2ce-03c5f0401aa0',\
+   u'Earth-helo-web',\
+   [\{u'name': u'default'\}]],\
+  [u'd95f6e13-b924-43b6-bc99-a33432928beb',\
+   u'Earth-worker-bee',\
+   [\{u'name': u'default'\}]],\
+  [u'42b01f7f-afab-49cb-aaed-f9b1c6d54abd',\
+   u'Earth-fin-journal',\
+   [\{u'name': u'default'\}]],\
+  [u'82355a98-bd93-4a29-833d-deaccba787fb',\
+   u'Earth-fin-acct',\
+   [\{u'name': u'default'\}]]]\}\
+\
+\cf5 In [
+\f2\b 9
+\f1\b0 ]: \cf0 earth.nova('brief-server')\
+OSCMD=brief_server args=[] kwargs=\{\}\
+\cf6 Out[
+\f2\b \cf6 9
+\f1\b0 \cf6 ]: \cf0 \
+\{u'Earth-book-web': [u'ce22ff31-867a-427a-bae0-e2fde385635f',\
+  [\{u'name': u'default'\}],\
+  []],\
+ u'Earth-fin-acct': [u'82355a98-bd93-4a29-833d-deaccba787fb',\
+  [\{u'name': u'default'\}],\
+  []],\
+ u'Earth-fin-journal': [u'42b01f7f-afab-49cb-aaed-f9b1c6d54abd',\
+  [\{u'name': u'default'\}],\
+  []],\
+ u'Earth-helo-web': [u'58985956-2a92-4430-b2ce-03c5f0401aa0',\
+  [\{u'name': u'default'\}],\
+  []],\
+ u'Earth-worker-bee': [u'd95f6e13-b924-43b6-bc99-a33432928beb',\
+  [\{u'name': u'default'\}],\
+  []]\}\
+\
+\cf5 In [
+\f2\b 10
+\f1\b0 ]: \cf0 earth.nova('status-server')\
+OSCMD=status_server args=[] kwargs=\{\}\
+\cf6 Out[
+\f2\b \cf6 10
+\f1\b0 \cf6 ]: \cf0 \
+\{u'ACTIVE': [[u'ce22ff31-867a-427a-bae0-e2fde385635f',\
+   u'Earth-book-web',\
+   [\{u'name': u'default'\}]],\
+  [u'58985956-2a92-4430-b2ce-03c5f0401aa0',\
+   u'Earth-helo-web',\
+   [\{u'name': u'default'\}]],\
+  [u'd95f6e13-b924-43b6-bc99-a33432928beb',\
+   u'Earth-worker-bee',\
+   [\{u'name': u'default'\}]],\
+  [u'42b01f7f-afab-49cb-aaed-f9b1c6d54abd',\
+   u'Earth-fin-journal',\
+   [\{u'name': u'default'\}]]],\
+ u'BUILD': [[u'82355a98-bd93-4a29-833d-deaccba787fb',\
+   u'Earth-fin-acct',\
+   [\{u'name': u'default'\}]]]\}\
+\
+\cf5 In [
+\f2\b 11
+\f1\b0 ]: \cf0 earth.nova('brief-server')\
+OSCMD=brief_server args=[] kwargs=\{\}\
+\cf6 Out[
+\f2\b \cf6 11
+\f1\b0 \cf6 ]: \cf0 \
+\{u'Earth-book-web': [u'ce22ff31-867a-427a-bae0-e2fde385635f',\
+  [\{u'name': u'default'\}],\
+  [[[u'fixed', u'192.168.1.4', 'IPv4', u'fa:16:3e:a7:92:e8']]]],\
+ u'Earth-fin-acct': [u'82355a98-bd93-4a29-833d-deaccba787fb',\
+  [\{u'name': u'default'\}],\
+  []],\
+ u'Earth-fin-journal': [u'42b01f7f-afab-49cb-aaed-f9b1c6d54abd',\
+  [\{u'name': u'default'\}],\
+  [[[u'fixed', u'10.168.11.4', 'IPv4', u'fa:16:3e:53:13:1b']]]],\
+ u'Earth-helo-web': [u'58985956-2a92-4430-b2ce-03c5f0401aa0',\
+  [\{u'name': u'default'\}],\
+  [[[u'fixed', u'192.168.1.3', 'IPv4', u'fa:16:3e:e8:81:76']]]],\
+ u'Earth-worker-bee': [u'd95f6e13-b924-43b6-bc99-a33432928beb',\
+  [\{u'name': u'default'\}],\
+  [[[u'fixed', u'192.168.11.3', 'IPv4', u'fa:16:3e:23:d5:56']]]]\}\
+\
+\cf5 In [
+\f2\b 12
+\f1\b0 ]: \cf0 earth.qsvc('net-list')\
+OSCMD=net_list args=[] kwargs=\{\}\
+\cf6 Out[
+\f2\b \cf6 12
+\f1\b0 \cf6 ]: \cf0 \
+[\{u'admin_state_up': True,\
+  u'id': u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1',\
+  u'name': u'Earth-fin-network',\
+  u'port_security_enabled': True,\
+  u'router:external': False,\
+  u'shared': False,\
+  u'status': u'ACTIVE',\
+  u'subnets': [u'74caa863-0d3f-4e05-9ad7-e96a424550c6'],\
+  u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7'\},\
+ \{u'admin_state_up': True,\
+  u'id': u'6039f2ec-eb1a-4f24-ae1e-1f05f5f9f100',\
+  u'name': u'Earth-service-network',\
+  u'port_security_enabled': True,\
+  u'router:external': False,\
+  u'shared': False,\
+  u'status': u'ACTIVE',\
+  u'subnets': [u'f4da19d7-8a82-4730-8afe-b9d00e854bbc'],\
+  u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7'\},\
+ \{u'admin_state_up': True,\
+  u'id': u'7f520688-e5ca-4d97-96ce-2d73dbc473bf',\
+  u'name': u'Earth-guest-network',\
+  u'port_security_enabled': True,\
+  u'router:external': False,\
+  u'shared': False,\
+  u'status': u'ACTIVE',\
+  u'subnets': [u'6db883bf-1e41-4fac-8043-a8492ffec4ad'],\
+  u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7'\},\
+ \{u'admin_state_up': True,\
+  u'id': u'dfbb2194-e226-4928-9825-7e4c2247e18c',\
+  u'name': u'public',\
+  u'port_security_enabled': True,\
+  u'router:external': True,\
+  u'shared': False,\
+  u'status': u'ACTIVE',\
+  u'subnets': [u'32a878bd-5fdf-4b39-9eac-45e6aa4a2477'],\
+  u'tenant_id': u'3a6fd3d54cf24e2891928ff32cd6083e'\}]\
+\
+\cf5 In [
+\f2\b 13
+\f1\b0 ]: \cf0 earth.qsvc('net-list', name='Earth-fin-network')\
+OSCMD=net_list args=[] kwargs=\{'name': 'Earth-fin-network'\}\
+\cf6 Out[
+\f2\b \cf6 13
+\f1\b0 \cf6 ]: \cf0 \
+[\{u'admin_state_up': True,\
+  u'id': u'51c1d1ba-7f7e-4d41-bacf-a78f4fd2fea1',\
+  u'name': u'Earth-fin-network',\
+  u'port_security_enabled': True,\
+  u'router:external': False,\
+  u'shared': False,\
+  u'status': u'ACTIVE',\
+  u'subnets': [u'74caa863-0d3f-4e05-9ad7-e96a424550c6'],\
+  u'tenant_id': u'c5f0839e275f482da0ea17cc941fb8a7'\}]\
+}

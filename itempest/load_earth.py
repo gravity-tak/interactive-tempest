@@ -17,37 +17,24 @@ import os
 
 from itempest import itempest_creds as icreds
 from itempest.lib import utils
-from itempest.lib import cmd_glance
 from itempest.lib import cmd_keystone
 from itempest.lib import cmd_nova
 from itempest.lib import cmd_neutron
 
 
-# sun-has-8-planets, earth-is-the-3rd and has-1-moon
 auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
 os_password = os.environ.get('OS_PASSWORD', 'openstack')
 
 # accounts created by devstack
-admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)
+# admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)
 demo_mgr = icreds.get_client_manager(auth_url, 'demo', os_password)
-
-# neutron at devstack is also referred as q-svc
-qadmin = utils.command_wrapper(admin_mgr, cmd_neutron)
-# commands in cmd_glance have higher search order
-nadmin = utils.command_wrapper(admin_mgr, (cmd_glance, cmd_nova))
-kadmin = utils.command_wrapper(admin_mgr, cmd_keystone)
 
 qdemo = utils.command_wrapper(demo_mgr, cmd_neutron)
 # nova list/show/.. will be prefixed with server_
 ndemo = utils.command_wrapper(demo_mgr, cmd_nova, True)
 kdemo = utils.command_wrapper(demo_mgr, cmd_keystone)
 
-# our solar system has 8 planets
-sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',
-               'Jupiter', 'Satun', 'Uranus', 'Neptune']
-tenants = {}
-for planet in sun_planets + ["Sun"]:
-    tenant = utils.fgrep(kadmin('tenant-list'), name=planet)
-    if len(tenant) < 1:
-        # tenant not exist, create it; default password=itempest
-        tenants[planet] = icreds.create_primary_project(planet)
+tenant_name = 'Earth'
+tenant_password = 'itempest'
+earth_mgr = icreds.get_client_manager(auth_url, tenant_name,
+                                      password=tenant_password)

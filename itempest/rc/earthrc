@@ -1,0 +1,20 @@
+# Openstack system SUN
+#
+# For each instance of tempest run againt an OpenStack environment
+# you need to have its own tempest config file and tempest log file
+#
+# THINGS to check:
+#
+#   [1] login_url, dashboard_url, uir, uri_v3 and uri are using
+#       the right protocol
+#       host_ip are correct
+#   [2] valueof(TEMPEST_CONFIG) match valueof(log_file@TEMPEST_CONFIG)
+#   [3] public_network_id@TEMPEST_CONFIG match ID of one of "neutron net-external"
+#
+
+RC_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+export TEMPEST_CONFIG_DIR=$RC_DIR              # itempest-sun.conf is at this directory
+export TEMPEST_CONFIG=itempest-earth.conf      # tempest conf name
+export TEMPEST_LOG_NAME=itempest-earth.log     # log name defined at log_file@itempest-sun.conf
+export OS_AUTH_URL=http://10.8.3.1:5000/v2.0   # Openstack SUN auth URL, check the IPADDR is
+                                               # the same as coded in itempest-sun.conf

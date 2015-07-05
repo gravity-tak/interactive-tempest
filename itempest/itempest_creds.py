@@ -99,7 +99,7 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
             for role in roles:
                 self.creds_client.assign_user_role(user, project, role)
         return user
- 
+
     def get_credentials(self, credential_type,
                         with_name=None, create_network=False):
         # default we don't create network, unless specified
@@ -162,6 +162,8 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
 #    tempest/services/network/network_client_base.py
 # this cause some commands not available. See diff from:
 #    tempest/services/network/json/network_client.py
+# TODO(akang): needs admin in [compute-admin] and [identity].
+#              How non-admin users get their credentials without it?
 def get_client_manager(os_auth_url, username, password,
                        tenant_name=None,
                        fill_in=True, identity_version='v2'):
@@ -212,7 +214,7 @@ def create_primary_project(name,
 def create_project_users(xadmin, project_name, num_of_users,
                          group_name=None):
     p = xadmin.identity_client.get_tenant_by_name(project_name)
-    
+
     icred = ItempestCreds(project_name)
     user_list = []
     for uid in range(1, num_of_users):

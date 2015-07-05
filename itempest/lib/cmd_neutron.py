@@ -459,6 +459,35 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
         external_gateway_info=external_gateway_info)
 
 
+# user defined command
+# this command might need admin priv for mgr_or_client
+def router_gateway_snat_set(mgr_or_client, router, enable):
+    net_client = _g_net_client(mgr_or_client)
+    external_gateway_info = router['external_gateway_info']
+    external_gateway_info['enable_snat'] = enable
+    return net_client.update_router(
+        router['id'],
+        external_gateway_info=external_gateway_info)
+
+
+# user-defined-command
+def router_gateway_port_show(mgr_or_client, router_id):
+    ports = router_port_list(mgr_or_client, router_id)
+    for port in ports:
+        if port['device_owner'] == u'network:router_gateway':
+            return port
+    return None
+
+
+# user-defined-command
+def router_gateway_ipaddr_get(mgr_or_client, router_id):
+    port = router_gateway_port_show(mgr_or_client, router_id)
+    for fips in port['fixed_ips']:
+        if 'ip_address' in fips:
+            return fips['ip_address']
+    return None
+
+
 def router_interface_add(mgr_or_client, router_id, subnet_id,
                          *args, **kwargs):
     """Add an internal network interface to a router."""
@@ -631,6 +660,7 @@ def d_router(mgr_or_client, router_id, **kwargs):
 # TODO(akang): delete extra routes if defined
 def d_this_router(mgr_or_client, router):
     router_id = router['id']
+    router_delete_extra_routes(mgr_or_client, router_id)
     router_gateway_clear(mgr_or_client, router_id)
     ports = router_port_list(mgr_or_client, router_id)
     for port in ports:
@@ -650,7 +680,6 @@ def destroy_myself(mgr_or_client, **kwargs):
 
 
 # client's tenant_id used to search for resources to be deleted.
-# TODO(akang): extra routes, snat in router's GW
 def d_myself(mgr_or_client, **kwargs):
     skip_fip = kwargs.pop('skip_fip',
                           kwargs.pop('skip_floatingip', False))
@@ -664,7 +693,6 @@ def d_myself(mgr_or_client, **kwargs):
         for fip in floatingip_list(mgr_or_client, tenant_id=tenant_id):
             if fip['status'] != 'ACTIVE':
                 floatingip_delete(mgr_or_client, fip['id'])
-    # rm extra routes
     # rm routers
     routers = router_list(mgr_or_client, tenant_id=tenant_id)
     for router in routers:
@@ -677,7 +705,7 @@ def d_myself(mgr_or_client, **kwargs):
 
     for sg in security_group_list(mgr_or_client, tenant_id=tenant_id):
         if (mdata.is_in_spattern(sg['name'], spattern) and
-            sg['name'] not in ['default']):
+                sg['name'] not in ['default']):
             security_group_delete(mgr_or_client, sg['id'])
 
 

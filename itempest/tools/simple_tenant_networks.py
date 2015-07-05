@@ -23,13 +23,12 @@ import traceback
 
 from itempest.lib import cmd_neutron as Neutron
 from itempest.lib import cmd_nova as Nova
-from itempest.lib import cmd_glance as Glance
 from itempest.lib import utils as U
 
 
-# earth1 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name=True)
-# earth2 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth2')
-# earth3 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth3')
+# e1 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name=True)
+# e2 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth2')
+# e3 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth3')
 class SimpleTenantNetworks(object):
     def __init__(self, client_mgr, json_file, **kwargs):
         self._client_mgr = client_mgr
@@ -92,46 +91,15 @@ class SimpleTenantNetworks(object):
         return (time.time() - t0)
 
     def _g_config(self, otypes):
-        for otype in otypes:
-            if otype in self._tenant_topo:
-                cfg = self._tenant_topo[otype]
-                if type(cfg) is dict:
-                    return [cfg]
-                return cfg
-        return []
+        return pop_config(otypes, self._tenant_topo)
 
     # build resources
-    def b_networks(self, networks=None):
+    def b_networks(self, networks_cfg=None):
         self.networks = {}
         self.subnets = {}
-        networks_cfg = self.g_networks_cfg()
-        for network in networks_cfg:
-            name = adjust_name(network.pop('name'),
-                               self.prefix_name, self.suffix_name)
-            if 'subnet' in network:
-                subnets = [network.pop('subnet')]
-            elif 'subnets' in network:
-                subnets = network.pop('subnets')
-            nets = self.qsvc('net-list', name=name)
-            if len(nets) < 1:
-                net = self.qsvc('net-create',name, **network)
-            else:
-                net = nets[0]
-            self.networks[name] = self.qsvc('net-show', net['id'])
-            self.b_subnets(self.networks[name]['id'], subnets)
-
-    def b_subnets(self, network_id, subnets=None):
-        for subnet in subnets:
-            name = adjust_name(subnet['name'],
-                               self.prefix_name, self.suffix_name)
-            cidr = subnet.pop('cidr')
-            subnet['name'] = name
-            snets = self.qsvc('subnet-list', name=name)
-            if len(snets) < 1:
-                snet = self.qsvc('subnet-create', network_id, cidr, **subnet)
-            else:
-                snet = snets[0]
-            self.subnets[name] = self.qsvc('subnet-show', snet['id'])
+        networks_cfg = networks_cfg or self.g_networks_cfg()
+        self.networks, self.subnets = b_networks(
+            self.qsvc, networks_cfg, self.prefix_name, self.suffix_name)
 
     def b_routers(self, routers=None):
         self.routers = {}
@@ -179,7 +147,8 @@ class SimpleTenantNetworks(object):
             if 'user_data' in s_opt:
                 if not os.path.isabs(s_opt['user_data']):
                     s_opt['user_data'] = os.path.realpath(
-                        os.path.join(self.dirname_json_file, s_opt['user_data']))
+                        os.path.join(self.dirname_json_file,
+                                     s_opt['user_data']))
                 data = open(s_opt['user_data'], 'r').read()
                 s_opt['user_data'] = base64.standard_b64encode(data)
         if len(s_opts) > 0:
@@ -188,7 +157,8 @@ class SimpleTenantNetworks(object):
 
     def g_security_groups(self):
         security_groups = self._g_config(
-            ('security-groups', 'security_groups', 'security-group', 'security_group'))
+            ('security-groups', 'security_groups', 'security-group',
+             'security_group'))
         sg_rules = self._g_config(
             ('security-group-rules', 'security_group_rules'))
         sg_rules_cfg = {}
@@ -229,6 +199,42 @@ def adjust_name(name, prefix_name=None, suffix_name=None):
     if suffix_name:
         name = name + "-" + suffix_name
     return name
+
+
+def b_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
+    networks = {}
+    subnets = {}
+    for network in networks_cfg:
+        name = adjust_name(network.pop('name'),
+                           prefix_name, suffix_name)
+        subnets_cfg = pop_config(['subnet', 'subnets'], network)
+        nets = qsvc('net-list', name=name)
+        if len(nets) < 1:
+            net = qsvc('net-create', name, **network)
+        else:
+            net = nets[0]
+        networks[name] = qsvc('net-show', net['id'])
+        subnets.update(b_subnets(qsvc, networks[name]['id'], subnets_cfg,
+                                 prefix_name=prefix_name,
+                                 suffix_name=suffix_name))
+    return (networks, subnets)
+
+
+def b_subnets(qsvc, network_id, subnets_cfg,
+              prefix_name=None, suffix_name=None):
+    subnets = {}
+    for subnet in subnets_cfg:
+        name = adjust_name(subnet['name'],
+                           prefix_name, suffix_name)
+        cidr = subnet.pop('cidr')
+        subnet['name'] = name
+        snets = qsvc('subnet-list', name=name)
+        if len(snets) < 1:
+            snet = qsvc('subnet-create', network_id, cidr, **subnet)
+        else:
+            snet = snets[0]
+        subnets[name] = qsvc('subnet-show', snet['id'])
+    return subnets
 
 
 def c_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
@@ -301,12 +307,12 @@ def c_security_groups(qsvc, security_groups_cfg):
 def c_servers(nova, qsvc, servers_cfg,
               prefix_name=None, suffix_name=None,
               security_groups=None, wait_on_boot=False):
-    images_in_house = nova('image-list')
-    flavors_in_house = nova('flavor-list')
+    from_images = nova('image-list')
+    from_flavors = nova('flavor-list')
     servers = {}
     for serv_cfg in servers_cfg:
         server = boot_server(nova, qsvc, serv_cfg,
-                             images_in_house, flavors_in_house,
+                             from_images, from_flavors,
                              prefix_name=prefix_name,
                              security_groups=security_groups,
                              wait_on_boot=wait_on_boot)
@@ -315,41 +321,60 @@ def c_servers(nova, qsvc, servers_cfg,
 
 
 def boot_server(nova, qsvc, server_cfg,
-                images_in_house=None, flavors_in_house=None,
+                from_images=None, from_flavors=None,
                 prefix_name=None, suffix_name=None,
                 security_groups=None, wait_on_boot=False):
-    images_in_house = images_in_house or nova('image-list')
-    flavors_in_house = flavors_in_house or nova('flavor-list')
     sv_name = adjust_name(server_cfg.pop('name'), prefix_name, suffix_name)
-    if_name = adjust_name(server_cfg.pop('interface'), prefix_name, suffix_name)
-    networks = qsvc('net-list', name=if_name)
-    image_id = get_image_id(server_cfg.pop('image'), images_in_house)
-    flavor_id = get_flavor_id(server_cfg.pop('flavor'), flavors_in_house)
+    servs = nova('server-list-with-detail', name=sv_name)
+    # nova name match is regexp, potentially you get more than you request
+    for sv in servs:
+        if sv_name == sv['name']:
+            return sv
+    from_images = from_images or nova('image-list')
+    from_flavors = from_flavors or nova('flavor-list')
+    sv_interfaces = pop_config(['interface', 'interfaces'], server_cfg)
+    networks = f_server_interfaces(qsvc, sv_interfaces,
+                                   prefix_name, suffix_name)
+    image_id = get_image_id(server_cfg.pop('image'), from_images)
+    flavor_id = get_flavor_id(server_cfg.pop('flavor'), from_flavors)
     return nova('c-server-on-interface', networks, image_id,
                 name=sv_name, flavor=flavor_id,
                 security_groups=security_groups,
                 wait_on_boot=wait_on_boot, **server_cfg)
 
 
+def f_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
+    if type(interface_names) in (str, unicode):
+        interface_names = [interface_names]
+    networks = []
+    for if_name in interface_names:
+        if_name = adjust_name(if_name, prefix_name, suffix_name)
+        svs = qsvc('net-list', name=if_name)
+        networks.extend(svs)
+    return networks
+
+
 def c_floatingip_to_server(nova, qsvc, server_id,
                            public_id=None, **kwargs):
-    network_public_id = public_id or qsvc('net-external-list')[0]
-    server = nova('server-show', server_id)
-    
+    public_network_id = public_id or qsvc('net-external-list')[0]
+    floatingip = qsvc('floatingip-create-for-server',
+                      public_network_id, server_id)
+    return floatingip
 
-def get_image_id(image_name, images_in_house):
-    for m in images_in_house:
+
+def get_image_id(image_name, from_images):
+    for m in from_images:
         if m['name'] == image_name:
             return m['id']
     return None
 
 
-def get_flavor_id(flavor, flavors_in_house):
+def get_flavor_id(flavor, from_flavors):
     if type(flavor) is int:
         return flavor
     if type(flavor) is str and flavor.is_digit():
         return int(flavor)
-    for f in flavors_in_house:
+    for f in from_flavors:
         if f['name'] == flavor:
             return int(f['id'])
     return 1
@@ -363,6 +388,16 @@ def get_subnet_name(network_name):
     return network_name + "-sub"
 
 
+def pop_config(otypes, from_topo_cfg):
+    for otype in otypes:
+        if otype in from_topo_cfg:
+            cfg = from_topo_cfg.pop(otype)
+            if type(cfg) is dict:
+                return [cfg]
+            return cfg
+    return []
+
+
 def get_last_trace():
     return traceback.extract_tb(sys.last_traceback)
 
@@ -370,4 +405,5 @@ def get_last_trace():
 def print_trace(tracemsg=None):
     tracemsg = tracemsg or get_last_trace()
     for msg in tracemsg:
-        print("line#%s @file: %s\n  %s\n    %s" % (msg[1], msg[0], msg[2], msg[3]))
+        print("line#%s @file: %s\n  %s\n    %s" %
+              (msg[1], msg[0], msg[2], msg[3]))

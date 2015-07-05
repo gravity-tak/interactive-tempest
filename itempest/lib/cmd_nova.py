@@ -158,6 +158,7 @@ def list_all_servers(mgr_or_client, **kwargs):
 
 
 # nova list
+# keyword search in nova is always regexp, not exact like neutron
 # WARN: list_servers not accept key-value list, but dict
 def server_list(mgr_or_client, **kwargs):
     """NOTE: servers_client.list_servers() accepts only one DICT argument.
@@ -278,24 +279,29 @@ def server_stop(mgr_or_client, server_id, *args, **kwargs):
 
 
 # nova rename
-def server_rename(mgr_or_client, *args, **kwargs):
-    raise(Exception("Not implemented yet!"))
+def server_rename(mgr_or_client, server_id, new_name):
+    servers_client = _g_servers_client(mgr_or_client)
+    server = servers_client.update_server(server_id, name=new_name)
+    return server
 
 
 # nova reboot
-def server_reboot(mgr_or_client, server_id, reboot_type, **kwargs):
+def server_reboot(mgr_or_client, server_id, reboot_type):
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.reboot(server_id, reboot_type)
     return server
 
 
-# nova ?
-def server_update(mgr_or_client, name, *args, **kwargs):
-    raise(Exception("Not implemented yet!"))
+# nova rename, ...
+# kwargs are name, meta, accessIPv4, accessIPv6, disk_config
+def server_update(mgr_or_client, server_id, **kwargs):
+    servers_client = _g_servers_client(mgr_or_client)
+    server = servers_client.update_server(server_id, **kwargs)
+    return server
 
 
 def server_console_url(mgr_or_client, server_id,
-                       console_type='novnc', **kwargs):
+                       console_type='novnc'):
     """NOTE:
 
         CLI: nova get-vnc-console <sever_id> novnc
@@ -385,7 +391,7 @@ def s_server(mgr_or_client, *args, **kwargs):
     status = {}
     for s in server_list_with_detail(mgr_or_client, **kwargs):
         s_name = s['status']
-        s_info = [s['id'], s['name'], _g_kval(s,'security_groups')]
+        s_info = [s['id'], s['name'], _g_kval(s, 'security_groups')]
         if s_name in status:
             status[s_name].append(s_info)
         else:
@@ -393,6 +399,8 @@ def s_server(mgr_or_client, *args, **kwargs):
     return status
 
 
+# if qsvc has admin priv and servers not created by admin
+# qsvc('brief-server', all_tenants=1)
 def brief_server(mgr_or_client, *args, **kwargs):
     status = {}
     spattern = mdata.get_name_search_pattern(**kwargs)

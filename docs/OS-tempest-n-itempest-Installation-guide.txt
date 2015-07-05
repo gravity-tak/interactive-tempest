@@ -19,7 +19,7 @@ Max OS.X Yosemite
 
 1. install Xcode
 2. sudo pip install virtualenv
-3. cd <any directory you want to install tempest>
+3. cd /opt/stack # or <any directory you want to install tempest>
 4. git clone https://github.com/openstack/tempest.git
 5. cd tempest
 6. sudo mkdir -p /usr/include   # if not exist
@@ -27,3 +27,13 @@ Max OS.X Yosemite
 8. ln -sf /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/ffi /usr/include/ffi
 9. python tools/install_env.py
 
+Install itempest
+================
+
+1. cd ~/Developer # or any directory
+2. git clone https://github.com/gravity-tak/interactive-tempest.git
+3. cd /opt/stack/tempest
+4. ln -s ~/Developer/interactive-tempest/itempest
+5. prepare your tempest.conf and resource file
+   refer to itempest/rc/sunrc and
+            itempest/rc/itempest-sun.conf

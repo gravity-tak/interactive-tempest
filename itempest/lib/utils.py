@@ -112,7 +112,8 @@ def command_wrapper(client_manager, cmd_module,
         if log_cmd:
             LOG.info(CMD_LOG_MSG, cmd, str(arg_list), str(kwargs))
         if halt:
-            import pdb; pdb.set_trace()
+            import pdb
+            pdb.set_trace()
         return f_method(client_manager, *arg_list, **kwargs)
 
     return os_command
@@ -133,16 +134,20 @@ def nova_wrapper(client_manager, cmd_module):
     return nova_command
 
 
+def fgrep(tempest_respl, **kwargs):
+    return field_grep(tempest_respl, kwargs, True)
+
+
 # tempest_resp_l is passed by reference
-def fgrep(tempest_resp_l, match_dict, keep_it=True):
+def field_grep(tempest_resp_l, match_dict, rm_ifnot_match=True):
     lx = len(tempest_resp_l) - 1
     while (lx >= 0):
         vd = tempest_resp_l[lx]
         matched = dict_is_matched(vd, match_dict)
         if matched:
-            if not keep_it:
+            if not rm_ifnot_match:
                 tempest_resp_l.pop(lx)
-        elif keep_it:
+        elif rm_ifnot_match:
             tempest_resp_l.pop(lx)
         lx -= 1
     return tempest_resp_l

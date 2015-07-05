@@ -1,6 +1,5 @@
-
 {
-    "name": "Expo-side1",
+    "name": "Sun-side1",
     "networks": [
         {
             "name": "fin-network",
@@ -22,11 +21,11 @@
             "subnets": [
                 {
                     "name": "service-subnet",
-                    "cidr": "192.168.66.0/24",
+                    "cidr": "192.168.11.0/24",
                     "dns_nameservers": ["8.8.4.4"],
                     "enable_dhcp": true,
                     "allocation_pools": [
-                        {"start": "192.168.66.2", "end": "192.168.66.66"}
+                        {"start": "192.168.11.2", "end": "192.168.11.66"}
                     ]
                 }
             ]
@@ -70,23 +69,20 @@
         },
         {
             "name": "fin-journal",
-            "interface": "fin-network",
-            "image": "cirros-0.3.3-x86_64-disk",
-            "flavor": "m1.tiny"
+            "interface": "fin-network"
         },
         {
             "name": "worker-bee",
-            "interface": "service-network",
-            "image": "ubuntu-12.04-x86_64",
-            "flavor": "m1.small"
+            "interface": "service-network"
         },
         {
             "name": "helo-web",
-            "interface": "guest-network",
-            "image": "cirros-0.3.3-x86_64-disk",
-            "flavor": "m1.tiny"
-        }
-    ],
+            "interface": "guest-network"
+        },
+        {
+            "name": "book-web",
+            "interface": "guest-network"
+        }   ],
     "security-groups": [
         {
             "name": "loginable",
