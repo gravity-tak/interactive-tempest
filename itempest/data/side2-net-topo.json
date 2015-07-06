@@ -64,7 +64,7 @@
         {
             "name": "fin-acct",
             "interface": "fin-network",
-            "image": "ubuntu-12.04-vt-x86_64",
+            "image": "ubuntu-14.04-x86_64",
             "flavor": "m1.small"
         },
         {
