@@ -354,11 +354,10 @@ def f_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
     return networks
 
 
-def c_floatingip_to_server(nova, qsvc, server_id,
-                           public_id=None, **kwargs):
+def c_floatingip_to_server(qsvc, server_id, public_id=None, **kwargs):
     public_network_id = public_id or qsvc('net-external-list')[0]
     floatingip = qsvc('floatingip-create-for-server',
-                      public_network_id, server_id)
+                      public_network_id['id'], server_id)
     return floatingip
 
 

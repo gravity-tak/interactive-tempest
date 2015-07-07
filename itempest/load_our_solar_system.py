@@ -46,7 +46,7 @@ kdemo = utils.command_wrapper(demo_mgr, cmd_keystone)
 sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',
                'Jupiter', 'Satun', 'Uranus', 'Neptune']
 tenants = {}
-for planet in sun_planets + ["Sun"]:
+for planet in sun_planets + :
     tenant = utils.fgrep(kadmin('tenant-list'), name=planet)
     if len(tenant) < 1:
         # tenant not exist, create it; default password=itempest

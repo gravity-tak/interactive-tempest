@@ -408,7 +408,7 @@ def brief_server(mgr_or_client, *args, **kwargs):
         if not mdata.is_in_spattern(s['name'], spattern):
             continue
         s_name = s['name']
-        s_info = [s['id'], s['security_groups']]
+        s_info = dict(id=s['id'], security_groups=s['security_groups'])
         addr_list = []
         for nn, na in s['addresses'].items():
             a_list = []
@@ -418,6 +418,8 @@ def brief_server(mgr_or_client, *args, **kwargs):
                                ("IPv%s" % adr['version']),
                                adr['OS-EXT-IPS-MAC:mac_addr']])
             addr_list.append(a_list)
-        s_info.append(addr_list)
+        s_info['addresses'] = addr_list
+        img = image_show(mgr_or_client, s['image']['id'])
+        s_info['image'] = img['name']
         status[s_name] = s_info
     return status
