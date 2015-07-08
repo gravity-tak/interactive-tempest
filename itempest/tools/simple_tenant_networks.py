@@ -82,12 +82,20 @@ class SimpleTenantNetworks(object):
         return (time.time() - t0)
 
     # wipeout all resources belog to this tenant!
-    def wipeout(self):
+    def wipeout(self, tenant_id=None, force_rm_fip=True):
         t0 = time.time()
+        kwargs = {}
+        if tenant_id:
+            kwargs['tenant_id'] = tenant_id
         # delete servers
-        self.nova('destroy-my-servers')
+        # self.nova('destroy-my-servers', **kwargs)
+        for server in self.nova('server-list'):
+            d_server(self.nova, server['id'], self.qsvc)
+        time.sleep(3.0)
         # detroy tenant networks+routers
-        self.qsvc('destroy-myself')
+        self.qsvc('destroy-myself',
+                  force_rm_fip=force_rm_fip,
+                  **kwargs)
         return (time.time() - t0)
 
     def _g_config(self, otypes):
@@ -178,7 +186,7 @@ class SimpleTenantNetworks(object):
     # delete resources
     def d_servers(self):
         for nid, server in self.servers.items():
-            self.nova('server-delete', server['id'])
+            d_server(self.nova, server['id'], self.qsvc)
 
     def d_routers(self):
         for nid, router in self.routers.items():
@@ -359,6 +367,26 @@ def c_floatingip_to_server(qsvc, server_id, public_id=None, **kwargs):
     floatingip = qsvc('floatingip-create-for-server',
                       public_network_id['id'], server_id)
     return floatingip
+
+
+def d_server(nova, server_id, qsvc=None):
+    try:
+        sv = nova('server-show', server_id)
+        d_server_floatingip(qsvc, sv) if qsvc else None
+        return nova('server-delete', server_id)
+    except Exception:
+        pass
+
+
+def d_server_floatingip(qsvc, server):
+    for if_name, if_addresses in server['addresses'].items():
+        for addr in if_addresses:
+            if ('OS-EXT-IPS:type' in addr and
+                addr['OS-EXT-IPS:type'] == u'floating'):
+                fip = qsvc('floatingip-list',
+                           floating_network_address=addr['addr'])
+                qsvc('floatingip_disassociate', fip[0]['id'])
+                qsvc('floatingip-delete', fip[0]['id'])
 
 
 def get_image_id(image_name, from_images):

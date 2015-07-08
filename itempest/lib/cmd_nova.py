@@ -408,7 +408,8 @@ def brief_server(mgr_or_client, *args, **kwargs):
         if not mdata.is_in_spattern(s['name'], spattern):
             continue
         s_name = s['name']
-        s_info = dict(id=s['id'], security_groups=s['security_groups'])
+        s_info = dict(id=s['id'],
+                      security_groups=s['security_groups'])
         addr_list = []
         for nn, na in s['addresses'].items():
             a_list = []

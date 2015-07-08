@@ -683,6 +683,9 @@ def destroy_myself(mgr_or_client, **kwargs):
 def d_myself(mgr_or_client, **kwargs):
     skip_fip = kwargs.pop('skip_fip',
                           kwargs.pop('skip_floatingip', False))
+    force_rm_fip = kwargs.pop('force_rm_fip', False)
+    if force_rm_fip:
+        skip_fip = False
     spattern = mdata.get_name_search_pattern(**kwargs)
     net_client = _g_net_client(mgr_or_client)
     tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
@@ -691,7 +694,7 @@ def d_myself(mgr_or_client, **kwargs):
         # TODO(akang): no name attributes in floatingip
         # for now, delete fip if it is not ACTIVE status
         for fip in floatingip_list(mgr_or_client, tenant_id=tenant_id):
-            if fip['status'] != 'ACTIVE':
+            if force_rm_fip or fip['status'] != 'ACTIVE':
                 floatingip_delete(mgr_or_client, fip['id'])
     # rm routers
     routers = router_list(mgr_or_client, tenant_id=tenant_id)
