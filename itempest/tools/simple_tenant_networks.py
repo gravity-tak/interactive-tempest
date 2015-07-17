@@ -26,24 +26,27 @@ from itempest.lib import cmd_nova as Nova
 from itempest.lib import utils as U
 
 
-# e1 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name=True)
-# e2 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth2')
-# e3 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix_name='earth3')
+# e1 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix=True)
+# e2 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix='earth2')
+# e3 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix='earth3')
 class SimpleTenantNetworks(object):
     def __init__(self, client_mgr, json_file, **kwargs):
         self._client_mgr = client_mgr
         self._cfg_file = json_file
-        self.prepare_prefix_name(kwargs.pop('prefix_name', None))
-        self.prepare_suffix_name(kwargs.pop('suffix_name', None))
-        log_cmd = kwargs.pop('log_cmd', False)
+        self.prepare_prefix_name(
+            kwargs.pop('prefix_name', kwargs.pop("prefix", None)))
+        self.prepare_suffix_name(
+            kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
         verbose = kwargs.pop('verbose', True)
+        self.no_servers =  kwargs.pop('no_server',
+                                      kwargs.pop('no_servers', False))
         self.load_tenant_topo(json_file)
         self.qsvc = U.command_wrapper(self._client_mgr, Neutron,
-                                      log_cmd=log_cmd,
+                                      log_cmd="OS-Neutron",
                                       verbose=verbose)
         self.nova = U.command_wrapper(self._client_mgr, Nova,
                                       nova_flavor=True,
-                                      log_cmd=log_cmd,
+                                      log_cmd="OS-Nova",
                                       verbose=verbose)
         self.security_groups = {}
         self.networks = {}
@@ -106,7 +109,7 @@ class SimpleTenantNetworks(object):
         self.networks = {}
         self.subnets = {}
         networks_cfg = networks_cfg or self.g_networks_cfg()
-        self.networks, self.subnets = b_networks(
+        self.networks, self.subnets = c_networks(
             self.qsvc, networks_cfg, self.prefix_name, self.suffix_name)
 
     def b_routers(self, routers=None):
@@ -119,6 +122,8 @@ class SimpleTenantNetworks(object):
             self.routers[rtr['name']] = rtr
 
     def b_servers(self, servers_cfg=None):
+        if self.no_servers:
+            return None
         servers_cfg = servers_cfg or self.g_servers_cfg()
         self.servers = c_servers(self.nova, self.qsvc, servers_cfg,
                                  prefix_name=self.prefix_name,
@@ -132,11 +137,11 @@ class SimpleTenantNetworks(object):
     # get resources' build config
     def g_networks_cfg(self):
         networks = self._g_config(('networks', 'network'))
-        return copy.deepcopy(networks)
+        return networks
 
     def g_routers_cfg(self):
         routers = self._g_config(('routers', 'router'))
-        return copy.deepcopy(routers)
+        return routers
 
     def g_servers_cfg(self):
         s_opt = self.g_server_options_cfg()
@@ -200,6 +205,21 @@ class SimpleTenantNetworks(object):
         for nid, sg in self.security_groups.items():
             self.qsvc('security-group-delete', sg['id'])
 
+    def a_floatingip_to_server(self, server_id):
+        return c_floatingip_to_server(self.qsvc, server_id)
+
+    def d_floatingip_from_server(self, server_id):
+        server = self.nova('server-show', server_id)
+        return d_server_floatingip(self.qsvc, server)
+
+    def a_security_group_to_server(self, server_id, security_group_name,
+                                   on_interface=None):
+        pass
+
+    def d_security_group_from_server(self, server_id, security_group_name,
+                                     on_interface=None):
+        pass
+
 
 def adjust_name(name, prefix_name=None, suffix_name=None):
     if prefix_name:
@@ -209,7 +229,7 @@ def adjust_name(name, prefix_name=None, suffix_name=None):
     return name
 
 
-def b_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
+def c_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
     networks = {}
     subnets = {}
     for network in networks_cfg:
@@ -222,13 +242,13 @@ def b_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
         else:
             net = nets[0]
         networks[name] = qsvc('net-show', net['id'])
-        subnets.update(b_subnets(qsvc, networks[name]['id'], subnets_cfg,
+        subnets.update(c_subnets(qsvc, networks[name]['id'], subnets_cfg,
                                  prefix_name=prefix_name,
                                  suffix_name=suffix_name))
     return (networks, subnets)
 
 
-def b_subnets(qsvc, network_id, subnets_cfg,
+def c_subnets(qsvc, network_id, subnets_cfg,
               prefix_name=None, suffix_name=None):
     subnets = {}
     for subnet in subnets_cfg:
@@ -333,6 +353,9 @@ def boot_server(nova, qsvc, server_cfg,
                 prefix_name=None, suffix_name=None,
                 security_groups=None, wait_on_boot=False):
     sv_name = adjust_name(server_cfg.pop('name'), prefix_name, suffix_name)
+    sg_names = server_cfg.pop('security_groups', None)
+    if sg_names:
+        security_groups = [{'name': x} for x in sg_names]
     servs = nova('server-list-with-detail', name=sv_name)
     # nova name match is regexp, potentially you get more than you request
     for sv in servs:
@@ -389,11 +412,14 @@ def d_server_floatingip(qsvc, server):
                 qsvc('floatingip-delete', fip[0]['id'])
 
 
-def get_image_id(image_name, from_images):
+def get_image_id(image_name, from_images, use_any_ifnot_exist=True):
     for m in from_images:
         if m['name'] == image_name:
             return m['id']
-    return None
+    if use_any_ifnot_exist:
+        return from_images[0]['id']
+    else:
+        return None
 
 
 def get_flavor_id(flavor, from_flavors):
@@ -418,6 +444,8 @@ def get_subnet_name(network_name):
 def pop_config(otypes, from_topo_cfg):
     for otype in otypes:
         if otype in from_topo_cfg:
+            # the reason to pop is to remove attributes that should not be
+            # in the config as we just pass whatever defined in the conf.
             cfg = from_topo_cfg.pop(otype)
             if type(cfg) is dict:
                 return [cfg]

@@ -409,6 +409,7 @@ def brief_server(mgr_or_client, *args, **kwargs):
             continue
         s_name = s['name']
         s_info = dict(id=s['id'],
+                      status=s['status'],
                       security_groups=s['security_groups'])
         addr_list = []
         for nn, na in s['addresses'].items():

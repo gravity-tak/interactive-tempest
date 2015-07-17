@@ -23,7 +23,7 @@ NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
                     'meta', 'migrate', 'rescue',
                     'list-secgroup', 'live-migrate']
-CMD_LOG_MSG = "OSCMD=%s args=%s kwargs=%s"
+CMD_LOG_MSG = "%s:%s %s args=%s kwargs=%s"
 
 LOG = oslog.getLogger(__name__)
 
@@ -93,6 +93,11 @@ def command_wrapper(client_manager, cmd_module,
     cmd_module_list = (cmd_module if type(cmd_module) in (list, tuple)
                        else [cmd_module])
     module_name_list = [x.__name__ for x in cmd_module_list]
+    if log_cmd:
+        if type(log_cmd) in (str, unicode):
+            pass
+        else:
+            log_cmd = "OSCMD"
 
     def os_command(cmd_line, *args, **kwargs):
         halt = kwargs.pop('debug', kwargs.pop('halt', False))
@@ -107,10 +112,13 @@ def command_wrapper(client_manager, cmd_module,
         if f_method in [None]:
             raise Exception("Module in %s do not have command '%s'." %
                             (module_name_list, cmd))
+        the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
         if verbose:
-            print(CMD_LOG_MSG % (cmd, str(arg_list), str(kwargs)))
+            print(CMD_LOG_MSG % (log_cmd, the_time, cmd,
+                                 str(arg_list), str(kwargs)))
         if log_cmd:
-            LOG.info(CMD_LOG_MSG, cmd, str(arg_list), str(kwargs))
+            LOG.info(CMD_LOG_MSG, log_cmd, the_time, cmd,
+                     str(arg_list), str(kwargs))
         if halt:
             import pdb
             pdb.set_trace()
@@ -156,11 +164,19 @@ def field_grep(tempest_resp_l, match_dict, rm_ifnot_match=True):
 def dict_is_matched(odict, mdict):
     matched = 0
     for key, val in mdict.items():
-        if key in odict and (
-           (type(val) is str and odict[key] == val) or
-           (type(val) in [list, tuple] and odict[key] in val)):
+        if key in odict and grep_this(odict[key], val):
             matched += 1
     return matched == len(mdict)
+
+
+def grep_this(target_val, wanted_val):
+    if type(wanted_val) is str and re.search(wanted_val, target_val):
+        return True
+    if type(wanted_val) in [list, tuple]:
+        for val in wanted_val:
+            if type(val) is str and re.search(val, target_val):
+                return True
+    return False
 
 
 def xfer_mdict_key(match_dict):

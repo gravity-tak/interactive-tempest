@@ -33,6 +33,7 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
+# this class requires correct [compute-admin] and [identity] in tempest.conf
 class ItempestCreds(isolated_creds.IsolatedCreds):
     """ItempestIsoLatedCreds overwirtes IsolatedCreds so that its credentail
     type of admin, primary and alt will create project/user name from provided
@@ -162,11 +163,11 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
 #    tempest/services/network/network_client_base.py
 # this cause some commands not available. See diff from:
 #    tempest/services/network/json/network_client.py
-# TODO(akang): needs admin in [compute-admin] and [identity].
-#              How non-admin users get their credentials without it?
+# This method doesn't require correct user/password in tempest.conf
+# however, the API in uri must be correct!
 def get_client_manager(os_auth_url, username, password,
                        tenant_name=None,
-                       fill_in=True, identity_version='v2'):
+                       fill_in=False, identity_version='v2'):
     cm_conf = dict(
         username=username,
         password=password,
@@ -181,6 +182,8 @@ def get_client_manager(os_auth_url, username, password,
     return cmgr
 
 
+# Following functions require tempest.conf with correct admin
+# information.
 # xadmin = get_os_manager(True)
 # xdemo = get_os_manager()
 def get_os_manager(is_admin=False):
