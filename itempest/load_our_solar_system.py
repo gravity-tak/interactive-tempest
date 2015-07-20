@@ -32,15 +32,15 @@ admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)
 demo_mgr = icreds.get_client_manager(auth_url, 'demo', os_password)
 
 # neutron at devstack is also referred as q-svc
-qadmin = utils.command_wrapper(admin_mgr, cmd_neutron)
+qadmin = utils.command_wrapper(admin_mgr, cmd_neutron, log_cmd="OS-Neutron")
 # commands in cmd_glance have higher search order
-nadmin = utils.command_wrapper(admin_mgr, (cmd_glance, cmd_nova))
-kadmin = utils.command_wrapper(admin_mgr, cmd_keystone)
+nadmin = utils.command_wrapper(admin_mgr, (cmd_glance, cmd_nova), log_cmd="OS-Nova")
+kadmin = utils.command_wrapper(admin_mgr, cmd_keystone, log_cmd="OS-Keystone")
 
-qdemo = utils.command_wrapper(demo_mgr, cmd_neutron)
+qdemo = utils.command_wrapper(demo_mgr, cmd_neutron, log_cmd="OS-Neutron")
 # nova list/show/.. will be prefixed with server_
-ndemo = utils.command_wrapper(demo_mgr, cmd_nova, True)
-kdemo = utils.command_wrapper(demo_mgr, cmd_keystone)
+ndemo = utils.command_wrapper(demo_mgr, cmd_nova, True, log_cmd="OS-Nova")
+kdemo = utils.command_wrapper(demo_mgr, cmd_keystone, log_cmd="OS-Keystone")
 
 # our solar system has 8 planets
 sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',

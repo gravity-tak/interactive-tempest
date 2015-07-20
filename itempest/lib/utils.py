@@ -93,11 +93,7 @@ def command_wrapper(client_manager, cmd_module,
     cmd_module_list = (cmd_module if type(cmd_module) in (list, tuple)
                        else [cmd_module])
     module_name_list = [x.__name__ for x in cmd_module_list]
-    if log_cmd:
-        if type(log_cmd) in (str, unicode):
-            pass
-        else:
-            log_cmd = "OSCMD"
+    log_cmd = log_cmd if type(log_cmd) in (str, unicode) else "OS-Command"
 
     def os_command(cmd_line, *args, **kwargs):
         halt = kwargs.pop('debug', kwargs.pop('halt', False))
@@ -142,6 +138,7 @@ def nova_wrapper(client_manager, cmd_module):
     return nova_command
 
 
+# ex: fgrep(j1.qsvc('router-list'), name="^j1-", router_type='exclu', distributed=True)
 def fgrep(tempest_respl, **kwargs):
     return field_grep(tempest_respl, kwargs, True)
 
@@ -176,6 +173,9 @@ def grep_this(target_val, wanted_val):
         for val in wanted_val:
             if type(val) is str and re.search(val, target_val):
                 return True
+    elif wanted_val == target_val:
+        # don't know, just compare it, for example shared=True
+        return True
     return False
 
 

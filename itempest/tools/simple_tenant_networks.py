@@ -33,14 +33,8 @@ class SimpleTenantNetworks(object):
     def __init__(self, client_mgr, json_file, **kwargs):
         self._client_mgr = client_mgr
         self._cfg_file = json_file
-        self.prepare_prefix_name(
-            kwargs.pop('prefix_name', kwargs.pop("prefix", None)))
-        self.prepare_suffix_name(
-            kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
-        verbose = kwargs.pop('verbose', True)
-        self.no_servers =  kwargs.pop('no_server',
-                                      kwargs.pop('no_servers', False))
         self.load_tenant_topo(json_file)
+        self.get_cfg_options(kwargs)
         self.qsvc = U.command_wrapper(self._client_mgr, Neutron,
                                       log_cmd="OS-Neutron",
                                       verbose=verbose)
@@ -52,6 +46,16 @@ class SimpleTenantNetworks(object):
         self.networks = {}
         self.routers = {}
         self.servers = {}
+
+    def get_cfg_options(self, kwargs):
+        self.prepare_prefix_name(
+            kwargs.pop('prefix_name', kwargs.pop("prefix", None)))
+        self.prepare_suffix_name(
+            kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
+        verbose = kwargs.pop('verbose', True)
+        self.no_servers =  kwargs.pop('no_server',
+                                      kwargs.pop('no_servers', False))
+        self.router_cfg_options = kwargs.pop("router_options", None)
 
     def prepare_prefix_name(self, with_name=None):
         self.prefix_name = with_name
@@ -67,6 +71,7 @@ class SimpleTenantNetworks(object):
         json_file = json_file or self._cfg_file
         self._tenant_topo = json.loads(open(json_file, 'r').read())
         self.dirname_json_file = os.path.dirname(json_file)
+
 
     def build(self):
         t0 = time.time()
@@ -116,6 +121,8 @@ class SimpleTenantNetworks(object):
         self.routers = {}
         routers_cfg = self.g_routers_cfg()
         for router in routers_cfg:
+            if self.router_cfg_options:
+                router.update(self.router_cfg_options)
             rtr = c_router(self.qsvc, router,
                            prefix_name=self.prefix_name,
                            suffix_name=self.suffix_name)
@@ -271,13 +278,13 @@ def c_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
     if len(rtrs) > 0:
         return qsvc('router-show', rtrs[0]['id'])
     else:
-        rtr = qsvc('router-create', name)
-        gw_if = router_cfg.get('gateway', None)
+        if_names = router_cfg.pop('interfaces', [])
+        gw_if = router_cfg.pop('gateway', None)
         gw_kwargs = {}
         if 'enable_snat' in router_cfg:
-            gw_kwargs['enable_snat'] = router_cfg['enable_snat']
+            gw_kwargs['enable_snat'] = router_cfg.pop('enable_snat')
+        rtr = qsvc('router-create', name, **router_cfg)
         rtr_set_gateway(qsvc, rtr['id'], gateway_if=gw_if, **gw_kwargs)
-        if_names = router_cfg.get('interfaces', [])
         rtr = rtr_add_interfaces_by_name(qsvc, rtr['id'], if_names,
                                          prefix_name=prefix_name,
                                          suffix_name=suffix_name)
