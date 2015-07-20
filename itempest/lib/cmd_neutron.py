@@ -45,8 +45,8 @@ def ext_list(mgr_or_client,
         neutron ext-list
     """
     net_client = _g_net_client(mgr_or_client)
-    return net_client.list_extensions()
-
+    result = net_client.list_extensions()
+    return result['extensions']
 
 # network
 def network_create(mgr_or_client, name=None, tenant_id=None, **kwargs):

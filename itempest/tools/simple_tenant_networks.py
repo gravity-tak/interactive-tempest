@@ -34,6 +34,7 @@ class SimpleTenantNetworks(object):
         self._client_mgr = client_mgr
         self._cfg_file = json_file
         self.load_tenant_topo(json_file)
+        verbose = kwargs.pop('verbose', True)
         self.get_cfg_options(kwargs)
         self.qsvc = U.command_wrapper(self._client_mgr, Neutron,
                                       log_cmd="OS-Neutron",
@@ -52,7 +53,6 @@ class SimpleTenantNetworks(object):
             kwargs.pop('prefix_name', kwargs.pop("prefix", None)))
         self.prepare_suffix_name(
             kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
-        verbose = kwargs.pop('verbose', True)
         self.no_servers =  kwargs.pop('no_server',
                                       kwargs.pop('no_servers', False))
         self.router_cfg_options = kwargs.pop("router_options", None)
