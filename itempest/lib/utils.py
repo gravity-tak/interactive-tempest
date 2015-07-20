@@ -102,8 +102,7 @@ def command_wrapper(client_manager, cmd_module,
             cmd = 'server_' + cmd
         for cmd_module in cmd_module_list:
             f_method = getattr(cmd_module, cmd, None)
-            if f_method:
-                break
+            if f_method: break
 
         if f_method in [None]:
             raise Exception("Module in %s do not have command '%s'." %
@@ -115,9 +114,7 @@ def command_wrapper(client_manager, cmd_module,
         if log_cmd:
             LOG.info(CMD_LOG_MSG, log_cmd, the_time, cmd,
                      str(arg_list), str(kwargs))
-        if halt:
-            import pdb
-            pdb.set_trace()
+        _trace_me() if halt else None
         return f_method(client_manager, *arg_list, **kwargs)
 
     return os_command
@@ -138,24 +135,28 @@ def nova_wrapper(client_manager, cmd_module):
     return nova_command
 
 
-# ex: fgrep(j1.qsvc('router-list'), name="^j1-", router_type='exclu', distributed=True)
-def fgrep(tempest_respl, **kwargs):
-    return field_grep(tempest_respl, kwargs, True)
+# Examples:
+#   fgrep(qsvc('router-list'), router_type='exclu', distributed=True)
+#   fgrep(qsvc('ext-list', alias='security')
+def fgrep(tempest_resp_list, **kwargs):
+    halt = kwargs.pop('halt', False)
+    _trace_me() if halt else None
+    return field_grep(tempest_resp_list, kwargs, True)
 
 
 # tempest_resp_l is passed by reference
-def field_grep(tempest_resp_l, match_dict, rm_ifnot_match=True):
-    lx = len(tempest_resp_l) - 1
+def field_grep(tempest_resp_list, grep_dict, rm_ifnot_match=True):
+    lx = len(tempest_resp_list) - 1
     while (lx >= 0):
-        vd = tempest_resp_l[lx]
-        matched = dict_is_matched(vd, match_dict)
+        vd = tempest_resp_list[lx]
+        matched = dict_is_matched(vd, grep_dict)
         if matched:
             if not rm_ifnot_match:
-                tempest_resp_l.pop(lx)
+                tempest_resp_list.pop(lx)
         elif rm_ifnot_match:
-            tempest_resp_l.pop(lx)
+            tempest_resp_list.pop(lx)
         lx -= 1
-    return tempest_resp_l
+    return tempest_resp_list
 
 
 def dict_is_matched(odict, mdict):
@@ -195,3 +196,8 @@ def run_till_timeout(seconds_to_try, interval=5.0):
         yield now
         time.sleep(interval)
         now = time.time()
+
+
+def _trace_me():
+    import pdb
+    pdb.set_trace()

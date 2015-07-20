@@ -52,3 +52,5 @@ for planet in sun_planets + ["Sun", "Moon"] + dwarf_planets:
     if len(tenant) < 1:
         # tenant not exist, create it; default password=itempest
         tenants[planet] = icreds.create_primary_project(planet)
+    else:
+        tenants[planet] = tenant[0]

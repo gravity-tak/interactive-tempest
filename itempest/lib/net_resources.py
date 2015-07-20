@@ -20,36 +20,17 @@
 from tempest.services.network import resources as NRS
 
 
-class DeletableNetwork(NRS.DeletableNetwork):
+DELETABLE_CLASS_DEF = """class %(cls_name)s(NRS.%(cls_name)s):
     pass
+"""
+IGNORE_LIST = ['DeletableSubnet', 'DeletableRouter']
 
 
-class DeletableFloatingIp(NRS.DeletableFloatingIp):
-    pass
-
-
-class DeletablePort(NRS.DeletablePort):
-    pass
-
-
-class DeletableSecurityGroup(NRS.DeletableSecurityGroup):
-    pass
-
-
-class DeletableSecurityGroupRule(NRS.DeletableSecurityGroupRule):
-    pass
-
-
-class DeletablePool(NRS.DeletablePool):
-    pass
-
-
-class DeletableMember(NRS.DeletableMember):
-    pass
-
-
-class DeletableVip(NRS.DeletableVip):
-    pass
+# inhere Deletable<Class> from parent module
+for cls_name in [x for x in dir(NRS)
+                 if x.startswith('Deletable') and x not in IGNORE_LIST]:
+    class_def = DELETABLE_CLASS_DEF % dict(cls_name=cls_name)
+    exec class_def
 
 
 # Add/mod methods so we can use it while sustain original functions.
@@ -70,7 +51,7 @@ class DeletableSubnet(NRS.DeletableSubnet):
 
 
 # DeletableSubnet should not deal with router which when owned by ADMIN
-# will raise previlidge issue. Always let the router deals with interfaces.
+# will raise privilege issue. Always let the router deals with interfaces.
 class DeletableRouter(NRS.DeletableRouter):
     def __init__(self, *args, **kwargs):
         super(DeletableRouter, self).__init__(*args, **kwargs)

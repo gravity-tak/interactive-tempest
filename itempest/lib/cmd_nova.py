@@ -120,7 +120,8 @@ def keypair_list(mgr_or_client, *args, **kwargs):
     return keypair
 
 
-def keypair_create(mgr_or_client, name=None, **kwargs):
+def keypair_add(mgr_or_client, name, **kwargs):
+    """nova keypair-add my-vm01-key"""
     name = name or data_utils.rand_name('itempest')
     keypair_client = _g_keypairs_client(mgr_or_client)
     pub_key = kwargs.pop('pub_key', None)
@@ -128,8 +129,8 @@ def keypair_create(mgr_or_client, name=None, **kwargs):
     return keypair
 
 
-def keypair_add(mgr_or_client, name=None, **kwargs):
-    return keypair_create(mgr_or_client, name, **kwargs)
+def keypair_create(mgr_or_client, name, **kwargs):
+    return keypair_add(mgr_or_client, name, **kwargs)
 
 
 def keypair_delete(mgr_or_client, key_name):
@@ -140,7 +141,7 @@ def keypair_delete(mgr_or_client, key_name):
 
 def keypair_show(mgr_or_client, key_name, **kwargs):
     keypair_client = _g_keypairs_client(mgr_or_client)
-    keypair = keypair_client.get_keypair(key_name)
+    keypair = keypair_client.show_keypair(key_name)
     return keypair
 
 

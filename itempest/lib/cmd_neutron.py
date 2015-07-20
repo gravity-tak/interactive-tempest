@@ -45,8 +45,8 @@ def ext_list(mgr_or_client,
         neutron ext-list
     """
     net_client = _g_net_client(mgr_or_client)
-    return net_client.list_extensions()
-
+    result = net_client.list_extensions()
+    return result['extensions']
 
 # network
 def network_create(mgr_or_client, name=None, tenant_id=None, **kwargs):
@@ -423,17 +423,36 @@ def router_update(mgr_or_client, router_id, *args, **kwargs):
 
 
 # extra routes (static routes) only available from router_update
-def router_update_extra_routes(mgr_or_client, router_id,
-                               nexthop, destination):
+def router_update_extra_routes_future(mgr_or_client, router_id,
+                                      nexthop, destination):
     net_client = _g_net_client(mgr_or_client)
     body = net_client.update_extra_routes(router_id,
                                           nexthop, destination)
+    return body['router']
+
+# NOT AVAILABLE NOW!
+# fixed by https://bugs.launchpad.net/tempest/+bug/1468600
+def router_update_extra_routes(mgr_or_client, router_id, routes):
+    net_client = _g_net_client(mgr_or_client)
+    body = net_client.update_extra_routes(router_id,
+                                          routes)
     return body['router']
 
 
 def router_delete_extra_routes(mgr_or_client, router_id):
     net_client = _g_net_client(mgr_or_client)
     return net_client.delete_extra_routes(router_id)
+
+
+# user-defined-command
+def router_add_extra_route(mgr_or_client, router_id,
+                           nexthop, destination):
+    net_client = _g_net_client(mgr_or_client)
+    extra_route = dict(nexthop=nexthop, destination=destination)
+    # TODO(akang): retrieve from router_id, and update with extra_route
+    body = net_client.update_extra_routes(router_id,
+                                          nexthop, destination)
+    return body['router']
 
 
 # router sub-commands
@@ -675,6 +694,9 @@ def d_this_router(mgr_or_client, router):
 
 
 # qsvc('destroy-myself', name_startswith='page2-')
+# To delete network resources of tenant=Mars:
+# mars = utils.fgrep(keyAdmin('tenant-list'), name='Mars')[0]
+# qsvcAdmin('destroy-myself', tenant_id=mars['id'])
 def destroy_myself(mgr_or_client, **kwargs):
     return d_myself(mgr_or_client, **kwargs)
 
