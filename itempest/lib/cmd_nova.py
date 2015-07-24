@@ -21,12 +21,12 @@ from oslo_log import log as oslog
 
 from tempest_lib.common.utils import data_utils
 
-from tempest.services.compute.json.flavors_client import FlavorsClientJSON
-from tempest.services.compute.json.images_client import ImagesClientJSON
-from tempest.services.compute.json.keypairs_client import KeyPairsClientJSON
-from tempest.services.compute.json.servers_client import ServersClientJSON
-from tempest.services.image.v1.json.image_client import ImageClientJSON
-from tempest.services.image.v2.json.image_client import ImageClientV2JSON
+from tempest.services.compute.json.flavors_client import FlavorsClient
+from tempest.services.compute.json.images_client import ImagesClient
+from tempest.services.compute.json.keypairs_client import KeyPairsClient
+from tempest.services.compute.json.servers_client import ServersClient
+from tempest.services.image.v1.json.image_client import ImageClient
+from tempest.services.image.v2.json.image_client import ImageClientV2
 
 
 LOG = oslog.getLogger(__name__)

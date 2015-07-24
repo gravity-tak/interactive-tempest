@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.services.image.v2.json.image_client import ImageClientV2JSON
+from tempest.services.image.v2.json.image_client import ImageClientV2
 
 
 # TODO(akang): which version of client should be used

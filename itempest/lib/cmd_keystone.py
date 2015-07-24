@@ -14,16 +14,16 @@
 #    under the License.
 
 from tempest.services.identity.v2.json.identity_client \
-    import IdentityClientJSON
+    import IdentityClient
 from tempest.services.identity.v3.json.endpoints_client \
-    import EndPointClientJSON
+    import EndPointClient
 from tempest.services.identity.v3.json.identity_client \
-    import IdentityV3ClientJSON
+    import IdentityV3Client
 from tempest.services.identity.v3.json.service_client \
-    import ServiceClientJSON
+    import ServiceClient
 
-from tempest_lib.services.identity.v2.token_client import TokenClientJSON
-from tempest_lib.services.identity.v3.token_client import V3TokenClientJSON
+from tempest_lib.services.identity.v2.token_client import TokenClient
+from tempest_lib.services.identity.v3.token_client import V3TokenClient
 
 
 def _g_identity_client(mgr_or_client):

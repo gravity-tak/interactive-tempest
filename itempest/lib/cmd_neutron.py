@@ -19,7 +19,7 @@ import os
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions
 
-from tempest.services.network.json.network_client import NetworkClientJSON
+from tempest.services.network.json.network_client import NetworkClient
 
 import man_data as mdata
 

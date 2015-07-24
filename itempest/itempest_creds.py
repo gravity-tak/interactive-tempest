@@ -15,12 +15,6 @@
 
 from oslo_log import log as logging
 
-# TODO(akang): auth.py is at tempest_lib.
-# Following import auth should be removed.
-try:
-    from tempest import auth
-except Exception:
-    pass
 from tempest import clients
 from tempest.common import cred_provider
 from tempest.common import isolated_creds
@@ -173,12 +167,8 @@ def get_client_manager(os_auth_url, username, password,
         password=password,
         tenant_name=(tenant_name if tenant_name else username))
     cmgr = None
-    try:
-        l_creds = l_auth.get_credentials(os_auth_url, **cm_conf)
-        cmgr = clients.Manager(l_creds)
-    except Exception:
-        creds = auth.get_credentials(os_auth_url, **cm_conf)
-        cmgr = clients.Manager(creds)
+    l_creds = l_auth.get_credentials(os_auth_url, **cm_conf)
+    cmgr = clients.Manager(l_creds)
     return cmgr
 
 
