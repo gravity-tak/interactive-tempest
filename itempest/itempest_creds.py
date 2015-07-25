@@ -161,12 +161,15 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
 # however, the API in uri must be correct!
 def get_client_manager(os_auth_url, username, password,
                        tenant_name=None,
-                       fill_in=False, identity_version='v2'):
+                       fill_in=False, identity_version='v2',
+                       **kwargs):
     cm_conf = dict(
         username=username,
         password=password,
-        tenant_name=(tenant_name if tenant_name else username))
+        tenant_name=(tenant_name if tenant_name else username),
+        disable_ssl_certificate_validation=True)
     cmgr = None
+    cm_conf.update(kwargs)
     l_creds = l_auth.get_credentials(os_auth_url, **cm_conf)
     cmgr = clients.Manager(l_creds)
     return cmgr

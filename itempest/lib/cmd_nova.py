@@ -33,37 +33,37 @@ LOG = oslog.getLogger(__name__)
 
 
 def _g_flavors_client(mgr_or_client):
-    if isinstance(mgr_or_client, FlavorsClientJSON):
+    if isinstance(mgr_or_client, FlavorsClient):
         return mgr_or_client
     return mgr_or_client.flavors_client
 
 
 def _g_image_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImageClientJSON):
+    if isinstance(mgr_or_client, ImageClient):
         return mgr_or_client
     return mgr_or_client.image_client
 
 
 def _g_image_v2_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImageClientV2JSON):
+    if isinstance(mgr_or_client, ImageClientV2):
         return mgr_or_client
     return mgr_or_client.image_client_v2
 
 
 def _g_images_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImagesClientJSON):
+    if isinstance(mgr_or_client, ImagesClient):
         return mgr_or_client
     return mgr_or_client.images_client
 
 
 def _g_keypairs_client(mgr_or_client):
-    if isinstance(mgr_or_client, KeyPairsClientJSON):
+    if isinstance(mgr_or_client, KeyPairsClient):
         return mgr_or_client
     return mgr_or_client.keypairs_client
 
 
 def _g_servers_client(mgr_or_client):
-    if isinstance(mgr_or_client, ServersClientJSON):
+    if isinstance(mgr_or_client, ServersClient):
         return mgr_or_client
     return mgr_or_client.servers_client
 

@@ -33,7 +33,7 @@ NET_CONSTANTS = {
 
 
 def _g_net_client(mgr_or_client):
-    if isinstance(mgr_or_client, NetworkClientJSON):
+    if isinstance(mgr_or_client, NetworkClient):
         return mgr_or_client
     return mgr_or_client.network_client
 

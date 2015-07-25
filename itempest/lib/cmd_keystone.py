@@ -27,37 +27,37 @@ from tempest_lib.services.identity.v3.token_client import V3TokenClient
 
 
 def _g_identity_client(mgr_or_client):
-    if isinstance(mgr_or_client, IdentityClientJSON):
+    if isinstance(mgr_or_client, IdentityClient):
         return mgr_or_client
     return mgr_or_client.identity_client
 
 
 def _g_identity_v3_client(mgr_or_client):
-    if isinstance(mgr_or_client, IdentityV3ClientJSON):
+    if isinstance(mgr_or_client, IdentityV3Client):
         return mgr_or_client
     return mgr_or_client.identity_v3_client
 
 
 def _g_endpoint_client(mgr_or_client):
-    if isinstance(mgr_or_client, EndPointClientJSON):
+    if isinstance(mgr_or_client, EndPointClient):
         return mgr_or_client
     return mgr_or_client.endpoints_client
 
 
 def _g_service_client(mgr_or_client):
-    if isinstance(mgr_or_client, ServiceClientJSON):
+    if isinstance(mgr_or_client, ServiceClient):
         return mgr_or_client
     return mgr_or_client.service_client
 
 
 def _g_token_v3_client(mgr_or_client):
-    if isinstance(mgr_or_client, V3TokenClientJSON):
+    if isinstance(mgr_or_client, V3TokenClient):
         return mgr_or_client
     return mgr_or_client.token_v3_client
 
 
 def _g_token_client(mgr_or_client):
-    if isinstance(mgr_or_client, TokenClientJSON):
+    if isinstance(mgr_or_client, TokenClient):
         return mgr_or_client
     return mgr_or_client.token_client
 
