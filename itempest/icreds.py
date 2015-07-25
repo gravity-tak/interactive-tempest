@@ -150,15 +150,15 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
 
 
 # devstack create two users: admin and demo
-# assume both have password=openstack
-#   admin = get_client_manager(OS_AUTH_URL, OS_USERNAME, OS_PASSWORD)
-#   demo = get_client_manager(OS_AUTH_URL, OS_USERNAME, OS_PASSWORD)
+# assume both have same password
+#   admin_mgr = get_client_manager(OS_AUTH_URL, OS_USERNAME, OS_PASSWORD)
+#   demo_mgr = get_client_manager(OS_AUTH_URL, OS_USERNAME, OS_PASSWORD)
 # network_client from get_client_manager() using:
 #    tempest/services/network/network_client_base.py
 # this cause some commands not available. See diff from:
 #    tempest/services/network/json/network_client.py
-# This method doesn't require correct user/password in tempest.conf
-# however, the API in uri must be correct!
+# This method with default values don't require correct user/password in
+# tempest.conf, however the API in uri must be correct!
 def get_client_manager(os_auth_url, username, password,
                        tenant_name=None,
                        fill_in=False, identity_version='v2',
@@ -177,8 +177,8 @@ def get_client_manager(os_auth_url, username, password,
 
 # Following functions require tempest.conf with correct admin
 # information.
-# xadmin = get_os_manager(True)
-# xdemo = get_os_manager()
+# adm_mgr = get_os_manager(True)
+# demo_mgr = get_os_manager()
 def get_os_manager(is_admin=False):
     if is_admin:
         mgr = clients.AdminManager()
@@ -187,7 +187,7 @@ def get_os_manager(is_admin=False):
     return mgr
 
 
-def create_test_projects(name, password='itemepst', **kwargs):
+def create_test_projects(name, password='itemepst8@OS', **kwargs):
     creds = ItempestCreds(name, password=password)
     creds_a = creds.get_admin_creds()
     creds_p = creds.get_primary_creds()
@@ -196,7 +196,7 @@ def create_test_projects(name, password='itemepst', **kwargs):
 
 
 def create_primary_project(name,
-                           cred_type='primary', password='itempest',
+                           cred_type='primary', password='itempest8@OS',
                            num_of_users=1,
                            **kwargs):
     creds = ItempestCreds(name, password=password,
@@ -205,15 +205,15 @@ def create_primary_project(name,
     return p
 
 
-# xadmin = get_os_manager(True)
-# users = create_project_users(xadmin, 'Expo', 3)
-def create_project_users(xadmin, project_name, num_of_users,
+# adm_mgr = get_os_manager(True)
+# users = create_project_users(adm_mgr, 'Earth', 3)
+def create_project_users(adm_mgr, project_name, num_of_users,
                          group_name=None):
-    p = xadmin.identity_client.get_tenant_by_name(project_name)
+    p = adm_mgr.identity_client.get_tenant_by_name(project_name)
 
-    icred = ItempestCreds(project_name)
+    proj_cred = ItempestCreds(project_name)
     user_list = []
     for uid in range(1, num_of_users):
-        user_list.append(icred._create_user(p, uid=uid,
-                                            group_name=group_name))
+        user_list.append(proj_cred._create_user(p, uid=uid,
+                                                group_name=group_name))
     return user_list

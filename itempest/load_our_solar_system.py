@@ -15,7 +15,7 @@
 
 import os
 
-from itempest import itempest_creds as icreds
+from itempest import icreds
 from itempest.lib import utils
 from itempest.lib import cmd_glance
 from itempest.lib import cmd_keystone
@@ -25,7 +25,7 @@ from itempest.lib import cmd_neutron
 
 # sun-has-8-planets, earth-is-the-3rd and has-1-moon
 auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
-os_password = os.environ.get('OS_PASSWORD', 'openstack')
+os_password = os.environ.get('OS_PASSWORD', 'itempest8@OS')
 
 # accounts created by devstack
 admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)

@@ -15,26 +15,25 @@
 
 import os
 
-from itempest import itempest_creds as icreds
+from itempest import icreds
 from itempest.lib import utils
 from itempest.lib import cmd_keystone
 from itempest.lib import cmd_nova
 from itempest.lib import cmd_neutron
 
 
-auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
-os_password = os.environ.get('OS_PASSWORD', 'openstack')
+os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
+os_username = os.environ.get('OS_USERNAME', 'Earth')
+os_password = os.environ.get('OS_PASSWORD', 'itempest8@OS')
+os_tenant_name = os.environ.get('OS_TENANT_NAME', os_username)
 
 # accounts created by devstack
 # admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)
-demo_mgr = icreds.get_client_manager(auth_url, 'demo', os_password)
+tenant_mgr = icreds.get_client_manager(os_auth_url, os_username, os_password,
+                                       tenant_name=os_tenant_name)
 
-qdemo = utils.command_wrapper(demo_mgr, cmd_neutron)
+qsvc = utils.command_wrapper(tenant_mgr, cmd_neutron)
 # nova list/show/.. will be prefixed with server_
-ndemo = utils.command_wrapper(demo_mgr, cmd_nova, True)
-kdemo = utils.command_wrapper(demo_mgr, cmd_keystone)
+nova = utils.command_wrapper(tenant_mgr, cmd_nova, True)
+keys = utils.command_wrapper(tenant_mgr, cmd_keystone)
 
-tenant_name = 'Earth'
-tenant_password = 'itempest'
-earth_mgr = icreds.get_client_manager(auth_url, tenant_name,
-                                      password=tenant_password)
