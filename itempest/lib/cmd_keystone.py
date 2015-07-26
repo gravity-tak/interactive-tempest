@@ -22,9 +22,12 @@ from tempest.services.identity.v3.json.identity_client \
 from tempest.services.identity.v3.json.service_client \
     import ServiceClient
 
-from tempest_lib.services.identity.v2.token_client import TokenClient
-from tempest_lib.services.identity.v3.token_client import V3TokenClient
-
+try:
+    from tempest_lib.services.identity.v2.token_client import TokenClient
+    from tempest_lib.services.identity.v3.token_client import V3TokenClient
+except Exception:
+    from tempest_lib.services.identity.v2.token_client import TokenClientJSON as TokenClient
+    from tempest_lib.services.identity.v3.token_client import V3TokenClientJSON as V3TokenClient
 
 def _g_identity_client(mgr_or_client):
     if isinstance(mgr_or_client, IdentityClient):

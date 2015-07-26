@@ -36,4 +36,3 @@ qsvc = utils.command_wrapper(tenant_mgr, cmd_neutron)
 # nova list/show/.. will be prefixed with server_
 nova = utils.command_wrapper(tenant_mgr, cmd_nova, True)
 keys = utils.command_wrapper(tenant_mgr, cmd_keystone)
-

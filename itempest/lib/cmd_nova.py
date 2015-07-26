@@ -168,8 +168,6 @@ def server_list(mgr_or_client, **kwargs):
         API: server_list(mgr, all_tenants=1)
     """
     server_client = _g_servers_client(mgr_or_client)
-    if kwargs.pop('detail', None):
-        return server_list_with_detail(mgr_or_client, **kwargs)
     server_id = kwargs.pop('server_id', kwargs.pop('id', None))
     network_id = kwargs.pop('network_id', None)
     if (server_id and type(server_id) is str):
@@ -184,7 +182,9 @@ def server_list(mgr_or_client, **kwargs):
 
 def server_list_with_detail(mgr_or_client, *args, **kwargs):
     server_client = _g_servers_client(mgr_or_client)
-    servers = server_client.list_servers_with_detail(kwargs)
+    kwargs['detail'] = True
+    # servers = server_client.list_servers_with_detail(kwargs)
+    servers = server_client.list_servers(**kwargs)
     return servers['servers']
 
 
@@ -237,7 +237,7 @@ def server_create(mgr_or_client, name, *args, **kwargs):
     # The instance retrieved on creation is missing network
     # details, necessitating retrieval after it becomes active to
     # ensure correct details.
-    server = server_client.get_server(server['id'])
+    server = server_show(mgr_or_client, server['id'])
     return server
 
 
@@ -261,7 +261,10 @@ def server_delete(mgr_or_client, server_id, *args, **kwargs):
 # nova show
 def server_show(mgr_or_client, server_id, *args, **kwargs):
     servers_client = _g_servers_client(mgr_or_client)
-    server = servers_client.get_server(server_id, **kwargs)
+    try:
+        server = servers_client.get_server(server_id, **kwargs)
+    except Exception:
+        server = servers_client.show_server(server_id, **kwargs)
     return server
 
 
@@ -404,10 +407,7 @@ def s_server(mgr_or_client, *args, **kwargs):
 # qsvc('brief-server', all_tenants=1)
 def brief_server(mgr_or_client, *args, **kwargs):
     status = {}
-    spattern = mdata.get_name_search_pattern(**kwargs)
-    for s in server_list_with_detail(mgr_or_client, **kwargs):
-        if not mdata.is_in_spattern(s['name'], spattern):
-            continue
+    for s in server_list(mgr_or_client, **kwargs):
         s_name = s['name']
         s_info = dict(id=s['id'],
                       status=s['status'],

@@ -141,6 +141,8 @@ def nova_wrapper(client_manager, cmd_module):
 def fgrep(tempest_resp_list, **kwargs):
     halt = kwargs.pop('halt', False)
     _trace_me() if halt else None
+    if type(tempest_resp_list) not in (list, tuple):
+        return tempest_resp_list
     return field_grep(tempest_resp_list, kwargs, True)
 
 
