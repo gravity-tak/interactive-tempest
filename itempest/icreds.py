@@ -167,6 +167,7 @@ def get_client_manager(os_auth_url, username, password,
     cm_conf = dict(
         username=username,
         password=password,
+        fill_in=fill_in,
         tenant_name=(tenant_name if tenant_name else username),
         disable_ssl_certificate_validation=True)
     cmgr = None
