@@ -409,6 +409,7 @@ def s_server(mgr_or_client, *args, **kwargs):
 # qsvc('brief-server', all_tenants=1)
 def brief_server(mgr_or_client, *args, **kwargs):
     status = {}
+    kwargs['detail'] = True
     for s in server_list(mgr_or_client, **kwargs):
         s_name = s['name']
         s_info = dict(id=s['id'],
