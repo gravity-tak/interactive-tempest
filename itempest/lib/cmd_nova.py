@@ -80,6 +80,8 @@ def flavor_list(mgr_or_client, *args, **kwargs):
 
 
 # image
+# nova('image-create', 'cirros-0.3.3-x86_64', 'bare', 'vmdk',
+#      location='http://10.34.57.161/images/cirros-0.3.3-x86_64-disk.vmdk')
 def image_create(mgr_or_client, name, container_format, disk_format,
                  **kwargs):
     """Create a new image."""

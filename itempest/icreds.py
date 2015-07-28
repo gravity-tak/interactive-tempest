@@ -40,8 +40,9 @@ class ItempestCreds(isolated_creds.IsolatedCreds):
                  password='itempest', num_of_users=1,
                  network_resources=None, cleanup_atexit=False):
         # super create self.cred_client
+        self.password = password
         super(ItempestCreds, self).__init__(identity_version,
-                                            name, password,
+                                            name,
                                             network_resources)
         self.num_of_users = num_of_users
         self.cleanup_atexit = cleanup_atexit
