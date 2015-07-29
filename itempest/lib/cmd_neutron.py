@@ -1,5 +1,5 @@
 # Copyright 2015 OpenStack Foundation
-# Copyright 2015 VMware.
+# Copyright 2015 VMware Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -711,7 +711,8 @@ def d_myself(mgr_or_client, **kwargs):
     spattern = mdata.get_name_search_pattern(**kwargs)
     net_client = _g_net_client(mgr_or_client)
     tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
-    # rm floatingips
+    # rm floatingips: be aware that VMs' might have FIP attached
+    # if fail, caller of d_myself should sleep then retry again
     if not skip_fip:
         # TODO(akang): no name attributes in floatingip
         # for now, delete fip if it is not ACTIVE status

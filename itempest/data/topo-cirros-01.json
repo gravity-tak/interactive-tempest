@@ -69,6 +69,10 @@
         {
             "name": "worker-bee",
             "interface": "service-network"
+        },
+        {
+            "name": "guest-bee",
+            "interface": "guest-network"
         }
     ],
     "security-groups": [

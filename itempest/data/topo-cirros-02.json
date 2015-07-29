@@ -68,6 +68,10 @@
         {
             "name": "helo-web",
             "interface": "guest-network"
+        },
+        {
+            "name": "guest-bee",
+            "interface": "guest-network"
         }
     ]
 }
