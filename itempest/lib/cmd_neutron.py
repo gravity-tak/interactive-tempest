@@ -312,7 +312,7 @@ def port_list(mgr_or_client, *args, **kwargs):
 
 def port_show(mgr_or_client, port_id, *args, **kwargs):
     net_client = _g_net_client(mgr_or_client)
-    body = net_client.show_port(*args, **kwargs)
+    body = net_client.show_port(port_id, *args, **kwargs)
     return body['port']
 
 
@@ -747,13 +747,37 @@ def g_port_id_ipv4_of_server(mgr_or_client, server_id,
             return (port0['id'], ip)
 
 
+def g_ports_of_server(mgr_or_client, server_id, **kwargs):
+    ports = port_list(mgr_or_client, device_id=server_id)
+    return ports
+
+
 # nova has method to add security-group to server
 # nova('server-add-security-group', server_id, name_of_security_group)
 def u_server_security_group(mgr_or_client, server_id, security_group_ids,
-                            port_id=None):
-    if not port_id:
-        port_id, ipv4 = g_port_id_ipv4_of_server(mgr_or_client, server_id)
+                            port_ids=None, action=None):
+    if port_ids:
+        if type(port_ids) in (unicode, str):
+            port_ids = [port_ids]
+    else:
+        port_ids = [p['id'] for p in g_ports_of_server(
+            mgr_or_client, server_id)]
     if not type(security_group_ids) in [list, tuple]:
         security_group_ids = [security_group_ids]
-    return port_update(mgr_or_client, port_id,
-                       security_groups=security_group_ids)
+    ports = []
+    sg_key = 'security_groups'
+    for port_id in port_ids:
+        if action:
+            port_info = port_show(mgr_or_client, port_id)
+            orig_sgs = port_info[sg_key] if sg_key in port_info else []
+            if action in (1, 'add'):
+                new_security_group_ids = list(
+                    set(orig_sgs) | set(security_group_ids))
+            elif action in (2, 'del', 'delete'):
+                new_security_group_ids = list(
+                    set(orig_sgs) - set(security_group_ids))
+        else:
+            new_security_group_ids = security_group_ids
+        ports.append(port_update(mgr_or_client, port_id,
+                                     security_groups=new_security_group_ids))
+    return ports
