@@ -676,7 +676,6 @@ def d_router(mgr_or_client, router_id, **kwargs):
 
 # NOTE: if attributes can only be manipulated by ADMIN, then
 #       mgr_or_client needs to have admin-priv.
-# TODO(akang): delete extra routes if defined
 def d_this_router(mgr_or_client, router):
     router_id = router['id']
     router_delete_extra_routes(mgr_or_client, router_id)
@@ -755,13 +754,13 @@ def g_ports_of_server(mgr_or_client, server_id, **kwargs):
 # nova has method to add security-group to server
 # nova('server-add-security-group', server_id, name_of_security_group)
 def u_server_security_group(mgr_or_client, server_id, security_group_ids,
-                            port_ids=None, action=None):
+                            port_ids=None, fixed_ip=None, action=None):
     if port_ids:
         if type(port_ids) in (unicode, str):
             port_ids = [port_ids]
     else:
         port_ids = [p['id'] for p in g_ports_of_server(
-            mgr_or_client, server_id)]
+            mgr_or_client, server_id, fixed_ip=fixed_ip)]
     if not type(security_group_ids) in [list, tuple]:
         security_group_ids = [security_group_ids]
     ports = []
@@ -779,5 +778,5 @@ def u_server_security_group(mgr_or_client, server_id, security_group_ids,
         else:
             new_security_group_ids = security_group_ids
         ports.append(port_update(mgr_or_client, port_id,
-                                     security_groups=new_security_group_ids))
+                                 security_groups=new_security_group_ids))
     return ports

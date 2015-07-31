@@ -399,6 +399,10 @@ def c_floatingip_to_server(qsvc, server_id, public_id=None, **kwargs):
     return floatingip
 
 
+def c_floatingip_on_interface(qsvc, server_id, net_id, public_id=None):
+    pass
+
+
 def d_server(nova, server_id, qsvc=None):
     try:
         sv = nova('server-show', server_id)
