@@ -30,8 +30,9 @@ def image_create(mgr_or_client, name, container_format, disk_format,
                  **kwargs):
     """Create a new image."""
     image_client = _g_image_v2_client(mgr_or_client)
-    is_public = kwargs.pop('is_public', True)
-    kwargs['visibility'] = 'public' if is_public else 'private'
+    if 'is_public' in kwargs:
+        is_public = kwargs.pop('is_public')
+        kwargs['visibility'] = 'public' if is_public else 'private'
     return image_client.create_image(name, container_format, disk_format,
                                      **kwargs)
 

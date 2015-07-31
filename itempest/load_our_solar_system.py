@@ -65,6 +65,6 @@ for planet in sun_planets + ["Sun", "Moon"] + dwarf_planets:
     if len(tenant) < 1:
         # tenant not exist, create it; default password=itempest
         tenant = icreds.create_primary_project(planet)
-        tenants[planet] = kadmin('tenant-show', tenant['id'])
+        tenants[planet] = kadmin('tenant_get_by_name', planet)
     else:
         tenants[planet] = tenant[0]
