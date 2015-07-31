@@ -92,7 +92,7 @@ def image_create(mgr_or_client, name, container_format, disk_format,
     if location:
         create_kwargs['location'] = location
     return image_client.create_image(name, container_format, disk_format,
-                                     **kwargs)
+                                     **create_kwargs)
 
 
 def image_list(mgr_or_client, *args, **kwargs):
