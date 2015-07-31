@@ -610,6 +610,7 @@ def _g_tenant_id(os_client):
         return os_client.rest_client.tenant_id
 
 
+"""
 # user defined commands
 def c_external_network(mgr_or_client,
                        name=None,
@@ -780,3 +781,4 @@ def u_server_security_group(mgr_or_client, server_id, security_group_ids,
         ports.append(port_update(mgr_or_client, port_id,
                                  security_groups=new_security_group_ids))
     return ports
+"""

@@ -22,6 +22,7 @@ import time
 import traceback
 
 from itempest.lib import cmd_neutron as Neutron
+from itempest.lib import cmd_neutron_u1 as N_UserCmd
 from itempest.lib import cmd_nova as Nova
 from itempest.lib import utils as U
 
@@ -36,7 +37,8 @@ class SimpleTenantNetworks(object):
         self.load_tenant_topo(json_file)
         verbose = kwargs.pop('verbose', True)
         self.get_cfg_options(kwargs)
-        self.qsvc = U.command_wrapper(self._client_mgr, Neutron,
+        self.qsvc = U.command_wrapper(self._client_mgr,
+                                      [Neutron, N_UserCmd],
                                       log_cmd="OS-Neutron",
                                       verbose=verbose)
         self.nova = U.command_wrapper(self._client_mgr, Nova,

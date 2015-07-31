@@ -87,14 +87,3 @@ def member_delete(mgr_or_client):
 def member_list(mgr_or_client):
     """Describe sharing permissions by image or tenant."""
     pass
-
-
-# handy commands
-def c_vmdk_image(mgr_or_client,
-                 name='ttylinux-i386',
-                 location=None,
-                 http_loc='http://10.34.57.161/images/%s.vdmk'):
-    kwargs = {'is_public': True}
-    kwargs['localtion'] = location or (http_loc % name)
-    return image_create(mgr_or_client, name, 'bare', 'vmdk',
-                        **kwargs)

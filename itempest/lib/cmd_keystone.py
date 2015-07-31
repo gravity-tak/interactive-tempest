@@ -246,8 +246,21 @@ def project_get(mgr_or_client, project_id, *args, **kwargs):
 
 # extra
 def delete_tenant_users(mgr_or_client, tenant_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    u_list = identity_client.list_users_for_tenant(tenant_id)
+    tenant = tenant_get(mgr_or_client, tenant_id)
+    u_list = user_list_of_tenant(mgr_or_client, tenant['id'])
     for u in u_list:
-        identity_client.delete_user(u['id'])
-    return identity_client.delete_tenant(tenant_id)
+        user_delete(mgr_or_client, u['id'])
+    return tenant_delete(mgr_or_client, tenant['id'])
+
+
+def delete_tenant_by_name(mgr_or_client, tenant_name, *args, **kwargs):
+    tenant = tenant_get_by_name(mgr_or_client, tenant_name)
+    u_list = user_list_of_tenant(mgr_or_client, tenant['id'])
+    for u in u_list:
+        user_delete(mgr_or_client, u['id'])
+    tenant_delete(mgr_or_client, tenant['id'])
+    try:
+        tenant_get_by_name(mgr_or_client, tenant_name)
+        return False
+    except Exception:
+        return True
