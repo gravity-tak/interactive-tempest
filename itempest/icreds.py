@@ -197,13 +197,18 @@ def create_test_projects(name, password='itemepst8@OS', **kwargs):
     return (creds_a, creds_p, creds_t)
 
 
-def create_primary_project(name,
-                           cred_type='primary', password='itempest8@OS',
+def create_primary_project(name, password='itempest8@OS',
                            num_of_users=1,
                            **kwargs):
     creds = ItempestCreds(name, password=password,
-                          num_of_users=num_of_users)
+                          num_of_users=num_of_users, **kwargs)
     p = creds.get_primary_creds(name)
+    return p
+
+
+def create_admin_project(name, password='itempest8@OS', **kwargs):
+    creds = ItempestCreds(name, password=password, **kwargs)
+    p = creds.get_admin_creds(name)
     return p
 
 
