@@ -26,3 +26,9 @@ def get_orphan_networks(qsvc, keys):
         if net['tenant_id'] not in tenant_list:
             orphan_list.append(net)
     return orphan_list
+
+
+def del_orphan_networks(qsvc, keys):
+    orphan_net_list = get_orphan_networks(qsvc, keys)
+    for net in orphan_net_list:
+        qsvc('destroy-myself', tenant_id=net['tenant_id'])

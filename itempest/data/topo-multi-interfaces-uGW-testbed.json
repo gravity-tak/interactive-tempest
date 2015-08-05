@@ -31,6 +31,20 @@
             ]
         },
         {
+            "name": "house-network",
+            "subnets": [
+                {
+                    "name": "house-subnet",
+                    "cidr": "192.168.12.0/24",
+                    "dns_nameservers": ["8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "192.168.12.2", "end": "192.168.12.90"}
+                    ]
+                }
+            ]
+        },
+        {
             "name": "top-network",
             "subnets": [
                 {
@@ -54,6 +68,17 @@
                     "enable_dhcp": true
                 }
             ]
+        },
+        {
+            "name": "who-network",
+            "subnets": [
+                {
+                    "name": "who-subnet",
+                    "cidr": "192.168.34.0/24",
+                    "dns_nameservers": ["8.8.8.8"],
+                    "enable_dhcp": true
+                }
+            ]
         }
     ],
     "router-options": {
@@ -64,7 +89,8 @@
             "gateway": "public",
             "interfaces": [
                 "hill-network",
-                "service-network"
+                "service-network",
+                "house-network"
             ] 
         },
         {
@@ -72,22 +98,18 @@
             "gateway": "public",
             "interfaces": [
                 "top-network",
-                "guest-network"
+                "guest-network",
+                "who-network"
             ]
         }
     ],
     "server-options": {
         "image": "cirros-0.3.3-x86_64-disk",
-        "flavor": "m1.small",
+        "flavor": "m1.tiny",
         "user_data": "./metadata/itempest-userdata"
     },
     "server-options-ubuntu": {
         "image": "ubuntu-14.04-x86_64",
-        "flavor": "m1.small",
-        "user_data": "./metadata/itempest-userdata"
-    },
-    "server-options-fedora": {
-        "image": "Fedora-Cloud-qcow2",
         "flavor": "m1.small",
         "user_data": "./metadata/itempest-userdata"
     },
@@ -103,6 +125,10 @@
             "interface": "hill-network"
         },
         {
+            "name": "house-bee",
+            "interface": "house-network"
+        },
+        {
             "name": "top-bee",
             "interface": "top-network"
         },
@@ -113,15 +139,43 @@
         {
             "name": "guest-bee",
             "interface": "guest-network"
+        },
+        {
+            "name": "who-bee",
+            "interface": "who-network"
         }
     ],
     "security-groups": [
         {
             "name": "loginable",
             "rules": ["ingress-ssh", "ingress-icmp"]
+        },
+        {
+            "name": "transfer",
+            "rules": ["ingress-ftp-data", "ingress-ftp-control"]
+        },
+        {
+            "name": "w-w-w",
+            "rules": ["ingress-http", "ingress-https"]
         }
     ],
     "security-group-rules": [
+        {
+            "name": "ingress-ftp-data",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "tcp",
+            "port_range_min": 20,
+            "port_range_max": 20
+        },
+        {
+            "name": "ingress-ftp-control",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "tcp",
+            "port_range_min": 21,
+            "port_range_max": 21
+        },
         {
             "name": "ingress-ssh",
             "direction": "ingress",
@@ -129,6 +183,22 @@
             "protocol": "tcp",
             "port_range_min": 22,
             "port_range_max": 22
+        },
+        {
+            "name": "ingress-http",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "tcp",
+            "port_range_min": 80,
+            "port_range_max": 80
+        },
+        {
+            "name": "ingress-https",
+            "direction": "ingress",
+            "ethertype": "IPv4",
+            "protocol": "tcp",
+            "port_range_min": 443,
+            "port_range_max": 443
         },
         {
             "name": "ingress-icmp",

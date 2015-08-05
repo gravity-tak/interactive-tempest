@@ -132,6 +132,8 @@ def d_myself(mgr_or_client, **kwargs):
     # rm networks/subnets
     for network in N.network_list(mgr_or_client, tenant_id=tenant_id):
         if N.mdata.is_in_spattern(network['name'], spattern):
+            #TODO(akang): if ports assoc to net, delete them first
+            # look for network's subnet which is in port
             N.network_delete(mgr_or_client, network['id'])
 
     for sg in N.security_group_list(mgr_or_client, tenant_id=tenant_id):
