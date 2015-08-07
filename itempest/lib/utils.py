@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
 import os
 import re
 import subprocess
@@ -32,7 +33,8 @@ LOG = oslog.getLogger(__name__)
 
 
 def log_cmd(log_header, cmd, s_arg, s_kwargs, flags):
-    the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
+    # the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
+    the_time = datetime.now().strftime("%Y-%m-%d,%H:%M:%S.%f")[:-3]
     if flags & 0x01:
         print(CMD_LOG_MSG % (log_header, the_time, cmd, s_arg, s_kwargs))
     if flags & 0x02:
@@ -40,7 +42,7 @@ def log_cmd(log_header, cmd, s_arg, s_kwargs, flags):
 
 
 def log_msg(mesg, log_header="OS-Message", flags=LOG_DEFAULT_FLAGS):
-    the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
+    the_time = datetime.now().strftime("%Y-%m-%d,%H:%M:%S.%f")[:-3]
     if flags & 0x01:
         print(LOG_MESG % (log_header, the_time, mesg))
     if flags & 0x02:
