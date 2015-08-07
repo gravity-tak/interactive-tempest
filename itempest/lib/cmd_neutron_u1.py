@@ -18,9 +18,9 @@ from itempest.lib import cmd_neutron as N
 
 
 # user defined commands
-def c_external_network(mgr_or_client,
-                       name=None,
-                       shared=True, **kwargs):
+def create_external_network(mgr_or_client,
+                            name=None,
+                            shared=True, **kwargs):
     kwargs['shared'] = shared
     kwargs['router:external'] = True
     return N.net_create(mgr_or_client,
@@ -28,9 +28,9 @@ def c_external_network(mgr_or_client,
                         **kwargs)
 
 
-def c_vlan_network(mgr_or_client,
-                   vlan_id=888, name=None,
-                   shared=True, **kwargs):
+def create_vlan_network(mgr_or_client,
+                        vlan_id=888, name=None,
+                        shared=True, **kwargs):
     kwargs.update({
         'shared': shared,
         'provider:network_type': 'vlan',
@@ -41,9 +41,9 @@ def c_vlan_network(mgr_or_client,
                         **kwargs)
 
 
-def c_flat_network(mgr_or_client,
-                   name=None,
-                   shared=True, **kwargs):
+def create_flat_network(mgr_or_client,
+                        name=None,
+                        shared=True, **kwargs):
     kwargs.update({
         'shared': shared,
         'provider:network_type': 'flat'})
@@ -53,32 +53,34 @@ def c_flat_network(mgr_or_client,
                         **kwargs)
 
 
-def c_security_group_loginable(mgr_or_client, name, **kwargs):
-    sg = security_group_create(mgr_or_client, name)
-    c_security_group_ssh_rule(mgr_or_client, sg['id'])
-    c_security_group_icmp_rule(mgr_or_client, sg['id'])
-    return security_group_show(mgr_or_client, sg['id'])
+def create_security_group_loginable(mgr_or_client, name, **kwargs):
+    sg = N.security_group_create(mgr_or_client, name)
+    N.c_security_group_ssh_rule(mgr_or_client, sg['id'])
+    N.c_security_group_icmp_rule(mgr_or_client, sg['id'])
+    return N.security_group_show(mgr_or_client, sg['id'])
 
 
-def c_security_group_ssh_rule(mgr_or_client, security_group_id):
-    ssh_rule = dict(direction='ingress', ethertype='IPv4', protocol='tcp',
+def create_security_group_ssh_rule(mgr_or_client, security_group_id):
+    ssh_rule = dict(direction='ingress',
+                    ethertype='IPv4', protocol='tcp',
                     port_range_min=22, port_range_max=22)
     return N.security_group_rule_create(mgr_or_client,
                                         security_group_id, **ssh_rule)
 
 
-def c_security_group_icmp_rule(mgr_or_client, security_group_id):
-    icmp_rule = dict(direction='ingress', ethertype='IPv4', protocol='icmp')
+def create_security_group_icmp_rule(mgr_or_client, security_group_id):
+    icmp_rule = dict(direction='ingress',
+                     ethertype='IPv4', protocol='icmp')
     return N.security_group_rule_create(mgr_or_client,
                                         security_group_id, **icmp_rule)
 
 
-def c_floatingip_for_server(mgr_or_client, public_network_id,
-                            server_id, port_id=None, **kwargs):
+def create_floatingip_for_server(mgr_or_client, public_network_id,
+                                 server_id, port_id=None, **kwargs):
     if port_id:
         ip4 = None
     else:
-        port_id, ip4 = g_port_id_ipv4_of_server(mgr_or_client, server_id)
+        port_id, ip4 = get_port_id_ipv4_of_server(mgr_or_client, server_id)
     result = N.floatingip_create(mgr_or_client, public_network_id,
                                  port_id=port_id,
                                  fixed_ip_address=ip4,
@@ -87,7 +89,7 @@ def c_floatingip_for_server(mgr_or_client, public_network_id,
 
 
 # delete router after clearing gateway and deleting sub-interfaces
-def d_router(mgr_or_client, router_id, **kwargs):
+def delete_router(mgr_or_client, router_id, **kwargs):
     routers = N.router_list(mgr_or_client, id=router_id)
     if len(routers) != 1:
         return None
@@ -156,8 +158,8 @@ def d_myself(mgr_or_client, **kwargs):
             N.security_group_delete(mgr_or_client, sg['id'])
 
 
-def g_port_id_ipv4_of_server(mgr_or_client, server_id,
-                             ip_addr=None, **kwargs):
+def get_port_id_ipv4_of_server(mgr_or_client, server_id,
+                               ip_addr=None, **kwargs):
     ports = N.port_list(mgr_or_client,
                         device_id=server_id, fixed_ip=ip_addr)
     # TODO(akang): assume only ONE from ports match server_id
@@ -169,32 +171,33 @@ def g_port_id_ipv4_of_server(mgr_or_client, server_id,
             return (port0['id'], ip)
 
 
-def g_ports_of_server(mgr_or_client, server_id, **kwargs):
+def get_ports_of_server(mgr_or_client, server_id, **kwargs):
     ports = N.port_list(mgr_or_client, device_id=server_id)
     return ports
 
 
 # nova has method to add security-group to server
 # nova('server-add-security-group', server_id, name_of_security_group)
-def u_server_security_group(mgr_or_client, server_id, security_group_ids,
-                            port_ids=None, fixed_ip=None, action=None):
+def update_server_security_group(mgr_or_client, server_id,
+                                 security_group_ids,
+                                 port_ids=None, fixed_ip=None, action=None):
     if port_ids:
         if type(port_ids) in (unicode, str):
             port_ids = [port_ids]
     else:
-        port_ids = [p['id'] for p in g_ports_of_server(
+        port_ids = [p['id'] for p in get_ports_of_server(
             mgr_or_client, server_id, fixed_ip=fixed_ip)]
     if not type(security_group_ids) in [list, tuple]:
         security_group_ids = [security_group_ids]
     ports = []
     for port_id in port_ids:
-        ports.append(u_port_security_group(mgr_or_client, port_id,
-                                           security_group_ids, action))
+        ports.append(update_port_security_group(mgr_or_client, port_id,
+                                                security_group_ids, action))
     return ports
 
 
-def u_port_security_group(mgr_or_client, port_id, security_group_ids,
-                          action=None):
+def update_port_security_group(mgr_or_client, port_id, security_group_ids,
+                               action=None):
     sg_key = 'security_groups'
     if type(security_group_ids) in (unicode, str):
         security_group_ids = [security_group_ids]

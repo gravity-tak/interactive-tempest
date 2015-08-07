@@ -99,7 +99,7 @@ class SimpleTenantNetworks(object):
         # delete servers
         # self.nova('destroy-my-servers', **kwargs)
         for server in self.nova('server-list'):
-            d_server(self.nova, server['id'], self.qsvc)
+            delete_server(self.nova, server['id'], self.qsvc)
         time.sleep(3.0)
         # detroy tenant networks+routers
         self.qsvc('destroy-myself',
@@ -115,7 +115,7 @@ class SimpleTenantNetworks(object):
         self.networks = {}
         self.subnets = {}
         networks_cfg = networks_cfg or self.g_networks_cfg()
-        self.networks, self.subnets = c_networks(
+        self.networks, self.subnets = create_networks(
             self.qsvc, networks_cfg, self.prefix_name, self.suffix_name)
 
     def b_routers(self, routers=None):
@@ -124,23 +124,23 @@ class SimpleTenantNetworks(object):
         for router in routers_cfg:
             if self.router_cfg_options:
                 router.update(self.router_cfg_options)
-            rtr = c_router(self.qsvc, router,
-                           prefix_name=self.prefix_name,
-                           suffix_name=self.suffix_name)
+            rtr = create_router(self.qsvc, router,
+                                prefix_name=self.prefix_name,
+                                suffix_name=self.suffix_name)
             self.routers[rtr['name']] = rtr
 
     def b_servers(self, servers_cfg=None):
         if self.no_servers:
             return None
         servers_cfg = servers_cfg or self.g_servers_cfg()
-        self.servers = c_servers(self.nova, self.qsvc, servers_cfg,
-                                 prefix_name=self.prefix_name,
-                                 suffix_name=self.suffix_name)
+        self.servers = create_servers(self.nova, self.qsvc, servers_cfg,
+                                      prefix_name=self.prefix_name,
+                                      suffix_name=self.suffix_name)
 
     def b_security_groups(self, sg_cfg=None):
         security_groups_cfg = sg_cfg or self.g_security_groups()
-        self.security_groups = c_security_groups(self.qsvc,
-                                                 security_groups_cfg)
+        self.security_groups = create_security_groups(
+            self.qsvc, security_groups_cfg)
 
     # get resources' build config
     def g_networks_cfg(self):
@@ -178,8 +178,8 @@ class SimpleTenantNetworks(object):
 
     def g_security_groups(self):
         security_groups = self._g_config(
-            ('security-groups', 'security_groups', 'security-group',
-             'security_group'))
+            ('security-groups', 'security_groups',
+             'security-group', 'security_group'))
         sg_rules = self._g_config(
             ('security-group-rules', 'security_group_rules'))
         sg_rules_cfg = {}
@@ -199,7 +199,7 @@ class SimpleTenantNetworks(object):
     # delete resources
     def d_servers(self):
         for nid, server in self.servers.items():
-            d_server(self.nova, server['id'], self.qsvc)
+            delete_server(self.nova, server['id'], self.qsvc)
 
     def d_routers(self):
         for nid, router in self.routers.items():
@@ -215,7 +215,7 @@ class SimpleTenantNetworks(object):
 
     def a_floatingip_to_server(self, server_id, security_group_id=None,
                                action='add', check_accessible=False):
-        floatingip = c_floatingip_to_server(
+        floatingip = create_floatingip_to_server(
             self.qsvc, server_id,
             security_group_id=security_group_id,
             action=action)
@@ -223,10 +223,13 @@ class SimpleTenantNetworks(object):
             ip_addr = floatingip['floating_ip_address']
             is_reachable = utils.ipaddr_is_reachable(
                 ip_addr, 30, 2)
+        else:
+            is_reachable = None
+        return (floatingip, is_reachable)
 
     def d_floatingip_from_server(self, server_id):
         server = self.nova('server-show', server_id)
-        return d_server_floatingip(self.qsvc, server)
+        return delete_server_floatingip(self.qsvc, server)
 
     def a_security_group_to_server(self, server_id, security_group_name,
                                    on_interface=None):
@@ -245,7 +248,7 @@ def adjust_name(name, prefix_name=None, suffix_name=None):
     return name
 
 
-def c_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
+def create_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
     networks = {}
     subnets = {}
     for network in networks_cfg:
@@ -258,14 +261,15 @@ def c_networks(qsvc, networks_cfg, prefix_name=None, suffix_name=None):
         else:
             net = nets[0]
         networks[name] = qsvc('net-show', net['id'])
-        subnets.update(c_subnets(qsvc, networks[name]['id'], subnets_cfg,
-                                 prefix_name=prefix_name,
-                                 suffix_name=suffix_name))
+        subnets.update(
+            create_subnets(qsvc, networks[name]['id'], subnets_cfg,
+                           prefix_name=prefix_name,
+                           suffix_name=suffix_name))
     return (networks, subnets)
 
 
-def c_subnets(qsvc, network_id, subnets_cfg,
-              prefix_name=None, suffix_name=None):
+def create_subnets(qsvc, network_id, subnets_cfg,
+                   prefix_name=None, suffix_name=None):
     subnets = {}
     for subnet in subnets_cfg:
         name = adjust_name(subnet['name'],
@@ -281,7 +285,7 @@ def c_subnets(qsvc, network_id, subnets_cfg,
     return subnets
 
 
-def c_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
+def create_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
     name = adjust_name(router_cfg.pop('name'), prefix_name, suffix_name)
     rtrs = qsvc('router-list', name=name)
     if len(rtrs) > 0:
@@ -293,14 +297,14 @@ def c_router(qsvc, router_cfg, prefix_name=None, suffix_name=None):
         if 'enable_snat' in router_cfg:
             gw_kwargs['enable_snat'] = router_cfg.pop('enable_snat')
         rtr = qsvc('router-create', name, **router_cfg)
-        rtr_set_gateway(qsvc, rtr['id'], gateway_if=gw_if, **gw_kwargs)
-        rtr = rtr_add_interfaces_by_name(qsvc, rtr['id'], if_names,
-                                         prefix_name=prefix_name,
-                                         suffix_name=suffix_name)
+        set_router_gateway(qsvc, rtr['id'], gateway_if=gw_if, **gw_kwargs)
+        rtr = add_router_interfaces_by_name(qsvc, rtr['id'], if_names,
+                                            prefix_name=prefix_name,
+                                            suffix_name=suffix_name)
         return rtr
 
 
-def rtr_set_gateway(qsvc, rtr_id, gateway_if=None):
+def set_router_gateway(qsvc, rtr_id, gateway_if=None):
     if gateway_if:
         xnet = qsvc('net-external-list', name=gateway_if)[0]
     else:
@@ -309,14 +313,14 @@ def rtr_set_gateway(qsvc, rtr_id, gateway_if=None):
     return qsvc('router-show', rtr_id)
 
 
-def rtr_set_gateway_snat(qsvc, rtr_id, gateway_if, enable_snat):
+def set_router_gateway_snat(qsvc, rtr_id, gateway_if, enable_snat):
     qsvc('router-gateway-set', rtr_id, gateway_if,
          enable_snat=enable_snat)
     return qsvc('router-show', rtr_id)
 
 
-def rtr_add_interfaces_by_name(qsvc, rtr_id, if_names,
-                               prefix_name=None, suffix_name=None):
+def add_router_interfaces_by_name(qsvc, rtr_id, if_names,
+                                  prefix_name=None, suffix_name=None):
     for if_name in if_names:
         if_name = adjust_name(if_name, prefix_name, suffix_name)
         networks = qsvc('net-list', name=if_name)
@@ -325,7 +329,7 @@ def rtr_add_interfaces_by_name(qsvc, rtr_id, if_names,
     return qsvc('router-show', rtr_id)
 
 
-def rtr_add_interfaces(qsvc, rtr_id, networks):
+def add_router_interfaces(qsvc, rtr_id, networks):
     for net_name in networks.keys():
         network = qsvc('network-list', name=net_name)
         subnet_id = network[0]['subnets'][0]
@@ -333,7 +337,7 @@ def rtr_add_interfaces(qsvc, rtr_id, networks):
     return qsvc('router-show', rtr_id)
 
 
-def c_security_groups(qsvc, security_groups_cfg):
+def create_security_groups(qsvc, security_groups_cfg):
     security_groups = {}
     for sg_name, sg_rules_cfg in security_groups_cfg.items():
         sgs = qsvc('security-group-list', name=sg_name)
@@ -348,9 +352,9 @@ def c_security_groups(qsvc, security_groups_cfg):
     return security_groups
 
 
-def c_servers(nova, qsvc, servers_cfg,
-              prefix_name=None, suffix_name=None,
-              security_groups=None, wait_on_boot=False):
+def create_servers(nova, qsvc, servers_cfg,
+                   prefix_name=None, suffix_name=None,
+                   security_groups=None, wait_on_boot=False):
     from_images = nova('image-list')
     from_flavors = nova('flavor-list')
     servers = {}
@@ -380,17 +384,17 @@ def boot_server(nova, qsvc, server_cfg,
     from_images = from_images or nova('image-list')
     from_flavors = from_flavors or nova('flavor-list')
     sv_interfaces = pop_config(['interface', 'interfaces'], server_cfg)
-    networks = f_server_interfaces(qsvc, sv_interfaces,
-                                   prefix_name, suffix_name)
+    networks = find_server_interfaces(qsvc, sv_interfaces,
+                                      prefix_name, suffix_name)
     image_id = get_image_id(server_cfg.pop('image'), from_images)
     flavor_id = get_flavor_id(server_cfg.pop('flavor'), from_flavors)
-    return nova('c-server-on-interface', networks, image_id,
+    return nova('create-server-on-interface', networks, image_id,
                 name=sv_name, flavor=flavor_id,
                 security_groups=security_groups,
                 wait_on_boot=wait_on_boot, **server_cfg)
 
 
-def f_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
+def find_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
     if type(interface_names) in (str, unicode):
         interface_names = [interface_names]
     networks = []
@@ -401,33 +405,33 @@ def f_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
     return networks
 
 
-def c_floatingip_to_server(qsvc, server_id,
-                           public_id=None, security_group_id=None,
-                           **kwargs):
+def create_floatingip_to_server(qsvc, server_id,
+                                public_id=None, security_group_id=None,
+                                **kwargs):
     public_network_id = public_id or qsvc('net-external-list')[0]
     action = kwargs.pop('action', 'add')
-    floatingip = qsvc('c-floatingip-for-server',
+    floatingip = qsvc('create-floatingip-for-server',
                       public_network_id['id'], server_id)
     if security_group_id:
-        qsvc('u-port-security-group', floatingip['port_id'],
+        qsvc('update-port-security-group', floatingip['port_id'],
              security_group_id, action=action)
     return floatingip
 
 
-def c_floatingip_on_interface(qsvc, server_id, net_id, public_id=None):
+def create_floatingip_on_interface(qsvc, server_id, net_id, public_id=None):
     pass
 
 
-def d_server(nova, server_id, qsvc=None):
+def delete_server(nova, server_id, qsvc=None):
     try:
         sv = nova('server-show', server_id)
-        d_server_floatingip(qsvc, sv) if qsvc else None
+        delete_server_floatingip(qsvc, sv) if qsvc else None
         return nova('server-delete', server_id)
     except Exception:
         pass
 
 
-def d_server_floatingip(qsvc, server):
+def delete_server_floatingip(qsvc, server):
     for if_name, if_addresses in server['addresses'].items():
         for addr in if_addresses:
             if ('OS-EXT-IPS:type' in addr and

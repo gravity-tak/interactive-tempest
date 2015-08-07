@@ -218,7 +218,7 @@ def boot(mgr_or_client, name, *args, **kwargs):
 
 # nova boot
 def server_create(mgr_or_client, name, *args, **kwargs):
-    """Please see c_server_on_interface() and c_server()"""
+    """Please see create_server_on_interface() and c_server()"""
     server_client = _g_servers_client(mgr_or_client)
     image_id = kwargs.pop('image_id')
     flavor_id = kwargs.pop('flavor_id', kwargs.pop('flavor', 2))
@@ -330,7 +330,7 @@ def server_get_password(mgr_or_client, server_id):
 
 # create our commands
 # user_data will be handled by server_created()
-def c_server_on_interface(mgr_or_client, networks, image_id,
+def create_server_on_interface(mgr_or_client, networks, image_id,
                           flavor=2, name=None, security_groups=None,
                           wait_on_boot=True, **kwargs):
     """Example:
@@ -353,7 +353,7 @@ def c_server_on_interface(mgr_or_client, networks, image_id,
         'security_groups': security_groups,
         }
     create_kwargs.update(kwargs)
-    msg_p = "itempest c-server-on-interface name=%s, image=%s"
+    msg_p = "itempest creae-server-on-interface name=%s, image=%s"
     msg_p += ", flavor=%s, create_kwargs=%s"
     LOG.info(msg_p, name, image_id, flavor, str(create_kwargs))
     return server_create(mgr_or_client, name, image_id=image_id,
@@ -363,10 +363,6 @@ def c_server_on_interface(mgr_or_client, networks, image_id,
 
 # nova('destroy-my-servers', name_startswith='page2-')
 def destroy_my_servers(mgr_or_client, **kwargs):
-    return d_my_servers(mgr_or_client, **kwargs)
-
-
-def d_my_servers(mgr_or_client, **kwargs):
     spattern = mdata.get_name_search_pattern(**kwargs)
     for s in server_list(mgr_or_client):
         # if spattern not provided, default is True
@@ -377,10 +373,6 @@ def d_my_servers(mgr_or_client, **kwargs):
 # admin priv required for ALL. or tenant's all servers
 # nova('destroy-all-servers', name_startswith='page-')
 def destroy_all_servers(mgr_or_client, **kwargs):
-    return d_all_servers(mgr_or_client, **kwargs)
-
-
-def d_all_servers(mgr_or_client, **kwargs):
     spattern = mdata.get_name_search_pattern(**kwargs)
     for s in list_all_servers(mgr_or_client):
         if mdata.is_in_spattern(s['name'], spattern):
@@ -388,14 +380,12 @@ def d_all_servers(mgr_or_client, **kwargs):
 
 
 def status_server(mgr_or_client, *args, **kwargs):
-    return s_server(mgr_or_client, *args, **kwargs)
-
-
-def s_server(mgr_or_client, *args, **kwargs):
     status = {}
     for s in server_list_with_detail(mgr_or_client, **kwargs):
         s_name = s['status']
-        s_info = [s['id'], s['name'], _g_kval(s, 'security_groups')]
+        img = image_show(mgr_or_client, s['image']['id'])
+        s_info = [s['id'], s['name'], img['name'],
+                  _g_kval(s, 'security_groups')]
         if s_name in status:
             status[s_name].append(s_info)
         else:

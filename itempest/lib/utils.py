@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import re
 import subprocess
 import time
@@ -24,6 +25,8 @@ NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'meta', 'migrate', 'rescue',
                     'list-secgroup', 'live-migrate']
 CMD_LOG_MSG = "%s:%s %s args=%s kwargs=%s"
+LOG_MESG = "%s:%s %s"
+LOG_DEFAULT_FLAGS = int(os.environ.get('ITEMPESTRUN_LOG_FLAGS', 0x01))
 
 LOG = oslog.getLogger(__name__)
 
@@ -34,6 +37,14 @@ def log_cmd(log_header, cmd, s_arg, s_kwargs, flags):
         print(CMD_LOG_MSG % (log_header, the_time, cmd, s_arg, s_kwargs))
     if flags & 0x02:
         LOG.info(CMD_LOG_MSG, log_header, the_time, cmd, s_arg, s_kwargs)
+
+
+def log_msg(mesg, log_header="OS-Message", flags=LOG_DEFAULT_FLAGS):
+    the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
+    if flags & 0x01:
+        print(LOG_MESG % (log_header, the_time, mesg))
+    if flags & 0x02:
+        LOG.info(LOG_MESG, log_header, the_time, mesg)
 
 
 # For cmdline itself (not args and kwargs),
@@ -207,16 +218,20 @@ def run_till_timeout(seconds_to_try, interval=5.0):
         now = time.time()
 
 
-def ipaddr_is_reachable(ip_addr, duration=15, sleep_for=2):
+def ipaddr_is_reachable(ip_addr, duration=30, sleep_for=1,
+                        show_progress=True):
     for t in run_till_timeout(duration, sleep_for):
-        if ping_ipaddr(ip_addr):
+        if ping_ipaddr(ip_addr, show_progress=show_progress):
             return True
     return False
 
 
-def ping_ipaddr(ip_addr):
-    cmd = ["ping", "-c3", ip_addr]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+def ping_ipaddr(ip_addr, show_progress=True):
+    cmd_line = ["ping", "-c3", ip_addr]
+    if show_progress:
+        log_msg('exec subprocess: %s' % cmd_line)
+    proc = subprocess.Popen(cmd_line,
+                            stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     proc.communicate()
     # if ip_addr is pinable, the return code is 0

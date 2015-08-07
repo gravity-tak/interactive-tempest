@@ -1,6 +1,36 @@
+
 {
-    "name": "multi-interfaces",
+    "name": "router-types",
     "networks": [
+        {
+            "name": "dist-network",
+            "subnets": [
+                {
+                    "name": "dist-subnet",
+                    "cidr": "10.168.99.0/24",
+                    "gateway_ip": "10.168.99.1",
+                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "10.168.99.2", "end": "10.168.99.99"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "dist-help-network",
+            "subnets": [
+                {
+                    "name": "dist-help-subnet",
+                    "cidr": "192.168.99.0/24",
+                    "dns_nameservers": ["8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "192.168.99.2", "end": "192.168.99.90"}
+                    ]
+                }
+            ]
+        },
         {
             "name": "hill-network",
             "subnets": [
@@ -17,29 +47,15 @@
             ]
         },
         {
-            "name": "service-network",
+            "name": "hill-service-network",
             "subnets": [
                 {
-                    "name": "service-subnet",
+                    "name": "hill-service-subnet",
                     "cidr": "192.168.11.0/24",
                     "dns_nameservers": ["8.8.4.4"],
                     "enable_dhcp": true,
                     "allocation_pools": [
                         {"start": "192.168.11.2", "end": "192.168.11.90"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "house-network",
-            "subnets": [
-                {
-                    "name": "house-subnet",
-                    "cidr": "192.168.12.0/24",
-                    "dns_nameservers": ["8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "192.168.12.2", "end": "192.168.12.90"}
                     ]
                 }
             ]
@@ -59,22 +75,11 @@
             ]
         },
         {
-            "name": "guest-network",
+            "name": "top-guest-network",
             "subnets": [
                 {
-                    "name": "guest-subnet",
+                    "name": "top-guest-subnet",
                     "cidr": "192.168.33.0/24",
-                    "dns_nameservers": ["8.8.8.8"],
-                    "enable_dhcp": true
-                }
-            ]
-        },
-        {
-            "name": "who-network",
-            "subnets": [
-                {
-                    "name": "who-subnet",
-                    "cidr": "192.168.34.0/24",
                     "dns_nameservers": ["8.8.8.8"],
                     "enable_dhcp": true
                 }
@@ -85,21 +90,31 @@
     },
     "routers": [
         {
+            "name": "dist-router",
+            "gateway": "public",
+            "distributed": true,
+            "router_type": "exclusive",
+            "interfaces": [
+                "dist-network",
+                "dist-help-network"
+            ]
+        },
+        {
             "name": "hill-router",
             "gateway": "public",
+            "router_type": "exclusive",
             "interfaces": [
                 "hill-network",
-                "service-network",
-                "house-network"
+                "hill-service-network"
             ] 
         },
         {
             "name": "top-router",
             "gateway": "public",
+            "router_type": "shared",
             "interfaces": [
                 "top-network",
-                "guest-network",
-                "who-network"
+                "top-guest-network"
             ]
         }
     ],
@@ -108,7 +123,7 @@
         "flavor": "m1.tiny",
         "user_data": "./metadata/itempest-userdata"
     },
-    "server-options-ubuntu": {
+    "server-ubuntu-options": {
         "image": "ubuntu-14.04-x86_64",
         "flavor": "m1.small",
         "user_data": "./metadata/itempest-userdata"
@@ -116,6 +131,8 @@
     "servers": [
         {
             "name": "hill-top",
+            "image": "ubuntu-14.04-x86_64",
+            "flavor": "m1.small",
             "interface": ["hill-network", "top-network"]
         },
         {
@@ -123,49 +140,25 @@
             "interface": "hill-network"
         },
         {
-            "name": "house-bee",
-            "interface": "house-network"
-        },
-        {
             "name": "top-bee",
             "interface": "top-network"
         },
         {
-            "name": "service-bee",
-            "interface": "service-network"
+            "name": "hill-service-bee",
+            "interface": "hill-service-network"
         },
         {
-            "name": "guest-bee",
-            "interface": "guest-network"
-        },
-        {
-            "name": "who-bee",
-            "interface": "who-network"
+            "name": "top-guest-bee",
+            "interface": "top-guest-network"
         }
     ],
     "security-groups": [
         {
             "name": "loginable",
             "rules": ["ingress-ssh", "ingress-icmp"]
-        },
-        {
-            "name": "transfer",
-            "rules": ["ingress-ftp"]
-        },
-        {
-            "name": "w-w-w",
-            "rules": ["ingress-http", "ingress-https"]
         }
     ],
     "security-group-rules": [
-        {
-            "name": "ingress-ftp",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "tcp",
-            "port_range_min": 20,
-            "port_range_max": 21
-        },
         {
             "name": "ingress-ssh",
             "direction": "ingress",
@@ -173,22 +166,6 @@
             "protocol": "tcp",
             "port_range_min": 22,
             "port_range_max": 22
-        },
-        {
-            "name": "ingress-http",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "tcp",
-            "port_range_min": 80,
-            "port_range_max": 80
-        },
-        {
-            "name": "ingress-https",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "tcp",
-            "port_range_min": 443,
-            "port_range_max": 443
         },
         {
             "name": "ingress-icmp",
