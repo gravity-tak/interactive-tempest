@@ -32,12 +32,12 @@ def delete_tenants(tenant_pool):
 def get_user(user_name, user_password):
     user_mgr = icreds.get_client_manager(os_auth_url, user_name, user_password)
     qsvc = utils.command_wrapper(user_mgr, [cmd_neutron, cmd_neutron_u1],
-                                 log_cmd="OS-Neutron")
+                                 log_header="OS-Neutron")
     # nova list/show/.. will be prefixed with server_
     nova = utils.command_wrapper(user_mgr, cmd_nova, True,
-                              log_cmd="OS-Nova")
+                              log_header="OS-Nova")
     keys = utils.command_wrapper(user_mgr, cmd_keystone,
-                              log_cmd="OS-Keystone")
+                              log_header="OS-Keystone")
     return (user_mgr, qsvc, nova, keys)
 
 # sun-has-8-planets, earth-is-the-3rd and has-1-moon

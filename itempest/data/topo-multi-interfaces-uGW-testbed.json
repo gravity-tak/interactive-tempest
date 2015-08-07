@@ -152,7 +152,7 @@
         },
         {
             "name": "transfer",
-            "rules": ["ingress-ftp-data", "ingress-ftp-control"]
+            "rules": ["ingress-ftp"]
         },
         {
             "name": "w-w-w",
@@ -161,19 +161,11 @@
     ],
     "security-group-rules": [
         {
-            "name": "ingress-ftp-data",
+            "name": "ingress-ftp",
             "direction": "ingress",
             "ethertype": "IPv4",
             "protocol": "tcp",
             "port_range_min": 20,
-            "port_range_max": 20
-        },
-        {
-            "name": "ingress-ftp-control",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "tcp",
-            "port_range_min": 21,
             "port_range_max": 21
         },
         {

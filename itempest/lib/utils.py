@@ -14,10 +14,10 @@
 #    under the License.
 
 import re
+import subprocess
 import time
 
 from oslo_log import log as oslog
-
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -26,6 +26,14 @@ NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
 CMD_LOG_MSG = "%s:%s %s args=%s kwargs=%s"
 
 LOG = oslog.getLogger(__name__)
+
+
+def log_cmd(log_header, cmd, s_arg, s_kwargs, flags):
+    the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
+    if flags & 0x01:
+        print(CMD_LOG_MSG % (log_header, the_time, cmd, s_arg, s_kwargs))
+    if flags & 0x02:
+        LOG.info(CMD_LOG_MSG, log_header, the_time, cmd, s_arg, s_kwargs)
 
 
 # For cmdline itself (not args and kwargs),
@@ -72,7 +80,7 @@ def norm_it(val):
 
 def command_wrapper(client_manager, cmd_module,
                     nova_flavor=False,
-                    log_cmd=None, verbose=True):
+                    log_header=None, verbose=True):
     """Usage Examples:
 
         from itempest import itempest_creds as icreds
@@ -93,7 +101,11 @@ def command_wrapper(client_manager, cmd_module,
     cmd_module_list = (cmd_module if type(cmd_module) in (list, tuple)
                        else [cmd_module])
     module_name_list = [x.__name__ for x in cmd_module_list]
-    log_cmd = log_cmd if type(log_cmd) in (str, unicode) else "OS-Command"
+    log_flag = 1 if verbose else 0
+    if type(log_header) in (str, unicode):
+        log_flag |= 0x02
+    else:
+        log_header = "OS-Command"
 
     def os_command(cmd_line, *args, **kwargs):
         halt = kwargs.pop('debug', kwargs.pop('halt', False))
@@ -107,13 +119,7 @@ def command_wrapper(client_manager, cmd_module,
         if f_method in [None]:
             raise Exception("Module in %s do not have command '%s'." %
                             (module_name_list, cmd))
-        the_time = time.strftime("%Y-%m-%d,%H:%M:%S")
-        if verbose:
-            print(CMD_LOG_MSG % (log_cmd, the_time, cmd,
-                                 str(arg_list), str(kwargs)))
-        if log_cmd:
-            LOG.info(CMD_LOG_MSG, log_cmd, the_time, cmd,
-                     str(arg_list), str(kwargs))
+        log_cmd(log_header, cmd, str(arg_list), str(kwargs), log_flag)
         _trace_me() if halt else None
         return f_method(client_manager, *arg_list, **kwargs)
 
@@ -132,6 +138,7 @@ def nova_wrapper(client_manager, cmd_module):
             raise Exception("Module '%s' does not have command '%s'." %
                             (cmd_module.__name__, cmd))
         return f_method(client_manager, *arg_list, **kwargs)
+
     return nova_command
 
 
@@ -198,6 +205,22 @@ def run_till_timeout(seconds_to_try, interval=5.0):
         yield now
         time.sleep(interval)
         now = time.time()
+
+
+def ipaddr_is_reachable(ip_addr, duration=15, sleep_for=2):
+    for t in run_till_timeout(duration, sleep_for):
+        if ping_ipaddr(ip_addr):
+            return True
+    return False
+
+
+def ping_ipaddr(ip_addr):
+    cmd = ["ping", "-c3", ip_addr]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    proc.communicate()
+    # if ip_addr is pinable, the return code is 0
+    return proc.returncode == 0
 
 
 def _trace_me():

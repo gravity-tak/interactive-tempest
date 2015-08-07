@@ -16,6 +16,7 @@
 
 from itempest.lib import cmd_neutron as N
 
+
 # user defined commands
 def c_external_network(mgr_or_client,
                        name=None,
@@ -70,6 +71,19 @@ def c_security_group_icmp_rule(mgr_or_client, security_group_id):
     icmp_rule = dict(direction='ingress', ethertype='IPv4', protocol='icmp')
     return N.security_group_rule_create(mgr_or_client,
                                         security_group_id, **icmp_rule)
+
+
+def c_floatingip_for_server(mgr_or_client, public_network_id,
+                            server_id, port_id=None, **kwargs):
+    if port_id:
+        ip4 = None
+    else:
+        port_id, ip4 = g_port_id_ipv4_of_server(mgr_or_client, server_id)
+    result = N.floatingip_create(mgr_or_client, public_network_id,
+                                 port_id=port_id,
+                                 fixed_ip_address=ip4,
+                                 **kwargs)
+    return result
 
 
 # delete router after clearing gateway and deleting sub-interfaces
@@ -132,13 +146,13 @@ def d_myself(mgr_or_client, **kwargs):
     # rm networks/subnets
     for network in N.network_list(mgr_or_client, tenant_id=tenant_id):
         if N.mdata.is_in_spattern(network['name'], spattern):
-            #TODO(akang): if ports assoc to net, delete them first
+            # TODO(akang): if ports assoc to net, delete them first
             # look for network's subnet which is in port
             N.network_delete(mgr_or_client, network['id'])
 
     for sg in N.security_group_list(mgr_or_client, tenant_id=tenant_id):
         if (N.mdata.is_in_spattern(sg['name'], spattern) and
-                sg['name'] not in ['default']):
+                    sg['name'] not in ['default']):
             N.security_group_delete(mgr_or_client, sg['id'])
 
 
@@ -173,20 +187,27 @@ def u_server_security_group(mgr_or_client, server_id, security_group_ids,
     if not type(security_group_ids) in [list, tuple]:
         security_group_ids = [security_group_ids]
     ports = []
-    sg_key = 'security_groups'
     for port_id in port_ids:
-        if action:
-            port_info = N.port_show(mgr_or_client, port_id)
-            orig_sgs = port_info[sg_key] if sg_key in port_info else []
-            if action in (1, 'add'):
-                new_security_group_ids = list(
-                    set(orig_sgs) | set(security_group_ids))
-            elif action in (2, 'del', 'delete'):
-                new_security_group_ids = list(
-                    set(orig_sgs) - set(security_group_ids))
-        else:
-            new_security_group_ids = security_group_ids
-        ports.append(N.port_update(
-            mgr_or_client, port_id,
-            security_groups=new_security_group_ids))
+        ports.append(u_port_security_group(mgr_or_client, port_id,
+                                           security_group_ids, action))
     return ports
+
+
+def u_port_security_group(mgr_or_client, port_id, security_group_ids,
+                          action=None):
+    sg_key = 'security_groups'
+    if type(security_group_ids) in (unicode, str):
+        security_group_ids = [security_group_ids]
+    if action:
+        port_info = N.port_show(mgr_or_client, port_id)
+        orig_sgs = port_info[sg_key] if sg_key in port_info else []
+        if action in (1, 'add'):
+            new_security_group_ids = list(
+                set(orig_sgs) | set(security_group_ids))
+        elif action in (2, 'del', 'delete'):
+            new_security_group_ids = list(
+                set(orig_sgs) - set(security_group_ids))
+    else:
+        new_security_group_ids = security_group_ids
+    return N.port_update(mgr_or_client, port_id,
+                         security_groups=new_security_group_ids)

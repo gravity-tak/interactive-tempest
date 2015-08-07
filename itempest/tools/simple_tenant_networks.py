@@ -21,10 +21,10 @@ import sys
 import time
 import traceback
 
-from itempest.lib import cmd_neutron as Neutron
-from itempest.lib import cmd_neutron_u1 as N_UserCmd
-from itempest.lib import cmd_nova as Nova
-from itempest.lib import utils as U
+from itempest.lib import cmd_neutron
+from itempest.lib import cmd_neutron_u1
+from itempest.lib import cmd_nova
+from itempest.lib import utils
 
 
 # e1 = SimpleTenantNetwork(earth_mgr, 'earth_topo.json', prefix=True)
@@ -37,14 +37,14 @@ class SimpleTenantNetworks(object):
         self.load_tenant_topo(json_file)
         verbose = kwargs.pop('verbose', True)
         self.get_cfg_options(kwargs)
-        self.qsvc = U.command_wrapper(self._client_mgr,
-                                      [Neutron, N_UserCmd],
-                                      log_cmd="OS-Neutron",
-                                      verbose=verbose)
-        self.nova = U.command_wrapper(self._client_mgr, Nova,
-                                      nova_flavor=True,
-                                      log_cmd="OS-Nova",
-                                      verbose=verbose)
+        self.qsvc = utils.command_wrapper(self._client_mgr,
+                                          [cmd_neutron, cmd_neutron_u1],
+                                          log_header="OS-Neutron",
+                                          verbose=verbose)
+        self.nova = utils.command_wrapper(self._client_mgr, cmd_nova,
+                                          nova_flavor=True,
+                                          log_header="OS-Nova",
+                                          verbose=verbose)
         self.security_groups = {}
         self.networks = {}
         self.routers = {}
@@ -55,8 +55,8 @@ class SimpleTenantNetworks(object):
             kwargs.pop('prefix_name', kwargs.pop("prefix", None)))
         self.prepare_suffix_name(
             kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
-        self.no_servers =  kwargs.pop('no_server',
-                                      kwargs.pop('no_servers', False))
+        self.no_servers = kwargs.pop('no_server',
+                                     kwargs.pop('no_servers', False))
         self.router_cfg_options = kwargs.pop("router_options", None)
 
     def prepare_prefix_name(self, with_name=None):
@@ -73,7 +73,6 @@ class SimpleTenantNetworks(object):
         json_file = json_file or self._cfg_file
         self._tenant_topo = json.loads(open(json_file, 'r').read())
         self.dirname_json_file = os.path.dirname(json_file)
-
 
     def build(self):
         t0 = time.time()
@@ -214,8 +213,16 @@ class SimpleTenantNetworks(object):
         for nid, sg in self.security_groups.items():
             self.qsvc('security-group-delete', sg['id'])
 
-    def a_floatingip_to_server(self, server_id):
-        return c_floatingip_to_server(self.qsvc, server_id)
+    def a_floatingip_to_server(self, server_id, security_group_id=None,
+                               action='add', check_accessible=False):
+        floatingip = c_floatingip_to_server(
+            self.qsvc, server_id,
+            security_group_id=security_group_id,
+            action=action)
+        if check_accessible:
+            ip_addr = floatingip['floating_ip_address']
+            is_reachable = utils.ipaddr_is_reachable(
+                ip_addr, 30, 2)
 
     def d_floatingip_from_server(self, server_id):
         server = self.nova('server-show', server_id)
@@ -394,10 +401,16 @@ def f_server_interfaces(qsvc, interface_names, prefix_name, suffix_name):
     return networks
 
 
-def c_floatingip_to_server(qsvc, server_id, public_id=None, **kwargs):
+def c_floatingip_to_server(qsvc, server_id,
+                           public_id=None, security_group_id=None,
+                           **kwargs):
     public_network_id = public_id or qsvc('net-external-list')[0]
-    floatingip = qsvc('floatingip-create-for-server',
+    action = kwargs.pop('action', 'add')
+    floatingip = qsvc('c-floatingip-for-server',
                       public_network_id['id'], server_id)
+    if security_group_id:
+        qsvc('u-port-security-group', floatingip['port_id'],
+             security_group_id, action=action)
     return floatingip
 
 
@@ -418,7 +431,7 @@ def d_server_floatingip(qsvc, server):
     for if_name, if_addresses in server['addresses'].items():
         for addr in if_addresses:
             if ('OS-EXT-IPS:type' in addr and
-                addr['OS-EXT-IPS:type'] == u'floating'):
+                        addr['OS-EXT-IPS:type'] == u'floating'):
                 fip = qsvc('floatingip-list',
                            floating_network_address=addr['addr'])
                 qsvc('floatingip_disassociate', fip[0]['id'])
