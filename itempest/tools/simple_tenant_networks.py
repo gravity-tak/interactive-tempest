@@ -17,9 +17,7 @@ import base64
 import copy
 import json
 import os
-import sys
 import time
-import traceback
 
 from itempest.lib import cmd_neutron
 from itempest.lib import cmd_neutron_u1
@@ -481,14 +479,3 @@ def pop_config(otypes, from_topo_cfg):
                 return [cfg]
             return cfg
     return []
-
-
-def get_last_trace():
-    return traceback.extract_tb(sys.last_traceback)
-
-
-def print_trace(tracemsg=None):
-    tracemsg = tracemsg or get_last_trace()
-    for msg in tracemsg:
-        print("line#%s @file: %s\n  %s\n    %s" %
-              (msg[1], msg[0], msg[2], msg[3]))

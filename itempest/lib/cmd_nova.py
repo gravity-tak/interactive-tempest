@@ -393,27 +393,42 @@ def status_server(mgr_or_client, *args, **kwargs):
     return status
 
 
-# if qsvc has admin priv and servers not created by admin
+# if qsvc has admin priv and want to see servers not created by admin
 # qsvc('brief-server', all_tenants=1)
 def brief_server(mgr_or_client, *args, **kwargs):
     status = {}
     kwargs['detail'] = True
-    for s in server_list(mgr_or_client, **kwargs):
-        s_name = s['name']
-        s_info = dict(id=s['id'],
-                      status=s['status'],
-                      security_groups=s['security_groups'])
-        addr_list = []
-        for nn, na in s['addresses'].items():
-            a_list = []
-            for adr in na:
-                a_list.append([adr['OS-EXT-IPS:type'],
-                               adr['addr'],
-                               ("IPv%s" % adr['version']),
-                               adr['OS-EXT-IPS-MAC:mac_addr']])
-            addr_list.append(a_list)
-        s_info['addresses'] = addr_list
-        img = image_show(mgr_or_client, s['image']['id'])
-        s_info['image'] = img['name']
+    for server in server_list(mgr_or_client, **kwargs):
+        s_name, s_info = info_server(mgr_or_client, server)
         status[s_name] = s_info
     return status
+
+
+def info_server(mgr_or_client, server):
+    if type(server) in (unicode, str):
+        server = server_show(mgr_or_client, server)
+    s_name = server['name']
+    s_info = dict(id=server['id'],
+                  status=server['status'],
+                  security_groups=server['security_groups'])
+    addr_dict = {}
+    for net_name, net_addr_info in server['addresses'].items():
+        addr_dict[net_name] = dict()
+        for adr in net_addr_info:
+            _type = adr['OS-EXT-IPS:type']
+            # _ver = "IPv%s" % adr['version']
+            addr_dict[net_name][_type] = adr['addr']
+    s_info['networks'] = addr_dict
+    img = image_show(mgr_or_client, server['image']['id'])
+    s_info['image'] = img['name']
+    return s_name, s_info
+
+
+def get_fixed_ip_pool(mgr_or_client, **kwargs):
+    ip_pool = []
+    servers = brief_server(mgr_or_client)
+    for s_name, s_info in servers.items():
+        for if_name, if_info in s_info['networks'].items():
+            if 'fixed' in if_info:
+                ip_pool.append(if_info['fixed'])
+    return ip_pool

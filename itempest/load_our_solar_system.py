@@ -23,22 +23,28 @@ from itempest.lib import cmd_nova
 from itempest.lib import cmd_neutron
 from itempest.lib import cmd_neutron_u1
 
+
 # import load_our_solar_system as osn
 # delete_tenants(osn.tenants)
 def delete_tenants(tenant_pool):
     for tenant_name in tenant_pool:
         kadmin('delete-tenant-by-name', tenant_name)
 
-def get_user(user_name, user_password):
-    user_mgr = icreds.get_client_manager(os_auth_url, user_name, user_password)
+
+def get_user(user_name, user_password, tenant_name=None):
+    tenant_name = tenant_name if tenant_name else user_name
+    user_mgr = icreds.get_client_manager(os_auth_url, user_name,
+                                         user_password,
+                                         tenant_name=tenant_name)
     qsvc = utils.command_wrapper(user_mgr, [cmd_neutron, cmd_neutron_u1],
                                  log_header="OS-Neutron")
     # nova list/show/.. will be prefixed with server_
     nova = utils.command_wrapper(user_mgr, cmd_nova, True,
-                              log_header="OS-Nova")
+                                 log_header="OS-Nova")
     keys = utils.command_wrapper(user_mgr, cmd_keystone,
-                              log_header="OS-Keystone")
+                                 log_header="OS-Keystone")
     return (user_mgr, qsvc, nova, keys)
+
 
 # sun-has-8-planets, earth-is-the-3rd and has-1-moon
 os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')

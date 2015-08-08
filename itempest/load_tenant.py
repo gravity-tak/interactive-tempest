@@ -20,6 +20,22 @@ from itempest.lib import utils
 from itempest.lib import cmd_keystone
 from itempest.lib import cmd_nova
 from itempest.lib import cmd_neutron
+from itempest.lib import cmd_neutron_u1
+
+
+def get_user(user_name, user_password, tenant_name=None):
+    tenant_name = tenant_name if tenant_name else user_name
+    user_mgr = icreds.get_client_manager(os_auth_url,
+                                         user_name, user_password,
+                                         tenant_name=tenant_name)
+    qsvc = utils.command_wrapper(user_mgr, [cmd_neutron, cmd_neutron_u1],
+                                 log_header="OS-Neutron")
+    # nova list/show/.. will be prefixed with server_
+    nova = utils.command_wrapper(user_mgr, cmd_nova, True,
+                                 log_header="OS-Nova")
+    keys = utils.command_wrapper(user_mgr, cmd_keystone,
+                                 log_header="OS-Keystone")
+    return (user_mgr, qsvc, nova, keys)
 
 
 os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
@@ -29,10 +45,5 @@ os_tenant_name = os.environ.get('OS_TENANT_NAME', os_username)
 
 # accounts created by devstack
 # admin_mgr = icreds.get_client_manager(auth_url, 'admin', os_password)
-tenant_mgr = icreds.get_client_manager(os_auth_url, os_username, os_password,
-                                       tenant_name=os_tenant_name)
-
-qsvc = utils.command_wrapper(tenant_mgr, cmd_neutron)
-# nova list/show/.. will be prefixed with server_
-nova = utils.command_wrapper(tenant_mgr, cmd_nova, True)
-keys = utils.command_wrapper(tenant_mgr, cmd_keystone)
+tenant_mgr, qsvc, nova, keys = get_user(os_username, os_password,
+                                        os_tenant_name)

@@ -14,12 +14,27 @@
 #    under the License.
 
 import time
+import traceback
 
 from itempest.lib import cmd_keystone
 from itempest.lib import cmd_neutron
 from itempest.lib import cmd_neutron_u1
 from itempest.lib import cmd_nova
 from itempest.lib import utils
+
+from tempest.common.utils.linux import remote_client
+
+VM_DEFAULT_CREDENTIALS = {
+    'cirros-0.3.3-x86_64-disk': {'username': 'cirros',
+                                 'password': 'cubswin:)'}
+}
+
+
+def get_image_cred(img_name):
+    if img_name in VM_DEFAULT_CREDENTIALS:
+        return VM_DEFAULT_CREDENTIALS[img_name]
+    else:
+        return dict(username='root', password='password')
 
 
 def get_commands(tenant_mgr):
@@ -44,7 +59,7 @@ def wipeout_net_resources_of_orphan_networks(adm_mgr, **kwargs):
 def wipeout_tenant_net_resources(tenant_id, adm_mgr, **kwargs):
     keys, nova, qsvc = get_commands(adm_mgr)
     t0 = time.time()
-    kwargs = {'tenant_id':tenant_id}
+    kwargs = {'tenant_id': tenant_id}
     # delete servers
     # self.nova('destroy-my-servers', **kwargs)
     for server in nova('server-list', tenant_id=tenant_id):
@@ -85,7 +100,6 @@ def get_tenant_of_orphan_networks(qsvc, keys):
     return o_tenant_list
 
 
-
 def add_floatingip_to_server(qsvc, server_id,
                              public_id=None, security_group_id=None,
                              **kwargs):
@@ -123,51 +137,129 @@ def del_server(nova, server_id, qsvc=None):
 
 
 def del_server_floatingip_by_id(qsvc, nova, server_id):
-    sever = nova('server-show', server_id)
-    return del_server_floatingip(qsvc, server)
+    server = nova('server-show', server_id)
+    del_server_floatingip(qsvc, server)
+    # TODO(akang): read sever to make sure floatingip is DELETED.
+    #              If not it is BUG
+    return nova('server-show', server_id)
 
 
 def del_server_floatingip(qsvc, server):
     for if_name, if_addresses in server['addresses'].items():
         for addr in if_addresses:
             if ('OS-EXT-IPS:type' in addr and
-                addr['OS-EXT-IPS:type'] == u'floating'):
+                        addr['OS-EXT-IPS:type'] == u'floating'):
                 fip = qsvc('floatingip-list',
                            floating_network_address=addr['addr'])
                 qsvc('floatingip_disassociate', fip[0]['id'])
                 qsvc('floatingip-delete', fip[0]['id'])
-    # TODO(akang): read sever to make sure floatingip is DELETED.
-    #              SHOULD MARK THIS AS BUG
 
 
-def test_server_with_floatingip_is_reachable(qsvc, nova,
-                                             server_id_list,
-                                             security_group_id=None,
-                                             check_accessible=60,
-                                             action='add'):
+def test_servers_are_reachable(qsvc, nova, server_id_list,
+                               security_group_id=None,
+                               check_accessible=60,
+                               action='add', del_fip=True):
     result = {}
     n_failure = 0
     mesg_p = "%s reach server[%s %s] with-ip[%s %s]."
     for server_id in server_id_list:
-        try:
-            ss = nova('server-show', server_id)
-            fip = add_floatingip_to_server(
-                qsvc, server_id,
-                security_group_id=security_group_id,
-                check_accessible=check_accessible,
-                action=action)
-            n_failure += 0 if fip[1] else 1
-            m_type = "CAN" if fip[1] else "CAN'T"
-            mesg = mesg_p % (m_type, server_id, ss['name'],
-                             fip[0]['fixed_ip_address'],
-                             fip[0]['floating_ip_address'])
-            result[server_id] = fip
-            utils.log_msg(mesg)
-        except Exception:
-            pass
-        ss = nova('server-show', server_id)
-        del_server_floatingip(qsvc, ss)
+        fip_result = add_floatingip_to_server_and_test_reachibility(
+            qsvc, nova, server_id,
+            security_group_id=security_group_id,
+            check_accessible=check_accessible,
+            action=action)
+        n_failure += 0 if fip_result[1] else 0
+        if del_fip:
+            del_server_floatingip_by_id(qsvc, nova, server_id)
     return result
+
+
+def add_floatingip_to_server_and_test_reachibility(qsvc, nova, server_id,
+                                                   security_group_id=None,
+                                                   check_accessible=60,
+                                                   action='add'):
+    mesg_p = "%s reach server[%s %s] with-ip[%s %s]."
+    try:
+        ss = nova('server-show', server_id)
+        fip_result = add_floatingip_to_server(
+            qsvc, server_id,
+            security_group_id=security_group_id,
+            check_accessible=check_accessible,
+            action=action)
+        m_type = "CAN" if fip_result[1] else "CAN'T"
+        mesg = mesg_p % (m_type, server_id, ss['name'],
+                         fip_result[0]['fixed_ip_address'],
+                         fip_result[0]['floating_ip_address'])
+        utils.log_msg(mesg)
+        return fip_result
+    except Exception:
+        tb_str = traceback.format_exc()
+        mesg = ("ERROR creating floatingip for server[%s]:\n%s" % (
+            server_id, tb_str))
+        utils.log_msg(mesg)
+        return (server_id, False)
+
+
+def check_server_public_interface_ssh_allowed(qsvc, nova, server_id,
+                                              dest_ip_list):
+    s_name, s_info = nova('info-server', server_id)
+    img_name = s_info['image']
+    cred = get_image_cred(img_name)
+    n_reachable = 0
+    for if_name, if_info in s_info['networks'].items():
+        if 'floating' in if_info:
+            handler = remote_client.RemoteClient(
+                if_info['floating'],
+                cred['username'], cred['password']
+            )
+            for dest_ip in dest_ip_list:
+                is_ok = is_reachable(handler, dest_ip)
+                n_reachable += 1 if is_ok else 0
+    return n_reachable
+
+
+def is_reachable(ssh_client, dest_ip, time_out=60.0, ping_timeout=5.0):
+    for now in utils.run_till_timeout(time_out, ping_timeout):
+        reachable = dest_is_reachable(ssh_client, dest_ip)
+        if reachable:
+            return True
+        mesg = ("Dest[%s] not-reachable retry in %s seconds."
+                % (dest_ip, time_out))
+        utils.log_msg(mesg)
+    return False
+
+
+def isnot_reachable(ssh_client, dest_ip, time_out=60.0, ping_timeout=5.0,
+                    idle_time=2.0):
+    if idle_time > 0.0:
+        time.sleep(idle_time)
+    for now in utils.run_till_timeout(time_out, ping_timeout):
+        reachable = dest_is_reachable(ssh_client, dest_ip)
+        if not reachable:
+            return True
+        mesg = ("Dest[%s] is reachable retry in %s seconds."
+                % (dest_ip, time_out))
+        utils.log_msg(mesg)
+    return False
+
+
+def dest_is_reachable(ssh_client, dest_ip):
+    XPTN = r"(\d+)\s+.*transmit.*(\d+).*receive.*(\d+).*loss"
+    import pdb; pdb.set_trace()
+    try:
+        result = ssh_client.ping_host(dest_ip)
+        utils.log_msg(result)
+        m = re.search(XPTN, result, (re.I | re.M))
+        if m and int(m.group(1)) > 0 and int(m.group(3)) == 0:
+            return True
+        else:
+            return False
+    except Exception:
+        tb_str = traceback.format_exc()
+        mesg = ("ERROR test dest_ip[%s] is reachable:\n%s" % (
+            dest_ip, tb_str))
+        utils.log_msg(mesg)
+        return False
 
 
 def _g_float(something, somevalue=1.0):

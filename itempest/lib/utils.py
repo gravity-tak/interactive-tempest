@@ -17,7 +17,9 @@ from datetime import datetime
 import os
 import re
 import subprocess
+import sys
 import time
+import traceback
 
 from oslo_log import log as oslog
 
@@ -239,6 +241,16 @@ def ping_ipaddr(ip_addr, show_progress=True):
     # if ip_addr is pinable, the return code is 0
     return proc.returncode == 0
 
+
+def get_last_trace():
+    return traceback.extract_tb(sys.last_traceback)
+
+
+def print_trace(tracemsg=None):
+    tracemsg = tracemsg or get_last_trace()
+    for msg in tracemsg:
+        print("line#%s @file: %s\n  %s\n    %s" %
+              (msg[1], msg[0], msg[2], msg[3]))
 
 def _trace_me():
     import pdb

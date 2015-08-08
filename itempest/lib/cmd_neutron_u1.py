@@ -14,7 +14,7 @@
 #    under the License.
 
 
-from itempest.lib import cmd_neutron as N
+from itempest.lib import cmd_neutron as Q
 
 
 # user defined commands
@@ -23,7 +23,7 @@ def create_external_network(mgr_or_client,
                             shared=True, **kwargs):
     kwargs['shared'] = shared
     kwargs['router:external'] = True
-    return N.net_create(mgr_or_client,
+    return Q.net_create(mgr_or_client,
                         name=name,
                         **kwargs)
 
@@ -35,8 +35,8 @@ def create_vlan_network(mgr_or_client,
         'shared': shared,
         'provider:network_type': 'vlan',
         'provider:segmentation_id': vlan_id})
-    name = name or N.data_utils.rand_name('vlan-%s-network' % vlan_id)
-    return N.net_create(mgr_or_client,
+    name = name or Q.data_utils.rand_name('vlan-%s-network' % vlan_id)
+    return Q.net_create(mgr_or_client,
                         name=name,
                         **kwargs)
 
@@ -47,31 +47,31 @@ def create_flat_network(mgr_or_client,
     kwargs.update({
         'shared': shared,
         'provider:network_type': 'flat'})
-    name = name or N.data_utils.rand_name('flat-network')
-    return N.net_create(mgr_or_client,
+    name = name or Q.data_utils.rand_name('flat-network')
+    return Q.net_create(mgr_or_client,
                         name=name,
                         **kwargs)
 
 
 def create_security_group_loginable(mgr_or_client, name, **kwargs):
-    sg = N.security_group_create(mgr_or_client, name)
-    N.c_security_group_ssh_rule(mgr_or_client, sg['id'])
-    N.c_security_group_icmp_rule(mgr_or_client, sg['id'])
-    return N.security_group_show(mgr_or_client, sg['id'])
+    sg = Q.security_group_create(mgr_or_client, name)
+    Q.c_security_group_ssh_rule(mgr_or_client, sg['id'])
+    Q.c_security_group_icmp_rule(mgr_or_client, sg['id'])
+    return Q.security_group_show(mgr_or_client, sg['id'])
 
 
 def create_security_group_ssh_rule(mgr_or_client, security_group_id):
     ssh_rule = dict(direction='ingress',
                     ethertype='IPv4', protocol='tcp',
                     port_range_min=22, port_range_max=22)
-    return N.security_group_rule_create(mgr_or_client,
+    return Q.security_group_rule_create(mgr_or_client,
                                         security_group_id, **ssh_rule)
 
 
 def create_security_group_icmp_rule(mgr_or_client, security_group_id):
     icmp_rule = dict(direction='ingress',
                      ethertype='IPv4', protocol='icmp')
-    return N.security_group_rule_create(mgr_or_client,
+    return Q.security_group_rule_create(mgr_or_client,
                                         security_group_id, **icmp_rule)
 
 
@@ -81,98 +81,28 @@ def create_floatingip_for_server(mgr_or_client, public_network_id,
         ip4 = None
     else:
         port_id, ip4 = get_port_id_ipv4_of_server(mgr_or_client, server_id)
-    result = N.floatingip_create(mgr_or_client, public_network_id,
+    result = Q.floatingip_create(mgr_or_client, public_network_id,
                                  port_id=port_id,
                                  fixed_ip_address=ip4,
                                  **kwargs)
     return result
 
 
-# delete router after clearing gateway and deleting sub-interfaces
-def delete_router(mgr_or_client, router_id, **kwargs):
-    routers = N.router_list(mgr_or_client, id=router_id)
-    if len(routers) != 1:
-        return None
-    return d_this_router(mgr_or_client, routers[0])
-
-
-# NOTE: if attributes can only be manipulated by ADMIN, then
-#       mgr_or_client needs to have admin-priv.
-def d_this_router(mgr_or_client, router):
-    router_id = router['id']
-    N.router_delete_extra_routes(mgr_or_client, router_id)
-    N.router_gateway_clear(mgr_or_client, router_id)
-    ports = N.router_port_list(mgr_or_client, router_id)
-    for port in ports:
-        if port['device_owner'].find(':router_interface') > 0:
-            if 'fixed_ips' in port:
-                for fixed_ips in port['fixed_ips']:
-                    if 'subnet_id' in fixed_ips:
-                        N.router_interface_delete(mgr_or_client,
-                                                  router_id,
-                                                  fixed_ips['subnet_id'])
-    return N.router_delete(mgr_or_client, router_id)
-
-
-# qsvc('destroy-myself', name_startswith='page2-')
-# To delete network resources of tenant=Mars:
-# mars = utils.fgrep(keyAdmin('tenant-list'), name='Mars')[0]
-# qsvcAdmin('destroy-myself', tenant_id=mars['id'])
-def destroy_myself(mgr_or_client, **kwargs):
-    return d_myself(mgr_or_client, **kwargs)
-
-
-# client's tenant_id used to search for resources to be deleted.
-def d_myself(mgr_or_client, **kwargs):
-    skip_fip = kwargs.pop('skip_fip',
-                          kwargs.pop('skip_floatingip', False))
-    force_rm_fip = kwargs.pop('force_rm_fip', False)
-    if force_rm_fip:
-        skip_fip = False
-    spattern = N.mdata.get_name_search_pattern(**kwargs)
-    net_client = N._g_net_client(mgr_or_client)
-    tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
-    # rm floatingips: be aware that VMs' might have FIP attached
-    # if fail, caller of d_myself should sleep then retry again
-    if not skip_fip:
-        # TODO(akang): no name attributes in floatingip
-        # for now, delete fip if it is not ACTIVE status
-        for fip in N.floatingip_list(mgr_or_client, tenant_id=tenant_id):
-            if force_rm_fip or fip['status'] != 'ACTIVE':
-                N.floatingip_delete(mgr_or_client, fip['id'])
-    # rm routers
-    routers = N.router_list(mgr_or_client, tenant_id=tenant_id)
-    for router in routers:
-        if N.mdata.is_in_spattern(router['name'], spattern):
-            d_this_router(mgr_or_client, router)
-    # rm networks/subnets
-    for network in N.network_list(mgr_or_client, tenant_id=tenant_id):
-        if N.mdata.is_in_spattern(network['name'], spattern):
-            # TODO(akang): if ports assoc to net, delete them first
-            # look for network's subnet which is in port
-            N.network_delete(mgr_or_client, network['id'])
-
-    for sg in N.security_group_list(mgr_or_client, tenant_id=tenant_id):
-        if (N.mdata.is_in_spattern(sg['name'], spattern) and
-                    sg['name'] not in ['default']):
-            N.security_group_delete(mgr_or_client, sg['id'])
-
-
 def get_port_id_ipv4_of_server(mgr_or_client, server_id,
                                ip_addr=None, **kwargs):
-    ports = N.port_list(mgr_or_client,
+    ports = Q.port_list(mgr_or_client,
                         device_id=server_id, fixed_ip=ip_addr)
     # TODO(akang): assume only ONE from ports match server_id
     #              need to handle server given 1+ network.
     port0 = ports[0]
     for ip4 in port0['fixed_ips']:
         ip = ip4['ip_address']
-        if N.netaddr.valid_ipv4(ip):
+        if Q.netaddr.valid_ipv4(ip):
             return (port0['id'], ip)
 
 
 def get_ports_of_server(mgr_or_client, server_id, **kwargs):
-    ports = N.port_list(mgr_or_client, device_id=server_id)
+    ports = Q.port_list(mgr_or_client, device_id=server_id)
     return ports
 
 
@@ -202,7 +132,7 @@ def update_port_security_group(mgr_or_client, port_id, security_group_ids,
     if type(security_group_ids) in (unicode, str):
         security_group_ids = [security_group_ids]
     if action:
-        port_info = N.port_show(mgr_or_client, port_id)
+        port_info = Q.port_show(mgr_or_client, port_id)
         orig_sgs = port_info[sg_key] if sg_key in port_info else []
         if action in (1, 'add'):
             new_security_group_ids = list(
@@ -212,5 +142,70 @@ def update_port_security_group(mgr_or_client, port_id, security_group_ids,
                 set(orig_sgs) - set(security_group_ids))
     else:
         new_security_group_ids = security_group_ids
-    return N.port_update(mgr_or_client, port_id,
+    return Q.port_update(mgr_or_client, port_id,
                          security_groups=new_security_group_ids)
+
+
+# delete router after clearing gateway and deleting sub-interfaces
+def delete_router(mgr_or_client, router_id, **kwargs):
+    routers = Q.router_list(mgr_or_client, id=router_id)
+    if len(routers) != 1:
+        return None
+    return delete_this_router(mgr_or_client, routers[0])
+
+
+# NOTE: if attributes can only be manipulated by ADMIN, then
+#       mgr_or_client needs to have admin-priv.
+def delete_this_router(mgr_or_client, router):
+    router_id = router['id']
+    Q.router_delete_extra_routes(mgr_or_client, router_id)
+    Q.router_gateway_clear(mgr_or_client, router_id)
+    ports = Q.router_port_list(mgr_or_client, router_id)
+    for port in ports:
+        if port['device_owner'].find(':router_interface') > 0:
+            if 'fixed_ips' in port:
+                for fixed_ips in port['fixed_ips']:
+                    if 'subnet_id' in fixed_ips:
+                        Q.router_interface_delete(mgr_or_client,
+                                                  router_id,
+                                                  fixed_ips['subnet_id'])
+    return Q.router_delete(mgr_or_client, router_id)
+
+
+# qsvc('destroy-myself', name_startswith='page2-')
+# To delete network resources of tenant=Mars:
+# mars = utils.fgrep(keyAdmin('tenant-list'), name='Mars')[0]
+# qsvcAdmin('destroy-myself', tenant_id=mars['id'])
+def destroy_myself(mgr_or_client, **kwargs):
+    skip_fip = kwargs.pop('skip_fip',
+                          kwargs.pop('skip_floatingip', False))
+    force_rm_fip = kwargs.pop('force_rm_fip', False)
+    if force_rm_fip:
+        skip_fip = False
+    spattern = Q.mdata.get_name_search_pattern(**kwargs)
+    net_client = Q._g_net_client(mgr_or_client)
+    tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
+    # rm floatingips: be aware that VMs' might have FIP attached
+    # if fail, caller of d_myself should sleep then retry again
+    if not skip_fip:
+        # TODO(akang): no name attributes in floatingip
+        # for now, delete fip if it is not ACTIVE status
+        for fip in Q.floatingip_list(mgr_or_client, tenant_id=tenant_id):
+            if force_rm_fip or fip['status'] != 'ACTIVE':
+                Q.floatingip_delete(mgr_or_client, fip['id'])
+    # rm routers
+    routers = Q.router_list(mgr_or_client, tenant_id=tenant_id)
+    for router in routers:
+        if Q.mdata.is_in_spattern(router['name'], spattern):
+            delete_this_router(mgr_or_client, router)
+    # rm networks/subnets
+    for network in Q.network_list(mgr_or_client, tenant_id=tenant_id):
+        if Q.mdata.is_in_spattern(network['name'], spattern):
+            # TODO(akang): if ports assoc to net, delete them first
+            # look for network's subnet which is in port
+            Q.network_delete(mgr_or_client, network['id'])
+
+    for sg in Q.security_group_list(mgr_or_client, tenant_id=tenant_id):
+        if (Q.mdata.is_in_spattern(sg['name'], spattern) and
+                    sg['name'] not in ['default']):
+            Q.security_group_delete(mgr_or_client, sg['id'])
