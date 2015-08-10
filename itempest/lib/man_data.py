@@ -62,3 +62,15 @@ def load_security_group(json_file):
         for rule_name in sg['rules']:
             security_groups[name].append(sg_rules[rule_name])
     return security_groups
+
+
+def get_server_address(server):
+    addr_dict = {}
+    for net_name, net_addr_info in server['addresses'].items():
+        addr_dict[net_name] = dict()
+        for adr in net_addr_info:
+            # _type = adr['OS-EXT-IPS:type']
+            _ver_type = "IPv%s-%s" % (adr['version'],
+                                      adr['OS-EXT-IPS:type'])
+            addr_dict[net_name][_ver_type] = adr['addr']
+    return addr_dict

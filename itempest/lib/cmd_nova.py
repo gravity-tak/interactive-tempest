@@ -176,7 +176,8 @@ def server_list(mgr_or_client, **kwargs):
                                                     server_id, network_id)
         else:
             return server_list_addresses(server_client, server_id)
-    servers = server_client.list_servers(kwargs)
+    # kill me; I though servers accept dict, now it accepts **kwargs
+    servers = server_client.list_servers(**kwargs)
     return servers['servers']
 
 
@@ -411,14 +412,17 @@ def info_server(mgr_or_client, server):
     s_info = dict(id=server['id'],
                   status=server['status'],
                   security_groups=server['security_groups'])
+    """
     addr_dict = {}
     for net_name, net_addr_info in server['addresses'].items():
         addr_dict[net_name] = dict()
         for adr in net_addr_info:
-            _type = adr['OS-EXT-IPS:type']
-            # _ver = "IPv%s" % adr['version']
-            addr_dict[net_name][_type] = adr['addr']
-    s_info['networks'] = addr_dict
+            # _type = adr['OS-EXT-IPS:type']
+            _ver_type = "IPv%s-%s" % (adr['version'],
+                                      adr['OS-EXT-IPS:type'])
+            addr_dict[net_name][_ver_type] = adr['addr']
+     """
+    s_info['networks'] = mdata.get_server_address(server)
     img = image_show(mgr_or_client, server['image']['id'])
     s_info['image'] = img['name']
     return s_name, s_info

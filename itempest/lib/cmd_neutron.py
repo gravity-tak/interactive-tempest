@@ -475,6 +475,7 @@ def router_gateway_snat_set(mgr_or_client, router, enable):
 
 
 # user-defined-command
+# only admin can see it?
 def router_gateway_port_show(mgr_or_client, router_id):
     ports = router_port_list(mgr_or_client, router_id)
     for port in ports:

@@ -242,6 +242,24 @@ def ping_ipaddr(ip_addr, show_progress=True):
     return proc.returncode == 0
 
 
+# port_list = qsvc('port-list')
+# port_by_network = listdict_as_dict(port_list, 'network_id')
+# server_list = nova('server-list')
+# server_by_name = listdict_as_dict(server_list, 'name')
+def listdict_as_dict(list_dict, col):
+    dicts = {}
+    for d in list_dict:
+        if col not in d:
+            continue
+        dkey = d[col]
+        # bwaware dkey==u'' for example network:dhcp
+        if dkey in dicts:
+            dicts[dkey].append(d)
+        else:
+            dicts[dkey] = [d]
+    return dicts
+
+
 def get_last_trace():
     return traceback.extract_tb(sys.last_traceback)
 

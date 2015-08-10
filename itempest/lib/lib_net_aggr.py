@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from operator import itemgetter
 import time
 import traceback
 
@@ -21,6 +22,7 @@ from itempest.lib import cmd_neutron
 from itempest.lib import cmd_neutron_u1
 from itempest.lib import cmd_nova
 from itempest.lib import utils
+from itempest.lib import man_data as mdata
 
 from tempest.common.utils.linux import remote_client
 
@@ -245,7 +247,8 @@ def isnot_reachable(ssh_client, dest_ip, time_out=60.0, ping_timeout=5.0,
 
 def dest_is_reachable(ssh_client, dest_ip):
     XPTN = r"(\d+)\s+.*transmit.*(\d+).*receive.*(\d+).*loss"
-    import pdb; pdb.set_trace()
+    import pdb;
+    pdb.set_trace()
     try:
         result = ssh_client.ping_host(dest_ip)
         utils.log_msg(result)
@@ -260,6 +263,32 @@ def dest_is_reachable(ssh_client, dest_ip):
             dest_ip, tb_str))
         utils.log_msg(mesg)
         return False
+
+
+def show_toplogy(mgr_or_client):
+    FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
+    FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
+    FMT_SERVER = "%s>> sever: {name} {id}" % (' ' * 10)
+    FMT_SERV_ADDR = "%s>> network: %s "
+    topo = ["\nNetwork topology of tenant[%s]" % mgr_or_client.credentials.tenant_name]
+    keys, nova, qsvc = get_commands(mgr_or_client)
+    s_list = nova('server-list-with-detail')
+    router_list = qsvc('router-list')
+    sorted(router_list, key=itemgetter('name'))
+    for router in router_list:
+        topo.append(FMT_ROUTER.format(**router))
+        rp_list = qsvc('router-port-list', router['id'])
+        for rp in rp_list:
+            intf = qsvc('net-show', rp['network_id'])
+            topo.append(FMT_INTERFACE.format(**intf))
+            if_name = intf['name']
+            if_servers = [s for s in s_list if if_name in s['addresses']]
+            for s in if_servers:
+                topo.append(FMT_SERVER.format(**s))
+                addr_dict = mdata.get_server_address(s)
+                if if_name in addr_dict:
+                    topo.append(FMT_SERV_ADDR % (' '*14, addr_dict[if_name]))
+    print("\n".join(topo))
 
 
 def _g_float(something, somevalue=1.0):
