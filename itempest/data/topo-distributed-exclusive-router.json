@@ -1,0 +1,80 @@
+{
+    "name": "Sun-side2",
+    "networks": [
+        {
+            "name": "acct-network",
+            "subnets": [
+                {
+                    "name": "acct-subnet",
+                    "cidr": "10.168.22.0/24",
+                    "gateway_ip": "10.168.22.1",
+                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "10.168.22.2", "end": "10.168.22.99"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "service-network",
+            "subnets": [
+                {
+                    "name": "service-subnet",
+                    "cidr": "192.168.22.0/24",
+                    "dns_nameservers": ["8.8.4.4"],
+                    "enable_dhcp": true,
+                    "allocation_pools": [
+                        {"start": "192.168.22.2", "end": "192.168.22.90"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "guest-network",
+            "subnets": [
+                {
+                    "name": "guest-subnet",
+                    "cidr": "192.168.44.0/24",
+                    "dns_nameservers": ["8.8.8.8"],
+                    "enable_dhcp": true
+                }
+            ]
+        }
+    ],
+    "router-options": {
+    },
+    "routers": [
+        {
+            "name": "expo-router",
+            "gateway": "public",
+            "distributed": true,
+            "router_type": "exclusive",
+            "interfaces": [
+                "acct-network",
+                "service-network",
+                "guest-network"
+            ] 
+        }
+    ],
+    "server-options": {
+        "image": "cirros-0.3.3-x86_64-disk",
+        "flavor": "m1.tiny",
+        "user_data": "./metadata/itempest-userdata"
+    },
+    "servers": [
+        {
+            "name": "acct-journal",
+            "interface": "acct-network"
+        },
+        {
+            "name": "helo-web",
+            "interface": "guest-network"
+        },
+        {
+            "name": "guest-bee",
+            "interface": "guest-network"
+        }
+    ]
+}
+

@@ -266,29 +266,46 @@ def dest_is_reachable(ssh_client, dest_ip):
 
 
 def show_toplogy(mgr_or_client):
+    tenant_name = mgr_or_client.credentials.tenant_name
     FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SERVER = "%s>> sever: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
-    topo = ["\nNetwork topology of tenant[%s]" % mgr_or_client.credentials.tenant_name]
+    topo = {}
+    topo_line = ["\nNetwork topology of tenant[%s]" % tenant_name]
     keys, nova, qsvc = get_commands(mgr_or_client)
     s_list = nova('server-list-with-detail')
     router_list = qsvc('router-list')
     sorted(router_list, key=itemgetter('name'))
     for router in router_list:
-        topo.append(FMT_ROUTER.format(**router))
+        rtr = _g_by_attr(router, ('id', 'name', 'router_type'))
+        rtr['networks'] = []
+        topo_line.append(FMT_ROUTER.format(**rtr))
         rp_list = qsvc('router-port-list', router['id'])
         for rp in rp_list:
-            intf = qsvc('net-show', rp['network_id'])
-            topo.append(FMT_INTERFACE.format(**intf))
-            if_name = intf['name']
+            network = qsvc('net-show', rp['network_id'])
+            netwk = _g_by_attr(network, ('name', 'id'))
+            netwk['port_id'] = rp['id']
+            topo_line.append(FMT_INTERFACE.format(**netwk))
+            if_name = network['name']
             if_servers = [s for s in s_list if if_name in s['addresses']]
             for s in if_servers:
-                topo.append(FMT_SERVER.format(**s))
                 addr_dict = mdata.get_server_address(s)
+                no_if = len(addr_dict)
+                topo_line.append(
+                    FMT_SERVER.format(**s) + " #network=%s" % no_if)
                 if if_name in addr_dict:
-                    topo.append(FMT_SERV_ADDR % (' '*14, addr_dict[if_name]))
-    print("\n".join(topo))
+                    topo_line.append(
+                        FMT_SERV_ADDR % (' '*14, addr_dict[if_name]))
+    print("\n".join(topo_line))
+
+
+def _g_by_attr(s_dict, attr_list):
+    d_dict = {}
+    for attr in attr_list:
+        if attr in s_dict:
+            d_dict[attr] = s_dict[attr]
+    return d_dict
 
 
 def _g_float(something, somevalue=1.0):
