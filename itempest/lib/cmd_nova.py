@@ -428,11 +428,19 @@ def info_server(mgr_or_client, server):
     return s_name, s_info
 
 
-def get_fixed_ip_pool(mgr_or_client, **kwargs):
-    ip_pool = []
+def get_server_fixed_ip_list(mgr_or_client, **kwargs):
+    ip_list = []
     servers = brief_server(mgr_or_client)
     for s_name, s_info in servers.items():
         for if_name, if_info in s_info['networks'].items():
-            if 'fixed' in if_info:
-                ip_pool.append(if_info['fixed'])
-    return ip_pool
+            if 'IPv4-fixed' in if_info:
+                ip_list.append(if_info['IPv4-fixed'])
+    return ip_list
+
+
+def get_server_id_list(mgr_or_client, **kwargs):
+    server_id_list = []
+    servers = server_list(mgr_or_client)
+    for server in servers:
+        server_id_list.append(server['id'])
+    return server_id_list

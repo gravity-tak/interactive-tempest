@@ -29,7 +29,7 @@ NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'list-secgroup', 'live-migrate']
 CMD_LOG_MSG = "%s:%s %s args=%s kwargs=%s"
 LOG_MESG = "%s:%s %s"
-LOG_DEFAULT_FLAGS = int(os.environ.get('ITEMPESTRUN_LOG_FLAGS', 0x01))
+LOG_DEFAULT_FLAGS = int(os.environ.get('ITEMPEST_LOG_FLAGS', 0x01))
 
 LOG = oslog.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def command_wrapper(client_manager, cmd_module,
                     log_header=None, verbose=True):
     """Usage Examples:
 
-        from itempest import itempest_creds as icreds
+        from itempest import icreds
         from itempest.lib import cmd_neutron
         from itempest.lib import utils as U
 
@@ -237,9 +237,14 @@ def ping_ipaddr(ip_addr, show_progress=True):
     proc = subprocess.Popen(cmd_line,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    proc.communicate()
+    data_stdout, data_stderr = proc.communicate()
     # if ip_addr is pinable, the return code is 0
-    return proc.returncode == 0
+    addr_reachable = (proc.returncode == 0)
+    if not addr_reachable:
+        mesg =("ip_addr[%s] is not reachable:\nstdout=%s\nstderr=%s"
+              % (ip_addr, data_stdout, data_stderr))
+        log_msg(mesg)
+    return addr_reachable
 
 
 # port_list = qsvc('port-list')

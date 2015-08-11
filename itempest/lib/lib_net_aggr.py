@@ -107,8 +107,8 @@ def add_floatingip_to_server(qsvc, server_id,
                              **kwargs):
     public_network_id = public_id or qsvc('net-external-list')[0]
     action = kwargs.pop('action', 'add')
-    check_accessible = kwargs.pop('check_accessible', None)
-    duration = kwargs.pop('duration', 30)
+    check_interval = kwargs.pop('check_interval', None)
+    duration = kwargs.pop('check_duration', 30)
     sleep_for = kwargs.pop('sleep_for', 1)
     show_progress = kwargs.pop('show_progress', True)
     floatingip = qsvc('create-floatingip-for-server',
@@ -116,11 +116,11 @@ def add_floatingip_to_server(qsvc, server_id,
     if security_group_id:
         qsvc('update-port-security-group', floatingip['port_id'],
              security_group_id, action=action)
-    if check_accessible:
+    if check_interval:
         server_public_ipaddr = floatingip['floating_ip_address']
 
         # pause for control-plane to propagate floating-ip to resources
-        time.sleep(_g_float(check_accessible))
+        time.sleep(_g_float(check_interval))
         is_reachable = utils.ipaddr_is_reachable(
             server_public_ipaddr,
             duration, sleep_for, show_progress=show_progress)
@@ -159,34 +159,37 @@ def del_server_floatingip(qsvc, server):
 
 def test_servers_are_reachable(qsvc, nova, server_id_list,
                                security_group_id=None,
-                               check_accessible=60,
+                               check_interval=5,
+                               check_duration=60,
                                action='add', del_fip=True):
     result = {}
     n_failure = 0
-    mesg_p = "%s reach server[%s %s] with-ip[%s %s]."
     for server_id in server_id_list:
         fip_result = add_floatingip_to_server_and_test_reachibility(
             qsvc, nova, server_id,
             security_group_id=security_group_id,
-            check_accessible=check_accessible,
-            action=action)
+            action=action,
+            check_interval=check_interval,
+            check_duration=check_duration)
         n_failure += 0 if fip_result[1] else 0
         if del_fip:
             del_server_floatingip_by_id(qsvc, nova, server_id)
-    return result
+    return (n_failure, result)
 
 
 def add_floatingip_to_server_and_test_reachibility(qsvc, nova, server_id,
                                                    security_group_id=None,
-                                                   check_accessible=60,
-                                                   action='add'):
+                                                   action='add',
+                                                   check_interval=5,
+                                                   check_duration=60):
     mesg_p = "%s reach server[%s %s] with-ip[%s %s]."
     try:
         ss = nova('server-show', server_id)
         fip_result = add_floatingip_to_server(
             qsvc, server_id,
             security_group_id=security_group_id,
-            check_accessible=check_accessible,
+            check_interval=check_interval,
+            check_duration=check_duration,
             action=action)
         m_type = "CAN" if fip_result[1] else "CAN'T"
         mesg = mesg_p % (m_type, server_id, ss['name'],
@@ -271,7 +274,7 @@ def show_toplogy(mgr_or_client):
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SERVER = "%s>> sever: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
-    topo = {}
+    topo = []
     topo_line = ["\nNetwork topology of tenant[%s]" % tenant_name]
     keys, nova, qsvc = get_commands(mgr_or_client)
     s_list = nova('server-list-with-detail')
@@ -286,18 +289,26 @@ def show_toplogy(mgr_or_client):
             network = qsvc('net-show', rp['network_id'])
             netwk = _g_by_attr(network, ('name', 'id'))
             netwk['port_id'] = rp['id']
+            netwk['servers'] = []
             topo_line.append(FMT_INTERFACE.format(**netwk))
             if_name = network['name']
             if_servers = [s for s in s_list if if_name in s['addresses']]
             for s in if_servers:
                 addr_dict = mdata.get_server_address(s)
                 no_if = len(addr_dict)
+                serv = _g_by_attr(s, ('name', 'id'))
+                serv['#interface'] = no_if
                 topo_line.append(
                     FMT_SERVER.format(**s) + " #network=%s" % no_if)
                 if if_name in addr_dict:
+                    serv['interface'] = addr_dict[if_name]
                     topo_line.append(
                         FMT_SERV_ADDR % (' '*14, addr_dict[if_name]))
+                netwk['servers'].append(serv)
+            rtr['networks'].append(netwk)
+        topo.append(rtr)
     print("\n".join(topo_line))
+    return topo
 
 
 def _g_by_attr(s_dict, attr_list):
