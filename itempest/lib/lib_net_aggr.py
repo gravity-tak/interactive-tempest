@@ -252,8 +252,6 @@ def isnot_reachable(ssh_client, dest_ip, time_out=60.0, ping_timeout=5.0,
 
 def dest_is_reachable(ssh_client, dest_ip):
     XPTN = r"(\d+).*transmit.*(\d+).*receive.*(\d+).*loss"
-    import pdb;
-    pdb.set_trace()
     try:
         result = ssh_client.ping_host(dest_ip)
         utils.log_msg(result)
