@@ -329,7 +329,7 @@ def server_get_password(mgr_or_client, server_id):
     return body
 
 
-# create our commands
+# following commands are user-defined-commands
 # user_data will be handled by server_created()
 def create_server_on_interface(mgr_or_client, networks, image_id,
                           flavor=2, name=None, security_groups=None,

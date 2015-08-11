@@ -214,7 +214,7 @@ def check_server_public_interface_ssh_allowed(qsvc, nova, server_id,
     for if_name, if_info in s_info['networks'].items():
         if 'floating' in if_info:
             handler = remote_client.RemoteClient(
-                if_info['floating'],
+                if_info['IPv4-floating'],
                 cred['username'], cred['password']
             )
             for dest_ip in dest_ip_list:
