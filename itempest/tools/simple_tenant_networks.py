@@ -8,8 +8,10 @@
 #         http://www.apache.org/licenses/LICENSE-2.0
 #
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+#  the
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
@@ -433,7 +435,7 @@ def delete_server_floatingip(qsvc, server):
     for if_name, if_addresses in server['addresses'].items():
         for addr in if_addresses:
             if ('OS-EXT-IPS:type' in addr and
-                        addr['OS-EXT-IPS:type'] == u'floating'):
+                    addr['OS-EXT-IPS:type'] == u'floating'):
                 fip = qsvc('floatingip-list',
                            floating_network_address=addr['addr'])
                 qsvc('floatingip_disassociate', fip[0]['id'])

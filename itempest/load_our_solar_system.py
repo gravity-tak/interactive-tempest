@@ -17,7 +17,6 @@ import os
 
 from itempest import icreds
 from itempest.lib import utils
-from itempest.lib import cmd_glance
 from itempest.lib import cmd_keystone
 from itempest.lib import cmd_nova
 from itempest.lib import cmd_neutron

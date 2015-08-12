@@ -40,7 +40,7 @@ def get_image_cred(img_name):
         return dict(username='root', password='password')
 
 
-def get_commands(tenant_mgr):
+def get_net_resource_commands(tenant_mgr):
     keys = utils.command_wrapper(tenant_mgr, [cmd_keystone],
                                  log_header='OS-Keystone')
     nova = utils.command_wrapper(tenant_mgr, [cmd_nova],
@@ -51,7 +51,7 @@ def get_commands(tenant_mgr):
 
 
 def wipeout_net_resources_of_orphan_networks(adm_mgr, **kwargs):
-    keys, nova, qsvc = get_commands(adm_mgr)
+    keys, nova, qsvc = get_net_resource_commands(adm_mgr)
     tenant_list = get_tenant_of_orphan_networks(qsvc, keys)
     times_used = 0
     for tenant_id in tenant_list:
@@ -60,7 +60,7 @@ def wipeout_net_resources_of_orphan_networks(adm_mgr, **kwargs):
 
 
 def wipeout_tenant_net_resources(tenant_id, adm_mgr, **kwargs):
-    keys, nova, qsvc = get_commands(adm_mgr)
+    keys, nova, qsvc = get_net_resource_commands(adm_mgr)
     t0 = time.time()
     kwargs = {'tenant_id': tenant_id}
     # delete servers
@@ -268,7 +268,7 @@ def dest_is_reachable(ssh_client, dest_ip):
         return False
 
 
-def show_toplogy(mgr_or_client):
+def show_toplogy(mgr_or_client, return_topo=True):
     tenant_name = mgr_or_client.credentials.tenant_name
     FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
@@ -276,7 +276,7 @@ def show_toplogy(mgr_or_client):
     FMT_SERV_ADDR = "%s>> network: %s "
     topo = []
     topo_line = ["\nNetwork topology of tenant[%s]" % tenant_name]
-    keys, nova, qsvc = get_commands(mgr_or_client)
+    keys, nova, qsvc = get_net_resource_commands(mgr_or_client)
     s_list = nova('server-list-with-detail')
     router_list = qsvc('router-list')
     sorted(router_list, key=itemgetter('name'))
@@ -303,12 +303,12 @@ def show_toplogy(mgr_or_client):
                 if if_name in addr_dict:
                     serv['interface'] = addr_dict[if_name]
                     topo_line.append(
-                        FMT_SERV_ADDR % (' '*14, addr_dict[if_name]))
+                        FMT_SERV_ADDR % (' ' * 14, addr_dict[if_name]))
                 netwk['servers'].append(serv)
             rtr['networks'].append(netwk)
         topo.append(rtr)
     print("\n".join(topo_line))
-    return topo
+    return topo if return_topo else {}
 
 
 def _g_by_attr(s_dict, attr_list):

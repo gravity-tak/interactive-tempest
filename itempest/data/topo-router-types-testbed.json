@@ -1,177 +1,210 @@
-
 {
-    "name": "router-types",
-    "networks": [
+  "name": "router-types",
+  "networks": [
+    {
+      "name": "dist-network",
+      "subnets": [
         {
-            "name": "dist-network",
-            "subnets": [
-                {
-                    "name": "dist-subnet",
-                    "cidr": "10.168.99.0/24",
-                    "gateway_ip": "10.168.99.1",
-                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "10.168.99.2", "end": "10.168.99.99"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "dist-help-network",
-            "subnets": [
-                {
-                    "name": "dist-help-subnet",
-                    "cidr": "192.168.99.0/24",
-                    "dns_nameservers": ["8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "192.168.99.2", "end": "192.168.99.90"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "hill-network",
-            "subnets": [
-                {
-                    "name": "hill-subnet",
-                    "cidr": "10.168.11.0/24",
-                    "gateway_ip": "10.168.11.1",
-                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "10.168.11.2", "end": "10.168.11.99"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "hill-service-network",
-            "subnets": [
-                {
-                    "name": "hill-service-subnet",
-                    "cidr": "192.168.11.0/24",
-                    "dns_nameservers": ["8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "192.168.11.2", "end": "192.168.11.90"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "top-network",
-            "subnets": [
-                {
-                    "name": "top-subnet",
-                    "cidr": "10.168.33.0/24",
-                    "dns_nameservers": ["8.8.8.8", "8.8.4.4"],
-                    "enable_dhcp": true,
-                    "allocation_pools": [
-                        {"start": "10.168.33.2", "end": "10.168.33.99"}
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "top-guest-network",
-            "subnets": [
-                {
-                    "name": "top-guest-subnet",
-                    "cidr": "192.168.33.0/24",
-                    "dns_nameservers": ["8.8.8.8"],
-                    "enable_dhcp": true
-                }
-            ]
+          "name": "dist-subnet",
+          "cidr": "10.168.99.0/24",
+          "gateway_ip": "10.168.99.1",
+          "dns_nameservers": [
+            "8.8.8.8",
+            "8.8.4.4"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "10.168.99.2",
+              "end": "10.168.99.99"
+            }
+          ]
         }
-    ],
-    "router-options": {
+      ]
     },
-    "routers": [
+    {
+      "name": "dist-help-network",
+      "subnets": [
         {
-            "name": "dist-router",
-            "gateway": "public",
-            "distributed": true,
-            "router_type": "exclusive",
-            "interfaces": [
-                "dist-network",
-                "dist-help-network"
-            ]
-        },
-        {
-            "name": "hill-router",
-            "gateway": "public",
-            "router_type": "exclusive",
-            "interfaces": [
-                "hill-network",
-                "hill-service-network"
-            ] 
-        },
-        {
-            "name": "top-router",
-            "gateway": "public",
-            "router_type": "shared",
-            "interfaces": [
-                "top-network",
-                "top-guest-network"
-            ]
+          "name": "dist-help-subnet",
+          "cidr": "192.168.99.0/24",
+          "dns_nameservers": [
+            "8.8.4.4"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "192.168.99.2",
+              "end": "192.168.99.90"
+            }
+          ]
         }
-    ],
-    "server-options": {
-        "image": "cirros-0.3.3-x86_64-disk",
-        "flavor": "m1.tiny",
-        "user_data": "./metadata/itempest-userdata"
+      ]
     },
-    "server-ubuntu-options": {
-        "image": "ubuntu-14.04-x86_64",
-        "flavor": "m1.small",
-        "user_data": "./metadata/itempest-userdata"
+    {
+      "name": "hill-network",
+      "subnets": [
+        {
+          "name": "hill-subnet",
+          "cidr": "10.168.11.0/24",
+          "gateway_ip": "10.168.11.1",
+          "dns_nameservers": [
+            "8.8.8.8",
+            "8.8.4.4"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "10.168.11.2",
+              "end": "10.168.11.99"
+            }
+          ]
+        }
+      ]
     },
-    "servers": [
+    {
+      "name": "hill-service-network",
+      "subnets": [
         {
-            "name": "hill-top",
-            "image": "ubuntu-14.04-x86_64",
-            "flavor": "m1.small",
-            "interface": ["hill-network", "top-network"]
-        },
-        {
-            "name": "hill-bee",
-            "interface": "hill-network"
-        },
-        {
-            "name": "top-bee",
-            "interface": "top-network"
-        },
-        {
-            "name": "hill-service-bee",
-            "interface": "hill-service-network"
-        },
-        {
-            "name": "top-guest-bee",
-            "interface": "top-guest-network"
+          "name": "hill-service-subnet",
+          "cidr": "192.168.11.0/24",
+          "dns_nameservers": [
+            "8.8.4.4"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "192.168.11.2",
+              "end": "192.168.11.90"
+            }
+          ]
         }
-    ],
-    "security-groups": [
+      ]
+    },
+    {
+      "name": "top-network",
+      "subnets": [
         {
-            "name": "loginable",
-            "rules": ["ingress-ssh", "ingress-icmp"]
+          "name": "top-subnet",
+          "cidr": "10.168.33.0/24",
+          "dns_nameservers": [
+            "8.8.8.8",
+            "8.8.4.4"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "10.168.33.2",
+              "end": "10.168.33.99"
+            }
+          ]
         }
-    ],
-    "security-group-rules": [
+      ]
+    },
+    {
+      "name": "top-guest-network",
+      "subnets": [
         {
-            "name": "ingress-ssh",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "tcp",
-            "port_range_min": 22,
-            "port_range_max": 22
-        },
-        {
-            "name": "ingress-icmp",
-            "direction": "ingress",
-            "ethertype": "IPv4",
-            "protocol": "icmp"
+          "name": "top-guest-subnet",
+          "cidr": "192.168.33.0/24",
+          "dns_nameservers": [
+            "8.8.8.8"
+          ],
+          "enable_dhcp": true
         }
-    ]
+      ]
+    }
+  ],
+  "router-options": {
+  },
+  "routers": [
+    {
+      "name": "dist-router",
+      "gateway": "public",
+      "distributed": true,
+      "router_type": "exclusive",
+      "interfaces": [
+        "dist-network",
+        "dist-help-network"
+      ]
+    },
+    {
+      "name": "hill-router",
+      "gateway": "public",
+      "router_type": "exclusive",
+      "interfaces": [
+        "hill-network",
+        "hill-service-network"
+      ]
+    },
+    {
+      "name": "top-router",
+      "gateway": "public",
+      "router_type": "shared",
+      "interfaces": [
+        "top-network",
+        "top-guest-network"
+      ]
+    }
+  ],
+  "server-options": {
+    "image": "cirros-0.3.3-x86_64-disk",
+    "flavor": "m1.tiny",
+    "user_data": "./metadata/itempest-userdata"
+  },
+  "server-ubuntu-options": {
+    "image": "ubuntu-14.04-x86_64",
+    "flavor": "m1.small",
+    "user_data": "./metadata/itempest-userdata"
+  },
+  "servers": [
+    {
+      "name": "hill-top",
+      "interface": [
+        "hill-network",
+        "top-network"
+      ]
+    },
+    {
+      "name": "hill-bee",
+      "interface": "hill-network"
+    },
+    {
+      "name": "top-bee",
+      "interface": "top-network"
+    },
+    {
+      "name": "hill-service-bee",
+      "interface": "hill-service-network"
+    },
+    {
+      "name": "top-guest-bee",
+      "interface": "top-guest-network"
+    }
+  ],
+  "security-groups": [
+    {
+      "name": "loginable",
+      "rules": [
+        "ingress-ssh",
+        "ingress-icmp"
+      ]
+    }
+  ],
+  "security-group-rules": [
+    {
+      "name": "ingress-ssh",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 22,
+      "port_range_max": 22
+    },
+    {
+      "name": "ingress-icmp",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "icmp"
+    }
+  ]
 }
