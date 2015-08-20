@@ -268,7 +268,7 @@ def dest_is_reachable(ssh_client, dest_ip):
         return False
 
 
-def show_toplogy(mgr_or_client, return_topo=True):
+def show_toplogy(mgr_or_client, return_topo=False):
     tenant_name = mgr_or_client.credentials.tenant_name
     FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)

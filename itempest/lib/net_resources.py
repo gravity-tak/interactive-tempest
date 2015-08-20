@@ -18,17 +18,17 @@
 #
 # Once upstream adapts this we can remove it and import it directly.
 
-from tempest.services.network import resources as NRS
+from tempest.services.network import resources as n_resources
 
 
-DELETABLE_CLASS_DEF = """class %(cls_name)s(NRS.%(cls_name)s):
+DELETABLE_CLASS_DEF = """class %(cls_name)s(n_resources.%(cls_name)s):
     pass
 """
 IGNORE_LIST = ['DeletableSubnet', 'DeletableRouter']
 
 
 # inhere Deletable<Class> from parent module
-for cls_name in [x for x in dir(NRS)
+for cls_name in [x for x in dir(n_resources)
                  if x.startswith('Deletable') and x not in IGNORE_LIST]:
     class_def = DELETABLE_CLASS_DEF % dict(cls_name=cls_name)
     exec class_def
@@ -108,9 +108,11 @@ class DeletableRouter(NRS.DeletableRouter):
         return self.client.delete_extra_routes(self.id)
 
     def delete(self):
+        self.delete_extra_routes()
+        self.unset_gateway()
         for subnet in self._subnets.copy():
             self.delete_interface(subnet)
-        super(self, DeletableRouter).delete()
+        super(DeletableRouter, self).delete()
 
 
 # Workaround solution
