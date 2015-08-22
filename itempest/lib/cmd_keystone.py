@@ -143,8 +143,10 @@ def service_update(mgr_or_client, service_id, **kwargs):
 # tenant
 def tenant_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.list_tenants()
-
+    result = identity_client.list_tenants()
+    if 'tenants' in result:
+        return result['tenants']
+    return result
 
 def tenant_get(mgr_or_client, tenant_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
@@ -182,6 +184,8 @@ def user_list(mgr_or_client, *args, **kwargs):
         return user_list_of_tenant(mgr_or_client, tenant_id)
     identity_client = _g_identity_client(mgr_or_client)
     result = identity_client.get_users()
+    if 'users' in result:
+        return result['users']
     return result
 
 
@@ -237,8 +241,8 @@ def user_role_remove(mgr_or_client, tenant_id, user_id, role_id):
 def project_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
     result = identity_client.list_projects()
-    if 'tenants' in result:
-        return result['tenants']
+    if 'projects' in result:
+        return result['projects']
     return result
 
 
