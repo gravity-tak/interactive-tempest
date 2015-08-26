@@ -53,22 +53,22 @@ def get_commands(os_auth_url, os_name, os_password,
     return (client_mgr, qsvc, nova, keys)
 
 
-def get_glance_command(client_mgr, log_cmd="OS-Glance", **kwargs):
+def get_glance_command(client_mgr, log_header="OS-Glance", **kwargs):
     return U.command_wrapper(client_mgr, cmd_glance,
-                             log_cmd=log_cmd)
+                             log_header=log_header)
 
-def get_qsvc_command(client_mgr, log_cmd="OS-Neutron", **kwargs):
+def get_qsvc_command(client_mgr, log_header="OS-Neutron", **kwargs):
     return U.command_wrapper(client_mgr,
                              [cmd_neutron, cmd_neutron_u1],
-                             log_cmd=log_cmd)
+                             log_header=log_header)
 
-def get_nova_command(client_mgr, log_cmd="OS-Nova", **kwargs):
+def get_nova_command(client_mgr, log_header="OS-Nova", **kwargs):
     return U.command_wrapper(client_mgr, cmd_nova,
-                             log_cmd=log_cmd)
+                             log_header=log_header)
 
-def get_keys_command(client_mgr, log_cmd="OS-Keystone", **kwargs):
+def get_keys_command(client_mgr, log_header="OS-Keystone", **kwargs):
     return U.command_wrapper(client_mgr, cmd_keystone,
-                             log_cmd=log_cmd)
+                             log_header=log_header)
 
 def create_image(glance, img_name, **create_kwargs):
     exact_img_name = r"\^%s\$" % img_name
