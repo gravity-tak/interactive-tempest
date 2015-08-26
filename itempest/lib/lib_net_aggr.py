@@ -282,6 +282,7 @@ def show_toplogy(mgr_or_client, return_topo=False):
     tenant_name = mgr_or_client.credentials.tenant_name
     FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
+    FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 12)
     FMT_SERVER = "%s>> sever: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
     topo = []
@@ -297,10 +298,11 @@ def show_toplogy(mgr_or_client, return_topo=False):
         rp_list = qsvc('router-port-list', router['id'])
         for rp in rp_list:
             network = qsvc('net-show', rp['network_id'])
-            netwk = _g_by_attr(network, ('name', 'id'))
+            netwk = _g_by_attr(network, ('name', 'id', 'subnets'))
             netwk['port_id'] = rp['id']
             netwk['servers'] = []
             topo_line.append(FMT_INTERFACE.format(**netwk))
+            topo_line.append(FMT_SUBNETS.format(**netwk))
             if_name = network['name']
             if_servers = [s for s in s_list if if_name in s['addresses']]
             for s in if_servers:
