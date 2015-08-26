@@ -158,7 +158,17 @@ def del_server_floatingip(qsvc, server):
                 qsvc('floatingip-delete', fip[0]['id'])
 
 
-def test_servers_are_reachable(qsvc, nova, server_id_list,
+def test_servers_are_reachable(mgr_or_client, loginable_sg_name='loginable',
+                               action='add', del_fip=True):
+    keys, nova, qsvc = get_net_resource_commands(mgr_or_client)
+    serv_list = [x['id'] for x in nova('server-list')]
+    sg_id = qsvc('security-group-list', name=loginable_sg_name)[0]
+    return check_servers_are_reachable(qsvc, nova, serv_list,
+                                       security_group_id=sg_id['id'],
+                                       action=action, del_fip=del_fip)
+
+
+def check_servers_are_reachable(qsvc, nova, server_id_list,
                                security_group_id=None,
                                check_interval=5,
                                check_duration=60,

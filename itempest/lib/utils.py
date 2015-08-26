@@ -61,6 +61,7 @@ def parse_cmdline(cmdline, *args, **kwargs):
     cmd_list = cmdline.split()
     cmd = re.sub("-", "_", cmd_list[0])
     arg_list = list(args)
+    arg0_list = []
     ix = 1
     while (ix < len(cmd_list)):
         arg = cmd_list[ix]
@@ -77,9 +78,9 @@ def parse_cmdline(cmdline, *args, **kwargs):
             key = re.sub("-", "_", key)
             kwargs[key] = norm_it(val)
         else:
-            arg_list.append(arg)
+            arg0_list.append(arg)
         ix += 1
-    return (cmd, arg_list, kwargs)
+    return (cmd, (arg0_list + arg_list), kwargs)
 
 
 def norm_it(val):
