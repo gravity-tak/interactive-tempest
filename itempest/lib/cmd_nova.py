@@ -95,7 +95,10 @@ def image_create(mgr_or_client, name, container_format, disk_format,
 
 def image_list(mgr_or_client, *args, **kwargs):
     image_client = _g_image_v2_client(mgr_or_client)
-    return image_client.list_images(*args, **kwargs)
+    result = image_client.list_images(*args, **kwargs)
+    if 'images' in result:
+        return result['images']
+    return result
 
 
 def image_delete(mgr_or_client, image_id, *args, **kwargs):
@@ -116,8 +119,10 @@ def image_show(mgr_or_client, image_id, *args, **kwargs):
 
 def keypair_list(mgr_or_client, *args, **kwargs):
     keypair_client = _g_keypairs_client(mgr_or_client)
-    keypair = keypair_client.list_keypairs(**kwargs)
-    return keypair
+    result = keypair_client.list_keypairs(**kwargs)
+    if 'keypairs' in result:
+        return result['keypairs']
+    return result
 
 
 def keypair_add(mgr_or_client, name, **kwargs):

@@ -52,7 +52,10 @@ def image_download(mgr_or_client):
 def image_list(mgr_or_client, *args, **kwargs):
     """List images you can access."""
     image_client = _g_image_v2_client(mgr_or_client)
-    return image_client.list_images(*args, **kwargs)
+    result = image_client.list_images(*args, **kwargs)
+    if 'images' in result:
+        return result['images']
+    return result
 
 
 def image_show(mgr_or_client, image_id, *args, **kwargs):
