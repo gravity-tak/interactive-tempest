@@ -76,7 +76,10 @@ def _g_kval(_dict, k):
 
 def flavor_list(mgr_or_client, *args, **kwargs):
     flavor_client = _g_flavors_client(mgr_or_client)
-    return flavor_client.list_flavors(**kwargs)
+    result = flavor_client.list_flavors(**kwargs)
+    if 'flavors' in result:
+        return result['flavors']
+    return result
 
 
 # image
