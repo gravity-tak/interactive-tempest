@@ -8,8 +8,10 @@
 #         http://www.apache.org/licenses/LICENSE-2.0
 #
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+#  the
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
@@ -22,6 +24,10 @@ import time
 import traceback
 
 from oslo_log import log as oslog
+from itempest import icreds
+from itempest.lib import cmd_glance, cmd_neutron, cmd_neutron_u1, \
+    cmd_nova, \
+    cmd_keystone
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -242,8 +248,8 @@ def ping_ipaddr(ip_addr, show_progress=True):
     # if ip_addr is pinable, the return code is 0
     addr_reachable = (proc.returncode == 0)
     if not addr_reachable:
-        mesg =("ip_addr[%s] is not reachable:\nstdout=%s\nstderr=%s"
-              % (ip_addr, data_stdout, data_stderr))
+        mesg = ("ip_addr[%s] is not reachable:\nstdout=%s\nstderr=%s"
+                % (ip_addr, data_stdout, data_stderr))
         log_msg(mesg)
     return addr_reachable
 
@@ -276,6 +282,50 @@ def print_trace(tracemsg=None):
         print("line#%s @file: %s\n  %s\n    %s" %
               (msg[1], msg[0], msg[2], msg[3]))
 
+
 def _trace_me():
     import pdb
     pdb.set_trace()
+
+
+class AttrContainer(object):
+    def __init__(self, **kwargs):
+        for k, v in (kwargs.items()):
+            setattr(self, k, v)
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+
+def get_commands(os_auth_url, os_name, os_password,
+                 os_tenant_name=None, **kwargs):
+    manager = icreds.get_client_manager(os_auth_url,
+                                        os_name, os_password,
+                                        tenant_name=os_tenant_name,
+                                        **kwargs)
+    qsvc = get_qsvc_command(manager)
+    nova = get_nova_command(manager)
+    keys = get_keys_command(manager)
+    return AttrContainer(manager=manager,
+                         qsvc=qsvc, nova=nova, keys=keys)
+
+
+def get_glance_command(client_mgr, log_header="OS-Glance", **kwargs):
+    return command_wrapper(client_mgr, cmd_glance,
+                           log_header=log_header)
+
+
+def get_qsvc_command(client_mgr, log_header="OS-Neutron", **kwargs):
+    return command_wrapper(client_mgr,
+                           [cmd_neutron, cmd_neutron_u1],
+                           log_header=log_header)
+
+
+def get_nova_command(client_mgr, log_header="OS-Nova", **kwargs):
+    return command_wrapper(client_mgr, cmd_nova,
+                           log_header=log_header)
+
+
+def get_keys_command(client_mgr, log_header="OS-Keystone", **kwargs):
+    return command_wrapper(client_mgr, cmd_keystone,
+                           log_header=log_header)
