@@ -1,7 +1,7 @@
 from itempest.lib import utils as U
 
 
-test_images = {
+TEST_IMAGES = {
     'ubuntu-14.04-x86_64': {
         'container_format': 'bare',
         'disk_format': 'vmdk',
@@ -17,7 +17,7 @@ test_images = {
     },
 }
 
-vio2 = dict(
+VIO2 = dict(
     gateway='10.158.57.253',
     nameservers=['8.8.8.8', '8.8.4.4'],
     nameservers_internal=['10.132.71.1', '10.132.71.2'],
@@ -53,28 +53,28 @@ def get_image(nova, img_name):
 
 def init_vio2_env(os_auth_url, os_name, os_password,
                   os_tenant_name=None, **kwargs):
-    vio2 = U.get_commands(os_auth_url,
+    user = U.get_commands(os_auth_url,
                           os_name, os_password,
-                          tenant_name=os_tenant_name,
+                          os_tenant_name=os_tenant_name,
                           **kwargs)
-    net = vio2.qsvc('net-list --name=public')
+    net = user.qsvc('net-list --name=public')
     if len(net) == 0:
-        net = vio2.qsvc('net-create', 'public',
+        net = user.qsvc('net-create', 'public',
                         **{'router:external': True, 'shared': False})
     else:
         net = net[0]
-    snet = vio2.qsvc('subnet-list --name=public-subnet')
+    snet = user.qsvc('subnet-list --name=public-subnet')
     if len(snet) == 0:
-        snet = vio2.qsvc('subnet-create', net['id'],
+        snet = user.qsvc('subnet-create', net['id'],
                          name='public-subnet',
-                         cidr=vio2['cidr'],
-                         gateway_ip=vio2['gateway'],
-                         dns_nameservers=vio2['nameservers'],
-                         allocation_pools=vio2['alloc_pools'],
+                         cidr=VIO2['cidr'],
+                         gateway_ip=VIO2['gateway'],
+                         dns_nameservers=VIO2['nameservers'],
+                         allocation_pools=VIO2['alloc_pools'],
                          enable_dhcp=False)
     else:
         snet = snet[0]
     img_list = []
-    for img_name, img_dict in test_images.items():
-        img_list.append(create_image(vio2.nova, img_name, **img_dict))
+    for img_name, img_dict in TEST_IMAGES.items():
+        img_list.append(create_image(user.nova, img_name, **img_dict))
     return (net, snet, img_list)
