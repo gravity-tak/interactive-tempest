@@ -136,7 +136,8 @@ def command_wrapper(client_manager, cmd_module,
             cmd = 'server_' + cmd
         for cmd_module in cmd_module_list:
             f_method = getattr(cmd_module, cmd, None)
-            if f_method: break
+            if f_method:
+                break
 
         if f_method in [None]:
             raise Exception("Module in %s do not have command '%s'." %
@@ -297,10 +298,10 @@ class AttrContainer(object):
         return str(self) == str(other)
 
 
-def get_commands(os_auth_url, os_name, os_password,
+def get_commands(os_auth_url, os_username, os_password,
                  os_tenant_name=None, **kwargs):
     manager = icreds.get_client_manager(os_auth_url,
-                                        os_name, os_password,
+                                        os_username, os_password,
                                         tenant_name=os_tenant_name,
                                         **kwargs)
     qsvc = get_qsvc_command(manager)

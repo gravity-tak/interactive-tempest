@@ -8,8 +8,10 @@
 #         http://www.apache.org/licenses/LICENSE-2.0
 #
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+#  the
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
@@ -20,9 +22,13 @@ import json
 from tempest.common import service_client
 from tempest.services.network.json.network_client import NetworkClient
 
-
 VERSION = "2.0"
 URI_PREFIX = "v2.0"
+POOL_RID = 'pool'
+VIP_RID = 'vip'
+HEALTHMONITOR_RID = 'health_monitor'
+MEMBER_RID = 'member'
+
 
 def _g_net_client(mgr_or_client):
     if isinstance(mgr_or_client, NetworkClient):
@@ -33,13 +39,14 @@ def _g_net_client(mgr_or_client):
 def _g_resource_namelist(lb_resource):
     if lb_resource[-1] == 's':
         return (lb_resource[:-1], lb_resource)
-    return (lb_resource, lb_resource+"s")
+    return (lb_resource, lb_resource + "s")
 
 
 def _list_lb(mgr_or_client, lb_resource):
+    resource_name_s, resource_name_p = _g_resource_namelist(lb_resource)
+    req_uri = '%s/lb/%s' % (URI_PREFIX, resource_name_p)
     net_client = _g_net_client(mgr_or_client)
-    uri = '%s/lb/%s' % (URI_PREFIX, lb_resource)
-    resp, body = net_client.get(uri)
+    resp, body = net_client.get(req_uri)
     net_client.expected_success(200, resp.status)
     body = json.loads(body)
     result = service_client.ResponseBody(resp, body)
@@ -49,9 +56,10 @@ def _list_lb(mgr_or_client, lb_resource):
 
 
 def _show_lb(mgr_or_client, lb_resource, resource_id):
-    uri = '%s/lb/%s/%s' % (URI_PREFIX, lb_resource, resource_id)
+    resource_name_s, resource_name_p = _g_resource_namelist(lb_resource)
+    req_uri = '%s/lb/%s/%s' % (URI_PREFIX, resource_name_p, resource_id)
     net_client = _g_net_client(mgr_or_client)
-    resp, body = net_client.get(uri)
+    resp, body = net_client.get(req_uri)
     net_client.expected_success(200, resp.status)
     body = json.loads(body)
     result = service_client.ResponseBody(resp, body)
@@ -61,7 +69,8 @@ def _show_lb(mgr_or_client, lb_resource, resource_id):
 
 
 def _delete_lb(mgr_or_client, lb_resource, resource_id):
-    req_uri = '%s/lb/%s/%s' % (URI_PREFIX, lb_resource, resource_id)
+    resource_name_s, resource_name_p = _g_resource_namelist(lb_resource)
+    req_uri = '%s/lb/%s/%s' % (URI_PREFIX, resource_name_p, resource_id)
     net_client = _g_net_client(mgr_or_client)
     resp, body = net_client.delete(req_uri)
     net_client.expected_success(204, resp.status)
@@ -69,13 +78,13 @@ def _delete_lb(mgr_or_client, lb_resource, resource_id):
     return result
 
 
-def _create_lb(mgr_or_client, lb_resource, resource_id, **kwargs):
-    name_s, name_p = _g_resource_namelist(lb_resource)
-    uri = '%s/lb/%s' % (URI_PREFIX, name_p)
+def _create_lb(mgr_or_client, lb_resource, **kwargs):
+    resource_name_s, resource_name_p = _g_resource_namelist(lb_resource)
+    req_uri = '%s/lb/%s' % (URI_PREFIX, resource_name_p)
     net_client = _g_net_client(mgr_or_client)
-    post_body = {name_s: kwargs}
+    post_body = {resource_name_s: kwargs}
     body = json.dumps(post_body)
-    resp, body = net_client.post(uri, body)
+    resp, body = net_client.post(req_uri, body)
     net_client.expected_success(201, resp.status)
     body = json.loads(body)
     return service_client.ResponseBody(resp, body)
@@ -98,7 +107,7 @@ def lb_healthmonitor_create(mgr_or_client):
 
 def lb_healthmonitor_delete(mgr_or_client, healthmonitor_id):
     """Delete a given health monitor."""
-    return _delete_lb(mgr_or_client, 'health_monitors', healthmonitor_id)
+    return _delete_lb(mgr_or_client, HEALTHMONITOR_RID, healthmonitor_id)
 
 
 def lb_healthmonitor_disassociate(mgr_or_client):
@@ -108,13 +117,12 @@ def lb_healthmonitor_disassociate(mgr_or_client):
 
 def lb_healthmonitor_list(mgr_or_client):
     """List health monitors that belong to a given tenant."""
-    lb_resource = 'health_monitors'
-    return _list_lb(mgr_or_client, lb_resource)
+    return _list_lb(mgr_or_client, HEALTHMONITOR_RID)
 
 
 def lb_healthmonitor_show(mgr_or_client, healthmonitor_id):
     """Show information of a given health monitor."""
-    return _show_lb(mgr_or_client, 'health_monitors', healthmonitor_id)
+    return _show_lb(mgr_or_client, HEALTHMONITOR_RID, healthmonitor_id)
 
 
 def lb_healthmonitor_update(mgr_or_client):
@@ -129,18 +137,17 @@ def lb_member_create(mgr_or_client):
 
 def lb_member_delete(mgr_or_client, member_id):
     """Delete a given member."""
-    return _delete_lb(mgr_or_client, 'members', member_id)
+    return _delete_lb(mgr_or_client, MEMBER_RID, member_id)
 
 
 def lb_member_list(mgr_or_client):
     """List members that belong to a given tenant."""
-    lb_resource = 'members'
-    return _list_lb(mgr_or_client, lb_resource)
+    return _list_lb(mgr_or_client, MEMBER_RID)
 
 
 def lb_member_show(mgr_or_client, member_id):
     """Show information of a given member."""
-    return _show_lb(mgr_or_client, 'members', member_id)
+    return _show_lb(mgr_or_client, MEMBER_RID, member_id)
 
 
 def lb_member_update(mgr_or_client):
@@ -153,17 +160,9 @@ def lb_pool_create(mgr_or_client, pool_name, lb_method, protocol, subnet_id,
     """Create a pool."""
     lb_method = lb_method or 'ROUND_ROBIN'
     protocol = protocol or 'HTTP'
-    uri = '%s/lb/pools' % (URI_PREFIX)
-    net_client = _g_net_client(mgr_or_client)
-    post_body = {"pool": dict(
-        name=pool_name, lb_method=lb_method,
-        protocol=protocol, subnet_id=subnet_id)}
-    post_body.update(**kwargs)
-    body = json.dumps(post_body)
-    resp, body = net_client.post(uri, body)
-    net_client.expected_success(201, resp.status)
-    body = json.loads(body)
-    return service_client.ResponseBody(resp, body)
+    post_body = dict(name=pool_name, lb_method=lb_method,
+                     protocol=protocol, subnet_id=subnet_id)
+    return _create_lb(mgr_or_client, POOL_RID, **post_body)
 
 
 def lb_pool_delete(mgr_or_client, pool_id):
@@ -199,11 +198,12 @@ def lb_pool_stats(mgr_or_client, pool_id):
 
 def lb_pool_update(mgr_or_client, pool_id, **kwargs):
     """Update a given pool."""
-    uri = '%s/lb/pools/%s' % (URI_PREFIX, pool_id)
+    resource_name_s, resource_name_p = _g_resource_namelist(POOL_RID)
+    uri = '%s/lb/pools/%s' % (URI_PREFIX, resource_name_p, pool_id)
     net_client = _g_net_client(mgr_or_client)
     body = lb_pool_show(mgr_or_client, pool_id)
     body.update(**kwargs)
-    update_body = {"pool":body}
+    update_body = {resource_name_s: body}
     update_body = json.dumps(update_body)
     resp, body = net_client.put(uri, update_body)
     net_client.expected_success(200, resp.status)
@@ -216,7 +216,7 @@ def lb_vip_create(mgr_or_client, vip_id):
     pass
 
 
-def lb_vip_delete(mgr_or_client):
+def lb_vip_delete(mgr_or_client, vip_id):
     """Delete a given vip."""
     return _delete_lb(mgr_or_client, 'vips', vip_id)
 
