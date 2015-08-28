@@ -122,7 +122,6 @@
       "name": "dist-router",
       "gateway": "public",
       "distributed": true,
-      "router_type": "exclusive",
       "interfaces": [
         "dist-network",
         "dist-help-network"

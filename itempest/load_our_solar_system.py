@@ -14,6 +14,7 @@
 #    under the License.
 
 import os
+import traceback
 
 from itempest import icreds
 from itempest.lib import utils
@@ -60,10 +61,18 @@ except Exception:
     pass
 
 # get-or-create Sun solaris system's admin Sun
-tenant = utils.fgrep(keys('tenant-list'), name=r'^Sun$')
-if len(tenant) < 1:
-    Sun = icreds.create_admin_project('Sun', 'itempest8@OS')
-(sun_mgr, s_qsvc, s_nova, s_keys) = get_user_commands('Sun', 'itempest8@OS')
+try:
+    tenant = utils.fgrep(keys('tenant-list'), name=r'^Sun$')
+    if len(tenant) < 1:
+        Sun = icreds.create_admin_project('Sun', 'itempest8@OS')
+    (sun_mgr, s_qsvc, s_nova, s_keys) = get_user_commands('Sun',
+                                                          'itempest8@OS')
+except Exception:
+    tb_str = traceback.format_exc()
+    mesg = ("ERROR creating/retriving Admin user[%s]:\n%s" % (
+        'Sun', tb_str))
+    utils.log_msg(mesg)
+
 
 # our solar system has 8 planets'
 sun_planets = ['Mercury', 'Venus', 'Earth', 'Mars',
