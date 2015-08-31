@@ -52,29 +52,33 @@ def get_image(nova, img_name):
 
 def init_vio2_env(os_auth_url, os_name, os_password,
                   os_tenant_name=None, **kwargs):
-    user = U.get_mimic_manager_cli(os_auth_url,
-                                   os_name, os_password,
-                                   os_tenant_name=os_tenant_name,
-                                   **kwargs)
-    net = user.qsvc('net-list --name=public')
+    cli_mgr = U.get_mimic_manager_cli(os_auth_url,
+                                      os_name, os_password,
+                                      os_tenant_name=os_tenant_name,
+                                      **kwargs)
+    return init_vio2(cli_mgr)
+
+
+def init_vio2(cli_mgr, **kwargs):
+    net = cli_mgr.qsvc('net-list --name=public')
     if len(net) == 0:
-        net = user.qsvc('net-create', 'public',
-                        **{'router:external': True, 'shared': False})
+        net = cli_mgr.qsvc('net-create', 'public',
+                           **{'router:external': True, 'shared': False})
     else:
         net = net[0]
-    snet = user.qsvc('subnet-list --name=public-subnet')
+    snet = cli_mgr.qsvc('subnet-list --name=public-subnet')
     if len(snet) == 0:
-        snet = user.qsvc('subnet-create', net['id'],
-                         name='public-subnet',
-                         cidr=VIO2['cidr'],
-                         gateway_ip=VIO2['gateway'],
-                         dns_nameservers=VIO2['nameservers'],
-                         allocation_pools=VIO2['alloc_pools'],
-                         enable_dhcp=False)
+        snet = cli_mgr.qsvc('subnet-create', net['id'],
+                            name='public-subnet',
+                            cidr=VIO2['cidr'],
+                            gateway_ip=VIO2['gateway'],
+                            dns_nameservers=VIO2['nameservers'],
+                            allocation_pools=VIO2['alloc_pools'],
+                            enable_dhcp=False)
     else:
         snet = snet[0]
-    rtr = user.qsvc('router-create router1')
+    # rtr = cli_mgr.qsvc('router-create router1')
     img_list = []
     for img_name, img_dict in TEST_IMAGES.items():
-        img_list.append(create_image(user.nova, img_name, **img_dict))
+        img_list.append(create_image(cli_mgr.nova, img_name, **img_dict))
     return (net, snet, img_list)
