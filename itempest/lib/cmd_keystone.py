@@ -237,7 +237,7 @@ def user_role_remove(mgr_or_client, tenant_id, user_id, role_id):
     return identity_client.delete_user_role(tenant_id, user_id, role_id)
 
 
-# project
+# project - identity v3
 def project_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
     result = identity_client.list_projects()
@@ -249,6 +249,17 @@ def project_list(mgr_or_client, *args, **kwargs):
 def project_get(mgr_or_client, project_id, *args, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
     return identity_client.get_project(project_id)
+
+
+
+def project_create(mgr_or_client, name, **kwargs):
+    identity_client = _g_identity_v3_client(mgr_or_client)
+    return identity_client.create_tenant(name, **kwargs)
+
+
+def project_delete(mgr_or_client, project_id, **kwargs):
+    identity_client = _g_identity_v3_client(mgr_or_client)
+    return identity_client.delete_tenant(project_id, **kwargs)
 
 
 # user defined commands

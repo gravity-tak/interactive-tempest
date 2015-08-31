@@ -299,10 +299,12 @@ class AttrContainer(object):
 
 
 def get_commands(os_auth_url, os_username, os_password,
-                 os_tenant_name=None, **kwargs):
+                 os_tenant_name=None, identity_version='v2',
+                 **kwargs):
     manager = icreds.get_client_manager(os_auth_url,
                                         os_username, os_password,
                                         tenant_name=os_tenant_name,
+                                        identity_version=identity_version,
                                         **kwargs)
     qsvc = get_qsvc_command(manager)
     nova = get_nova_command(manager)

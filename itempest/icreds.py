@@ -167,6 +167,7 @@ def get_client_manager(os_auth_url, username, password,
     cm_conf = dict(
         username=username,
         password=password,
+        identity_version=identity_version,
         fill_in=fill_in,
         tenant_name=(tenant_name if tenant_name else username),
         disable_ssl_certificate_validation=True)
@@ -189,8 +190,11 @@ def get_os_manager(is_admin=False):
     return mgr
 
 
-def create_test_projects(name, password='itemepst8@OS', **kwargs):
-    creds = ItempestCreds(name, password=password)
+def create_test_projects(name, password='itemepst8@OS',
+                         identity_version='v2',
+                         **kwargs):
+    creds = ItempestCreds(name, password=password,
+                          identity_version=identity_version)
     creds_a = creds.get_admin_creds()
     creds_p = creds.get_primary_creds()
     creds_t = creds.get_alt_creds()
@@ -198,16 +202,20 @@ def create_test_projects(name, password='itemepst8@OS', **kwargs):
 
 
 def create_primary_project(name, password='itempest8@OS',
-                           num_of_users=1,
+                           identity_version='v2', num_of_users=1,
                            **kwargs):
     creds = ItempestCreds(name, password=password,
+                          identity_version=identity_version,
                           num_of_users=num_of_users, **kwargs)
     p = creds.get_primary_creds(name)
     return p
 
 
-def create_admin_project(name, password='itempest8@OS', **kwargs):
-    creds = ItempestCreds(name, password=password, **kwargs)
+def create_admin_project(name, password='itempest8@OS',
+                         identity_version='v2', **kwargs):
+    creds = ItempestCreds(name, password=password,
+                          identity_version=identity_version,
+                          **kwargs)
     p = creds.get_admin_creds(name)
     return p
 
