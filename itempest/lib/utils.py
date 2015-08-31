@@ -298,14 +298,18 @@ class AttrContainer(object):
         return str(self) == str(other)
 
 
-def get_commands(os_auth_url, os_username, os_password,
-                 os_tenant_name=None, identity_version='v2',
-                 **kwargs):
+def get_mimic_manager_cli(os_auth_url, os_username, os_password,
+                          os_tenant_name=None, identity_version='v2',
+                          **kwargs):
     manager = icreds.get_client_manager(os_auth_url,
                                         os_username, os_password,
                                         tenant_name=os_tenant_name,
                                         identity_version=identity_version,
                                         **kwargs)
+    return get_mimic_manager_cli_with_client_manager(manager)
+
+
+def get_mimic_manager_cli_with_client_manager(manager):
     qsvc = get_qsvc_command(manager)
     nova = get_nova_command(manager)
     keys = get_keys_command(manager)

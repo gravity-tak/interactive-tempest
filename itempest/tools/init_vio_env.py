@@ -1,6 +1,5 @@
 from itempest.lib import utils as U
 
-
 TEST_IMAGES = {
     'ubuntu-14.04-x86_64': {
         'container_format': 'bare',
@@ -53,10 +52,10 @@ def get_image(nova, img_name):
 
 def init_vio2_env(os_auth_url, os_name, os_password,
                   os_tenant_name=None, **kwargs):
-    user = U.get_commands(os_auth_url,
-                          os_name, os_password,
-                          os_tenant_name=os_tenant_name,
-                          **kwargs)
+    user = U.get_mimic_manager_cli(os_auth_url,
+                                   os_name, os_password,
+                                   os_tenant_name=os_tenant_name,
+                                   **kwargs)
     net = user.qsvc('net-list --name=public')
     if len(net) == 0:
         net = user.qsvc('net-create', 'public',
@@ -74,6 +73,7 @@ def init_vio2_env(os_auth_url, os_name, os_password,
                          enable_dhcp=False)
     else:
         snet = snet[0]
+    rtr = user.qsvc('router-create router1')
     img_list = []
     for img_name, img_dict in TEST_IMAGES.items():
         img_list.append(create_image(user.nova, img_name, **img_dict))
