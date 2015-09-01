@@ -1,5 +1,5 @@
 {
-  "name": "Sun-side1",
+  "name": "exclusive-router",
   "networks": [
     {
       "name": "face-network",
@@ -79,7 +79,7 @@
   },
   "routers": [
     {
-      "name": "expo-router",
+      "name": "expo-exclusive-router",
       "gateway": "public",
       "router_type": "exclusive",
       "interfaces": [

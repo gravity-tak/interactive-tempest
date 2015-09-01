@@ -48,6 +48,7 @@ def ext_list(mgr_or_client,
     result = net_client.list_extensions()
     return result['extensions']
 
+
 # network
 def network_create(mgr_or_client, name=None, tenant_id=None, **kwargs):
     return net_create(mgr_or_client,
@@ -414,6 +415,7 @@ def router_update_extra_routes_future(mgr_or_client, router_id,
     body = net_client.update_extra_routes(router_id,
                                           nexthop, destination)
     return body['router']
+
 
 # NOT AVAILABLE NOW!
 # fixed by https://bugs.launchpad.net/tempest/+bug/1468600

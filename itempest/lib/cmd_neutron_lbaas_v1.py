@@ -24,10 +24,10 @@ from tempest.services.network.json.network_client import NetworkClient
 
 VERSION = "2.0"
 URI_PREFIX = "v2.0"
-POOL_RID = 'pool'
-VIP_RID = 'vip'
-HEALTHMONITOR_RID = 'health_monitor'
-MEMBER_RID = 'member'
+POOL_RID = 'pools'
+VIP_RID = 'vips'
+HEALTHMONITOR_RID = 'health_monitors'
+MEMBER_RID = 'members'
 
 
 def _g_net_client(mgr_or_client):
@@ -50,7 +50,7 @@ def _list_lb(mgr_or_client, lb_resource):
     net_client.expected_success(200, resp.status)
     body = json.loads(body)
     result = service_client.ResponseBody(resp, body)
-    if lb_resource in result:
+    if resource_name_p in result:
         return result[lb_resource]
     return result
 
@@ -90,6 +90,20 @@ def _create_lb(mgr_or_client, lb_resource, **kwargs):
     return service_client.ResponseBody(resp, body)
 
 
+# itempest keyword show_then_update so you can control not to
+# get the lb's content before update it.
+def _update_lb(mgr_or_client, lb_resource, resource_id, **kwargs):
+    resource_name_s, resource_name_p = _g_resource_namelist(lb_resource)
+    uri = '%s/lb/%s/%s' % (URI_PREFIX, resource_name_p, resource_id)
+    net_client = _g_net_client(mgr_or_client)
+    update_body = {resource_name_s: kwargs}
+    update_body = json.dumps(update_body)
+    resp, body = net_client.put(uri, update_body)
+    net_client.expected_success(200, resp.status)
+    body = json.loads(body)
+    return service_client.ResponseBody(resp, body)
+
+
 def lb_agent_hosting_pool(mgr_or_client):
     """Get loadbalancer agent hosting a pool."""
     pass
@@ -100,9 +114,16 @@ def lb_healthmonitor_associate(mgr_or_client):
     pass
 
 
-def lb_healthmonitor_create(mgr_or_client):
+def lb_healthmonitor_create(mgr_or_client, **kwargs):
     """Create a health monitor."""
-    pass
+    create_kwargs = dict(
+        type=kwargs.pop('type', 'TCP'),
+        max_retries=kwargs.pop('nax_retries', 3),
+        timeout=kwargs.pop('timeout', 1),
+        delay=kwargs.pop('delay', 4),
+    )
+    create_kwargs.update(**kwargs)
+    return _create_lb(mgr_or_client, HEALTHMONITOR_RID, **create_kwargs)
 
 
 def lb_healthmonitor_delete(mgr_or_client, healthmonitor_id):
@@ -125,14 +146,28 @@ def lb_healthmonitor_show(mgr_or_client, healthmonitor_id):
     return _show_lb(mgr_or_client, HEALTHMONITOR_RID, healthmonitor_id)
 
 
-def lb_healthmonitor_update(mgr_or_client):
+def lb_healthmonitor_update(mgr_or_client, healthmonitor_id,
+                            show_then_update=True, **kwargs):
     """Update a given health monitor."""
-    pass
+    body = (lb_healthmonitor_show(mgr_or_client, healthmonitor_id)
+            if show_then_update else {})
+    body.update(**kwargs)
+    return _update_lb(mgr_or_client, HEALTHMONITOR_RID,
+                      healthmonitor_id, **body)
 
 
-def lb_member_create(mgr_or_client):
+# tempest create_member(self,protocol_port, pool, ip_version)
+# we use pool_id
+def lb_member_create(mgr_or_client, protocol_port, pool_id,
+                     ip_version=4, **kwargs):
     """Create a member."""
-    pass
+    create_kwargs = dict(
+        protocol_port=protocol_port,
+        pool_id=pool_id,
+        address=("fd00:abcd" if ip_version == 6 else "10.0.9.46"),
+    )
+    create_kwargs.update(**kwargs)
+    return _create_lb(mgr_or_client, MEMBER_RID, **create_kwargs)
 
 
 def lb_member_delete(mgr_or_client, member_id):
@@ -150,9 +185,13 @@ def lb_member_show(mgr_or_client, member_id):
     return _show_lb(mgr_or_client, MEMBER_RID, member_id)
 
 
-def lb_member_update(mgr_or_client):
+def lb_member_update(mgr_or_client, member_id,
+                     show_then_update=True, **kwargs):
     """Update a given member."""
-    pass
+    body = (lb_member_show(mgr_or_client, member_id) if
+            show_then_update else {})
+    body.update(**kwargs)
+    return _update_lb(mgr_or_client, MEMBER_RID, member_id, **body)
 
 
 def lb_pool_create(mgr_or_client, pool_name, lb_method, protocol, subnet_id,
@@ -160,20 +199,22 @@ def lb_pool_create(mgr_or_client, pool_name, lb_method, protocol, subnet_id,
     """Create a pool."""
     lb_method = lb_method or 'ROUND_ROBIN'
     protocol = protocol or 'HTTP'
-    post_body = dict(name=pool_name, lb_method=lb_method,
-                     protocol=protocol, subnet_id=subnet_id)
-    return _create_lb(mgr_or_client, POOL_RID, **post_body)
+    create_kwargs = dict(
+        name=pool_name, lb_method=lb_method,
+        protocol=protocol, subnet_id=subnet_id,
+    )
+    create_kwargs.update(kwargs)
+    return _create_lb(mgr_or_client, POOL_RID, **create_kwargs)
 
 
 def lb_pool_delete(mgr_or_client, pool_id):
     """Delete a given pool."""
-    return _delete_lb(mgr_or_client, 'pools', pool_id)
+    return _delete_lb(mgr_or_client, POOL_RID, pool_id)
 
 
 def lb_pool_list(mgr_or_client):
     """List pools that belong to a given tenant."""
-    lb_resource = 'pools'
-    return _list_lb(mgr_or_client, lb_resource)
+    return _list_lb(mgr_or_client, POOL_RID)
 
 
 def lb_pool_list_on_agent(mgr_or_client):
@@ -183,7 +224,7 @@ def lb_pool_list_on_agent(mgr_or_client):
 
 def lb_pool_show(mgr_or_client, pool_id):
     """Show information of a given pool."""
-    return _show_lb(mgr_or_client, 'pools', pool_id)
+    return _show_lb(mgr_or_client, POOL_RID, pool_id)
 
 
 def lb_pool_stats(mgr_or_client, pool_id):
@@ -196,42 +237,62 @@ def lb_pool_stats(mgr_or_client, pool_id):
     return service_client.ResponseBody(resp, body)
 
 
-def lb_pool_update(mgr_or_client, pool_id, **kwargs):
+def lb_pool_update(mgr_or_client, pool_id,
+                   show_then_update=True, **kwargs):
     """Update a given pool."""
-    resource_name_s, resource_name_p = _g_resource_namelist(POOL_RID)
-    uri = '%s/lb/pools/%s' % (URI_PREFIX, resource_name_p, pool_id)
-    net_client = _g_net_client(mgr_or_client)
-    body = lb_pool_show(mgr_or_client, pool_id)
+    body = (lb_pool_show(mgr_or_client, pool_id) if
+            show_then_update else {})
     body.update(**kwargs)
-    update_body = {resource_name_s: body}
-    update_body = json.dumps(update_body)
-    resp, body = net_client.put(uri, update_body)
-    net_client.expected_success(200, resp.status)
-    body = json.loads(body)
-    return service_client.ResponseBody(resp, body)
+    return _update_lb(mgr_or_client, POOL_RID, pool_id, **body)
 
 
-def lb_vip_create(mgr_or_client, vip_id):
+def lb_vip_create(mgr_or_client, pool_id, **kwargs):
     """Create a vip."""
-    pass
+    create_kwargs = dict(
+        pool_id=pool_id,
+        protocol=kwargs.pop('protocol', 'HTTP'),
+        protocol_port=kwargs.pop('protocol_port', 80),
+        name=kwargs.pop('name', None),
+        address=kwargs.pop('address', None),
+    )
+    for k in create_kwargs.keys():
+        if create_kwargs[k] is None:
+            create_kwargs.pop(k)
+    create_kwargs.update(**kwargs)
+    # subnet_id needed to create vip
+    return _create_lb(mgr_or_client, VIP_RID, **create_kwargs)
 
 
 def lb_vip_delete(mgr_or_client, vip_id):
     """Delete a given vip."""
-    return _delete_lb(mgr_or_client, 'vips', vip_id)
+    return _delete_lb(mgr_or_client, VIP_RID, vip_id)
 
 
 def lb_vip_list(mgr_or_client):
     """List vips that belong to a given tenant."""
-    lb_resource = 'vips'
-    return _list_lb(mgr_or_client, lb_resource)
+    return _list_lb(mgr_or_client, VIP_RID)
 
 
 def lb_vip_show(mgr_or_client, vip_id):
     """Show information of a given vip."""
-    return _show_lb(mgr_or_client, 'vips', vip_id)
+    return _show_lb(mgr_or_client, VIP_RID, vip_id)
 
 
-def lb_vip_update(mgr_or_client):
+def lb_vip_update(mgr_or_client, vip_id,
+                  show_then_update=True, **kwargs):
     """Update a given vip."""
-    pass
+    body = (lb_vip_show(mgr_or_client, vip_id) if
+            show_then_update else {})
+    body.update(**kwargs)
+    return _update_lb(mgr_or_client, VIP_RID, vip_id, **body)
+
+
+def destroy_lb(mgr_or_client):
+    for o in lb_member_list(mgr_or_client):
+        lb_member_delete(mgr_or_client, o['id'])
+    for o in lb_healthmonitor_list(mgr_or_client):
+        lb_healthmonitor_delete(mgr_or_client, o['id'])
+    for o in lb_vip_list(mgr_or_client):
+        lb_vip_delete(mgr_or_client, o['id'])
+    for o in lb_pool_list(mgr_or_client):
+        lb_pool_delete(mgr_or_client, o['id'])
