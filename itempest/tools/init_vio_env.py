@@ -1,3 +1,5 @@
+import copy
+import ConfigParser
 from itempest.lib import utils as U
 
 TEST_IMAGES = {
@@ -16,6 +18,14 @@ TEST_IMAGES = {
     },
 }
 
+VIO1 = dict(
+    gateway='10.158.57.253',
+    nameservers=['8.8.8.8', '8.8.4.4'],
+    nameservers_internal=['10.132.71.1', '10.132.71.2'],
+    cidr='10.158.57.0/24',
+    alloc_pools=[dict(start='10.158.57.20', end='10.158.57.34')],
+)
+
 VIO2 = dict(
     gateway='10.158.57.253',
     nameservers=['8.8.8.8', '8.8.4.4'],
@@ -23,6 +33,114 @@ VIO2 = dict(
     cidr='10.158.57.0/24',
     alloc_pools=[dict(start='10.158.57.40', end='10.158.57.54')],
 )
+
+VIO3 = dict(
+    gateway='10.158.57.253',
+    nameservers=['8.8.8.8', '8.8.4.4'],
+    nameservers_internal=['10.132.71.1', '10.132.71.2'],
+    cidr='10.158.57.0/24',
+    alloc_pools=[dict(start='10.158.57.60', end='10.158.57.74')],
+)
+
+# ConfigParser raise exception for session name as default
+# 'DEFAULT': dict(
+#    log_file = 'itempest-vio2-internal.log',
+#    lock_path = '/opt/stack/data/itempest-vio2-internal',
+# ),
+vio1_internal_conf = {
+    'compute': dict(
+        flavor_ref=1, image_ref='',
+        flavor_ref_alt=1, image_ref_alt='',
+    ),
+    'compute-admin': dict(
+        username='admin', password='2os@VMware', tanant_name='admin',
+    ),
+    'network': dict(
+        public_network_id='',
+    ),
+    'nsxv': dict(
+        manager_uri='https://10.133.236.114',
+        vdn_scope_id='vdnscope-1',
+        vlan_physical_network='dvs-109',
+        flat_network_alloc_pool='10.158.57.253 10.158.57.35 10.158.57.39 '
+                                '10.158.57.0/24'
+    ),
+    'identity': dict(
+        disable_ssl_certificate_validation=True,
+        v2_admin_endpoint_type='adminURL',
+        v2_public_endpoint_type='internalURL',
+        uri_v3='http://10.133.236.20:35357/v3/',
+        uri='http://10.133.236.20:35357/v2.0/',
+    ),
+}
+vio2_internal_conf = {
+    'compute': dict(
+        flavor_ref=1, image_ref='',
+        flavor_ref_alt=1, image_ref_alt='',
+    ),
+    'compute-admin': dict(
+        username='admin', password='2os@VMware', tanant_name='admin',
+    ),
+    'network': dict(
+        public_network_id='',
+    ),
+    'nsxv': dict(
+        manager_uri='https://10.133.236.115',
+        vdn_scope_id='vdnscope-1',
+        vlan_physical_network='dvs-109',
+        flat_network_alloc_pool='10.158.57.253 10.158.57.55 10.158.57.59 '
+                                ' 10.158.57.0/24'
+    ),
+    'identity': dict(
+        disable_ssl_certificate_validation=True,
+        v2_admin_endpoint_type='adminURL',
+        v2_public_endpoint_type='internalURL',
+        uri_v3='http://10.133.236.60:35357/v3/',
+        uri='http://10.133.236.60:35357/v2.0/',
+    ),
+}
+vio3_internal_conf = {
+    'compute': dict(
+        flavor_ref=1, image_ref='',
+        flavor_ref_alt=1, image_ref_alt='',
+    ),
+    'compute-admin': dict(
+        username='admin', password='2os@VMware', tanant_name='admin',
+    ),
+    'network': dict(
+        public_network_id='',
+    ),
+    'nsxv': dict(
+        manager_uri='https://10.133.236.116',
+        vdn_scope_id='vdnscope-1',
+        vlan_physical_network='dvs-109',
+        flat_network_alloc_pool='10.158.57.253 10.158.57.75 10.158.57.79 '
+                                ' 10.158.57.0/24'
+    ),
+    'identity': dict(
+        disable_ssl_certificate_validation=True,
+        v2_admin_endpoint_type='adminURL',
+        v2_public_endpoint_type='internalURL',
+        uri_v3='http://10.133.236.40:35357/v3/',
+        uri='http://10.133.236.40:35357/v2.0/',
+    ),
+}
+
+def build_tempest_conf(tempest_conf_fname, from_template, **kwargs):
+    t_template = (
+        from_template if type(from_template) in (str, unicode) else
+        'itempest/_local/rc/vio/tempest-internal.conf.sample')
+    cp = ConfigParser.ConfigParser()
+    cp.readfp(open(t_template))
+    for sess in kwargs.keys():
+        if not cp.has_section(sess):
+            cp.add_section(sess)
+        for k, v in kwargs[sess].items():
+            cp.set(sess, k, v)
+    # write conf to tempest_conf
+    with open(tempest_conf_fname, 'wb') as configfile:
+        cp.write(configfile)
+    return tempest_conf_fname
 
 
 def create_image(glance, img_name, **create_kwargs):
@@ -50,35 +168,50 @@ def get_image(nova, img_name):
     return {}
 
 
-def init_vio2_env(os_auth_url, os_name, os_password,
-                  os_tenant_name=None, **kwargs):
-    cli_mgr = U.get_mimic_manager_cli(os_auth_url,
-                                      os_name, os_password,
-                                      os_tenant_name=os_tenant_name,
-                                      **kwargs)
-    return init_vio2(cli_mgr)
+def init_vio1(cli_mgr, **kwargs):
+    return init_vio_tempest_env(cli_mgr, VIO1, vio2_internal_conf, **kwargs)
 
 
 def init_vio2(cli_mgr, **kwargs):
-    net = cli_mgr.qsvc('net-list --name=public')
+    return init_vio_tempest_env(cli_mgr, VIO2, vio2_internal_conf, **kwargs)
+
+
+def init_vio3(cli_mgr, **kwargs):
+    return init_vio_tempest_env(cli_mgr, VIO3, vio2_internal_conf, **kwargs)
+
+
+def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf, **kwargs):
+    xnet_name = kwargs.pop('public_net_name', 'public')
+    xsubnet_name = kwargs.pop('public_subnet_name', 'public-subnet')
+    img_name = kwargs.pop('image_name', 'cirros-0.3.3-x86_64-disk')
+    from_template = kwargs.pop('tempest_sample',
+                               '/opt/config/tempest-internal.conf.sample')
+    tempest_conf_name = kwargs.pop('tempest_conf_name',
+                                   '/opt/stack/tempest/etc/tempest.conf')
+    net = cli_mgr.qsvc('net-list', name=xnet_name)
     if len(net) == 0:
-        net = cli_mgr.qsvc('net-create', 'public',
+        net = cli_mgr.qsvc('net-create', xnet_name,
                            **{'router:external': True, 'shared': False})
     else:
         net = net[0]
-    snet = cli_mgr.qsvc('subnet-list --name=public-subnet')
+    snet = cli_mgr.qsvc('subnet-list', name=xsubnet_name)
     if len(snet) == 0:
         snet = cli_mgr.qsvc('subnet-create', net['id'],
-                            name='public-subnet',
-                            cidr=VIO2['cidr'],
-                            gateway_ip=VIO2['gateway'],
-                            dns_nameservers=VIO2['nameservers'],
-                            allocation_pools=VIO2['alloc_pools'],
+                            name=xsubnet_name,
+                            cidr=vio_net_conf['cidr'],
+                            gateway_ip=vio_net_conf['gateway'],
+                            dns_nameservers=vio_net_conf['nameservers'],
+                            allocation_pools=vio_net_conf['alloc_pools'],
                             enable_dhcp=False)
     else:
         snet = snet[0]
-    # rtr = cli_mgr.qsvc('router-create router1')
-    img_list = []
-    for img_name, img_dict in TEST_IMAGES.items():
-        img_list.append(create_image(cli_mgr.nova, img_name, **img_dict))
-    return (net, snet, img_list)
+    # let it fail, if not found
+    img = U.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
+    vio2_iconf = copy.deepcopy(internal_conf)
+    vio2_iconf['compute']['image_ref'] = img['id']
+    vio2_iconf['compute']['image_ref_alt'] = img['id']
+    vio2_iconf['network']['public_network_id'] = net['id']
+    conf_name = build_tempest_conf(tempest_conf_name, from_template,
+                                   **vio2_iconf)
+    net = cli_mgr.qsvc('net-list', name=xnet_name)[0]
+    return (conf_name, net)
