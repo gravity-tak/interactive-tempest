@@ -1,0 +1,97 @@
+[DEFAULT]
+debug = True
+log_file = itempest-demo.log
+use_stderr = False
+lock_path = /opt/stack/lock/itempest-vio2-demo
+
+
+[auth]
+# tempest_roles = member
+
+
+[cli]
+
+
+[compute]
+flavor_regex = ^m1.small$
+tenant_network_mask_bits = 28
+tenant_network_cidr = 10.110.0.0/16
+ssh_connect_method = floating
+ssh_timeout = 196
+ip_version_for_ssh = 4
+network_for_ssh = private
+ssh_user = root
+allow_tenant_isolation = True
+build_interval = 1
+build_timeout = 1202
+
+
+[dashboard]
+
+
+[identity]
+disable_ssl_certificate_validation = true
+auth_version = v2
+alt_tenant_name = alt_demo
+alt_password = openstack
+alt_username = alt_demo
+tenant_name = demo
+password = openstack
+username = demo
+uri_v3 = http://10.158.57.16:5000/v3/
+uri = http://10.158.57.16:5000/v2.0/
+
+
+[identity-feature-enabled]
+xml_api = True
+
+
+[image]
+
+
+[image-feature-enabled]
+
+
+[network]
+tenant_network_mask_bits = 28
+tenant_network_cidr = 10.220.0.0/16
+default_network = 10.0.0.0/24
+public_router_id = 
+public_network_id = f580f7a2-000c-40bf-9c3a-ab2d9923b4bc
+tenant_networks_reachable = false
+api_version = 2.0
+dns_servers = 8.8.8.8,8.8.4.4
+
+
+[network-feature-enabled]
+api_extensions = binding,security-group,dist-router,multi-provider,provider,quotas,external-net,extraroute,router,ext-gw-mode
+xml_api = True
+ipv6 = False
+
+
+[orchestration]
+
+
+[scenario]
+large_ops_number = 0
+img_dir = /home/stack/jenkins/devstack/files/images/cirros-0.3.1-x86_64-uec
+
+
+[service_available]
+neutron = True
+heat = False
+ceilometer = False
+swift = False
+cinder = True
+nova = True
+glance = True
+horizon = True
+
+[volume]
+build_interval = 1
+build_timeout = 196
+
+
+[volume-feature-enabled]
+api_extensions = OS-SCH-HNT,
+backup = False

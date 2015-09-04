@@ -1,0 +1,171 @@
+[DEFAULT]
+debug = True
+log_file = itempest-internal.log
+use_stderr = False
+lock_path = /opt/stack/data/itempest-internal
+compute_feature_enabled.api_v3 = True
+
+[auth]
+# tempest_roles = member
+
+[baremetal]
+
+[boto]
+
+[cli]
+cli_dir = /usr/local/bin
+enabled = false
+
+[compute]
+ssh_connect_method = fixed
+flavor_ref_alt = 1
+flavor_ref = 1
+image_ssh_user = cirros
+image_ssh_password = cubswin:)
+image_alt_ssh_user = cirros
+image_alt_ssh_password = cubswin:)
+ssh_timeout = 196
+ip_version_for_ssh = 4
+network_for_ssh = flat
+ssh_user = cirros
+ssh_password = cubwins:)
+allow_tenant_isolation = True
+build_timeout = 1500
+region = nova
+endpoint_type = internalURL
+volume_device_name = vdb
+image_ref = cb903819-8b7c-4eaa-b37c-2a5277f1cdc7
+image_ref_alt = cb903819-8b7c-4eaa-b37c-2a5277f1cdc7
+fixed_network_name = flat
+tenant_network_mask_bits = 28
+tenant_network_cidr = 172.16.11.0/24
+
+[compute-admin]
+tenant_name = admin
+password = 2os@VMware
+username = admin
+tanant_name = admin
+
+[compute-feature-enabled]
+block_migration_for_live_migration = False
+change_password = False
+live_migration = False
+resize = True
+api_v3 = False
+pause = False
+
+[dashboard]
+
+
+[data_processing]
+endpoint_type = internalURL
+
+[database]
+
+
+[debug]
+
+
+[identity]
+disable_ssl_certificate_validation = true
+auth_version = v2
+admin_domain_name = Default
+# admin_tenant_id = 53ba69fad9de41c48636c8025cbccf53
+admin_tenant_name = admin
+admin_password = 2os@VMware
+admin_username = admin
+alt_tenant_name = alt-user
+alt_password = vmware
+alt_username = alt-user
+tenant_name = default
+password = vmware
+username = default
+region = nova
+# on kilo identity_client hardcoded with adminURL
+endpoint_type = internalURL
+# on Liberty release, identity_client uses v2_admin_endpoint_type
+v2_admin_endpoint_type = adminURL
+uri_v3 = http://10.133.236.40:35357/v3/
+uri = http://10.133.236.40:35357/v2.0/
+
+[identity-feature-enabled]
+
+[image]
+region = nova
+endpoint_type = internalURL
+
+[image-feature-enabled]
+
+[input-scenario]
+
+[negative]
+
+[network]
+tenant_network_cidr = 10.220.0.0/16
+tenant_network_mask_bits = 28
+tenant_networks_reachable = false
+api_version = 2.0
+build_timeout = 500
+region = nova
+endpoint_type = internalURL
+public_network_id = 25f9948e-987a-4d67-aad2-08ebdd85bd89
+
+[network-feature-enabled]
+api_extensions = binding,security-group,dist-router,multi-provider,provider,quotas,external-net,extraroute,router,ext-gw-mode,security-group-logging,lbaas,nsxv-router-type,dvr
+ipv6 = False
+
+[object-storage]
+region = nova
+endpoint_type = internalURL
+operator_role = storage-ops
+
+[object-storage-feature-enabled]
+
+[orchestration]
+region = nova
+endpoint_type = internalURL
+
+[queuing]
+
+[scenario]
+large_ops_number = 0
+
+[service_available]
+neutron = True
+heat = True
+ceilometer = False
+swift = False
+cinder = True
+nova = True
+glance = True
+horizon = True
+
+[stress]
+
+[telemetry]
+too_slow_to_test = False
+
+[volume]
+build_timeout = 1500
+region = nova
+endpoint_type = internalURL
+storage_protocol = LSI Logic SCSI
+vendor_name = VMware
+disk_format = vmdk
+volume_size = 5
+
+[volume-feature-enabled]
+backup = False
+
+[nsxv]
+manager_uri = https://10.133.236.115
+user = admin
+password = default
+vdn_scope_id = vdnscope-1
+vlan_physical_network = dvs-109
+provider_vlan_id = 888
+waitfor_disassoc = 15.0
+waitfor_assoc = 5.0
+waitfor_connectivity = 120.0
+flat_network_alloc_pool = 10.158.57.253 10.158.57.55 10.158.57.59 10.158.57/24
+

@@ -42,11 +42,7 @@ VIO3 = dict(
     alloc_pools=[dict(start='10.158.57.60', end='10.158.57.74')],
 )
 
-# ConfigParser raise exception for session name as default
-# 'DEFAULT': dict(
-#    log_file = 'itempest-vio2-internal.log',
-#    lock_path = '/opt/stack/data/itempest-vio2-internal',
-# ),
+# ConfigParser raise exception for session name as DEFAULT
 vio1_internal_conf = {
     'compute': dict(
         flavor_ref=1, image_ref='',
@@ -126,10 +122,13 @@ vio3_internal_conf = {
     ),
 }
 
-def build_tempest_conf(tempest_conf_fname, from_template, **kwargs):
+
+def build_tempest_conf(tempest_conf_fname, from_template,
+                       conf_defaults=None, **kwargs):
     t_template = (
         from_template if type(from_template) in (str, unicode) else
         'itempest/_local/rc/vio/tempest-internal.conf.sample')
+    conf_defaults = conf_defaults if type(conf_defaults) is dict else None
     cp = ConfigParser.ConfigParser()
     cp.readfp(open(t_template))
     for sess in kwargs.keys():
@@ -137,6 +136,10 @@ def build_tempest_conf(tempest_conf_fname, from_template, **kwargs):
             cp.add_section(sess)
         for k, v in kwargs[sess].items():
             cp.set(sess, k, v)
+    # update default; hacking
+    if conf_defaults:
+        for k,v in conf_defaults.items():
+            cp._defaults[k] = str(v)
     # write conf to tempest_conf
     with open(tempest_conf_fname, 'wb') as configfile:
         cp.write(configfile)
@@ -168,26 +171,53 @@ def get_image(nova, img_name):
     return {}
 
 
+# beaware cli_mgr is managing vio1
 def init_vio1(cli_mgr, **kwargs):
-    return init_vio_tempest_env(cli_mgr, VIO1, vio2_internal_conf, **kwargs)
+    if 'tempest_conf' not in kwargs:
+        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio1-internal.conf'
+    conf_defaults = dict(
+        log_file='itempest-vio1-internal.log',
+        lock_path='/opt/stack/data/itempest-vio1-internal',
+    )
+    return init_vio_tempest_env(cli_mgr, VIO1, vio1_internal_conf,
+                                conf_defaults=conf_defaults, **kwargs)
 
 
+# beaware cli_mgr is managing vio2
 def init_vio2(cli_mgr, **kwargs):
-    return init_vio_tempest_env(cli_mgr, VIO2, vio2_internal_conf, **kwargs)
+    if 'tempest_conf' not in kwargs:
+        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio2-internal.conf'
+    conf_defaults = dict(
+        log_file='itempest-vio2-internal.log',
+        lock_path='/opt/stack/data/itempest-vio2-internal',
+    )
+    return init_vio_tempest_env(cli_mgr, VIO2, vio2_internal_conf,
+                                conf_defaults=conf_defaults, **kwargs)
 
 
+# beaware cli_mgr is managing vio3
 def init_vio3(cli_mgr, **kwargs):
-    return init_vio_tempest_env(cli_mgr, VIO3, vio2_internal_conf, **kwargs)
+    if 'tempest_conf' not in kwargs:
+        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio3-internal.conf'
+    conf_defaults = dict(
+        log_file='itempest-vio3-internal.log',
+        lock_path='/opt/stack/data/itempest-vio3-internal',
+    )
+    return init_vio_tempest_env(cli_mgr, VIO3, vio3_internal_conf,
+                                conf_defaults=conf_defaults, **kwargs)
 
 
-def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf, **kwargs):
+# assume you run this def from parent of itempest dir
+def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf,
+                         conf_defaults=None, **kwargs):
     xnet_name = kwargs.pop('public_net_name', 'public')
     xsubnet_name = kwargs.pop('public_subnet_name', 'public-subnet')
+    use_internal_dns = kwargs.pop('use_internal_dns', False)
     img_name = kwargs.pop('image_name', 'cirros-0.3.3-x86_64-disk')
     from_template = kwargs.pop('tempest_sample',
-                               '/opt/config/tempest-internal.conf.sample')
-    tempest_conf_name = kwargs.pop('tempest_conf_name',
-                                   '/opt/stack/tempest/etc/tempest.conf')
+                               'itempest/etc/tempest-internal.conf.sample')
+    tempest_conf = kwargs.pop('tempest_conf',
+                              'itempest/etc/itempest-internal.conf')
     net = cli_mgr.qsvc('net-list', name=xnet_name)
     if len(net) == 0:
         net = cli_mgr.qsvc('net-create', xnet_name,
@@ -196,22 +226,25 @@ def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf, **kwargs):
         net = net[0]
     snet = cli_mgr.qsvc('subnet-list', name=xsubnet_name)
     if len(snet) == 0:
+        dns_nameservers = (
+            vio_net_conf['nameservers_internal'] if use_internal_dns else
+            vio_net_conf['nameservers'])
         snet = cli_mgr.qsvc('subnet-create', net['id'],
                             name=xsubnet_name,
                             cidr=vio_net_conf['cidr'],
                             gateway_ip=vio_net_conf['gateway'],
-                            dns_nameservers=vio_net_conf['nameservers'],
+                            dns_nameservers=dns_nameservers,
                             allocation_pools=vio_net_conf['alloc_pools'],
                             enable_dhcp=False)
     else:
         snet = snet[0]
     # let it fail, if not found
     img = U.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
-    vio2_iconf = copy.deepcopy(internal_conf)
-    vio2_iconf['compute']['image_ref'] = img['id']
-    vio2_iconf['compute']['image_ref_alt'] = img['id']
-    vio2_iconf['network']['public_network_id'] = net['id']
-    conf_name = build_tempest_conf(tempest_conf_name, from_template,
-                                   **vio2_iconf)
+    vio_iconf = copy.deepcopy(conf_conf)
+    vio_iconf['compute']['image_ref'] = img['id']
+    vio_iconf['compute']['image_ref_alt'] = img['id']
+    vio_iconf['network']['public_network_id'] = net['id']
+    conf_name = build_tempest_conf(tempest_conf, from_template,
+                                   conf_defaults, **vio_iconf)
     net = cli_mgr.qsvc('net-list', name=xnet_name)[0]
     return (conf_name, net)
