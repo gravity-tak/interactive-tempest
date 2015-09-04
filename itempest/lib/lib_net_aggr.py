@@ -40,14 +40,17 @@ def get_image_cred(img_name):
 
 # cli_mgr = utils.get_mimic_manager_cli(os_auth_url, username, passwor)
 def wipeout_net_resources_of_orphan_networks(cli_mgr, **kwargs):
+    force_rm_fip = kwargs.pop('force_rm_fip', True)
     tenant_list = get_tenant_of_orphan_networks(cli_mgr)
     times_used = 0
     for tenant_id in tenant_list:
-        times_used += wipeout_tenant_net_resources(tenant_id, cli_mgr)
+        times_used += wipeout_tenant_net_resources(
+            tenant_id, cli_mgr, force_rm_fip=force_rm_fip, **kwargs)
     return times_used
 
 
-def wipeout_tenant_net_resources(tenant_id, cli_mgr, **kwargs):
+def wipeout_tenant_net_resources(tenant_id, cli_mgr,
+                                 force_rm_fip=False, **kwargs):
     t0 = time.time()
     kwargs = {'tenant_id': tenant_id}
     # delete servers
