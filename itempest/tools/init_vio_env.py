@@ -110,6 +110,7 @@ vio3_internal_conf = {
         manager_uri='https://10.133.236.116',
         vdn_scope_id='vdnscope-1',
         vlan_physical_network='dvs-109',
+        waitfor_connectivity=180.0,
         flat_network_alloc_pool='10.158.57.253 10.158.57.75 10.158.57.79 '
                                 ' 10.158.57.0/24'
     ),
@@ -238,8 +239,11 @@ def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf,
                             enable_dhcp=False)
     else:
         snet = snet[0]
-    # let it fail, if not found
-    img = U.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
+    # get image by img_name, otherwise random get one
+    try:
+        img = U.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
+    except Exception:
+        img = cli_mgr.nova('image-list')[0]
     vio_iconf = copy.deepcopy(conf_conf)
     vio_iconf['compute']['image_ref'] = img['id']
     vio_iconf['compute']['image_ref_alt'] = img['id']

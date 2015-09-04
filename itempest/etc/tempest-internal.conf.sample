@@ -166,6 +166,6 @@ vlan_physical_network = dvs-109
 provider_vlan_id = 888
 waitfor_disassoc = 15.0
 waitfor_assoc = 5.0
-waitfor_connectivity = 120.0
+waitfor_connectivity = 180.0
 flat_network_alloc_pool = 10.158.57.253 10.158.57.55 10.158.57.59 10.158.57/24
 
