@@ -91,8 +91,8 @@ vio2_internal_conf = {
         disable_ssl_certificate_validation=True,
         v2_admin_endpoint_type='adminURL',
         v2_public_endpoint_type='internalURL',
-        uri_v3='http://10.133.236.60:35357/v3/',
-        uri='http://10.133.236.60:35357/v2.0/',
+        uri_v3='http://10.133.236.40:35357/v3/',
+        uri='http://10.133.236.40:35357/v2.0/',
     ),
 }
 vio3_internal_conf = {
@@ -118,8 +118,8 @@ vio3_internal_conf = {
         disable_ssl_certificate_validation=True,
         v2_admin_endpoint_type='adminURL',
         v2_public_endpoint_type='internalURL',
-        uri_v3='http://10.133.236.40:35357/v3/',
-        uri='http://10.133.236.40:35357/v2.0/',
+        uri_v3='http://10.133.236.60:35357/v3/',
+        uri='http://10.133.236.60:35357/v2.0/',
     ),
 }
 
