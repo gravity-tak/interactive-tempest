@@ -79,6 +79,17 @@ vio2_internal_conf = {
     ),
     'network': dict(
         public_network_id='',
+        dns_servers='10.132.71.1,10.132.71.2',
+        outside_world_servers='104.130.159.134,91.189.89.224',
+        flat_network_alloc_pool='10.158.57.253,10.158.57.55,10.158.57.59'
+                                ',10.158.57.0/24'
+    ),
+    'scenario': dict(
+        outside_world_servers='91.189.89.224,104.130.159.134',
+        waitfor_disassoc=15.0,
+        waitfor_assoc=5.0,
+        waitfor_connectivity=120.0,
+        flat_alloc_pool_dict='gateway:10.34.57.1,start:10.34.57.216,end:10.34.57.220,cidr:10.34.57.0/24',
     ),
     'nsxv': dict(
         manager_uri='https://10.133.236.115',
@@ -139,7 +150,7 @@ def build_tempest_conf(tempest_conf_fname, from_template,
             cp.set(sess, k, v)
     # update default; hacking
     if conf_defaults:
-        for k,v in conf_defaults.items():
+        for k, v in conf_defaults.items():
             cp._defaults[k] = str(v)
     # write conf to tempest_conf
     with open(tempest_conf_fname, 'wb') as configfile:
