@@ -57,9 +57,9 @@ vio1_internal_conf = {
     'nsxv': dict(
         manager_uri='https://10.133.236.114',
         vdn_scope_id='vdnscope-1',
-        vlan_physical_network='dvs-109',
-        flat_network_alloc_pool='10.158.57.253 10.158.57.35 10.158.57.39 '
-                                '10.158.57.0/24'
+        vlan_physical_network='dvs-22',
+        flat_network_alloc_pool='10.158.57.253 10.158.57.35 10.158.57.39'
+                                ' 10.158.57.0/24'
     ),
     'identity': dict(
         disable_ssl_certificate_validation=True,
@@ -84,7 +84,7 @@ vio2_internal_conf = {
         manager_uri='https://10.133.236.115',
         vdn_scope_id='vdnscope-1',
         vlan_physical_network='dvs-109',
-        flat_network_alloc_pool='10.158.57.253 10.158.57.55 10.158.57.59 '
+        flat_network_alloc_pool='10.158.57.253 10.158.57.55 10.158.57.59'
                                 ' 10.158.57.0/24'
     ),
     'identity': dict(
@@ -175,7 +175,7 @@ def get_image(nova, img_name):
 # beaware cli_mgr is managing vio1
 def init_vio1(cli_mgr, **kwargs):
     if 'tempest_conf' not in kwargs:
-        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio1-internal.conf'
+        kwargs['tempest_conf'] = 'etc/tempest-vio1-internal.conf'
     conf_defaults = dict(
         log_file='itempest-vio1-internal.log',
         lock_path='/opt/stack/data/itempest-vio1-internal',
@@ -187,7 +187,7 @@ def init_vio1(cli_mgr, **kwargs):
 # beaware cli_mgr is managing vio2
 def init_vio2(cli_mgr, **kwargs):
     if 'tempest_conf' not in kwargs:
-        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio2-internal.conf'
+        kwargs['tempest_conf'] = 'etc/tempest-vio2-internal.conf'
     conf_defaults = dict(
         log_file='itempest-vio2-internal.log',
         lock_path='/opt/stack/data/itempest-vio2-internal',
@@ -199,7 +199,7 @@ def init_vio2(cli_mgr, **kwargs):
 # beaware cli_mgr is managing vio3
 def init_vio3(cli_mgr, **kwargs):
     if 'tempest_conf' not in kwargs:
-        kwargs['tempest_conf'] = 'itempest/etc/tempest-vio3-internal.conf'
+        kwargs['tempest_conf'] = 'etc/tempest-vio3-internal.conf'
     conf_defaults = dict(
         log_file='itempest-vio3-internal.log',
         lock_path='/opt/stack/data/itempest-vio3-internal',
