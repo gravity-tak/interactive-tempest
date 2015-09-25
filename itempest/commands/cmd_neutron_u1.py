@@ -14,7 +14,7 @@
 #    under the License.
 
 
-from itempest.lib import cmd_neutron as Q
+from itempest.commands import cmd_neutron as Q
 
 
 # user defined commands

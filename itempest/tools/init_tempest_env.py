@@ -29,8 +29,7 @@ Public VIP: 10.158.57.16
 Public Network: 10.158.57.40-10.158.57.59
 """
 
-from itempest.lib import cmd_neutron
-from itempest.lib import cmd_nova
+from itempest.commands import cmd_neutron, cmd_nova
 from itempest.lib import utils as U
 
 class InitTempestEnv(object):

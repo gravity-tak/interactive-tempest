@@ -21,7 +21,7 @@ from tempest_lib import exceptions
 
 from tempest.services.network.json.network_client import NetworkClient
 
-import man_data as mdata
+import itempest.lib.man_data as mdata
 
 
 NET_CONSTANTS = {

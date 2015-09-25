@@ -21,9 +21,9 @@ import json
 import os
 import time
 
-from itempest.lib import cmd_neutron
-from itempest.lib import cmd_neutron_u1
-from itempest.lib import cmd_nova
+from itempest.commands import cmd_neutron
+from itempest.commands import cmd_neutron_u1
+from itempest.commands import cmd_nova
 from itempest.lib import utils
 
 

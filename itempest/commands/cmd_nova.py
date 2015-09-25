@@ -16,7 +16,7 @@
 import base64
 import os
 
-import man_data as mdata
+import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
 
 from tempest_lib.common.utils import data_utils

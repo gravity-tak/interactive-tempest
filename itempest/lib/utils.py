@@ -24,10 +24,11 @@ import time
 import traceback
 
 from oslo_log import log as oslog
+
 from itempest import icreds
-from itempest.lib import cmd_glance, cmd_neutron, cmd_neutron_u1, \
-    cmd_nova, \
-    cmd_keystone
+from itempest.commands import cmd_glance, cmd_nova, cmd_keystone
+from itempest.commands import cmd_neutron, cmd_neutron_lbaas_v1
+from itempest.commands import cmd_neutron_u1
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -301,21 +302,27 @@ class AttrContainer(object):
 def get_mimic_manager_cli(os_auth_url, os_username, os_password,
                           os_tenant_name=None, identity_version='v2',
                           **kwargs):
+    lbaasv1 = kwargs.pop('lbaasv1', True)
     manager = icreds.get_client_manager(os_auth_url,
                                         os_username, os_password,
                                         tenant_name=os_tenant_name,
                                         identity_version=identity_version,
                                         **kwargs)
-    return get_mimic_manager_cli_with_client_manager(manager)
+    return get_mimic_manager_cli_with_client_manager(manager,
+                                                     lbaasv1=lbaasv1)
 
 
-def get_mimic_manager_cli_with_client_manager(manager):
+def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True):
     qsvc = get_qsvc_command(manager)
     nova = get_nova_command(manager)
     keys = get_keys_command(manager)
-    return AttrContainer(manager=manager,
-                         qsvc=qsvc, nova=nova, keys=keys)
-
+    lbv1 = get_lbv1_command(manager) if lbaasv1 else None
+    mcli = AttrContainer(manager=manager,
+                         qsvc=qsvc,
+                         nova=nova,
+                         keys=keys,
+                         lbv1=lbv1)
+    return mcli
 
 def get_glance_command(client_mgr, log_header="OS-Glance", **kwargs):
     return command_wrapper(client_mgr, cmd_glance,
@@ -335,4 +342,9 @@ def get_nova_command(client_mgr, log_header="OS-Nova", **kwargs):
 
 def get_keys_command(client_mgr, log_header="OS-Keystone", **kwargs):
     return command_wrapper(client_mgr, cmd_keystone,
+                           log_header=log_header)
+
+
+def get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
+    return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
                            log_header=log_header)

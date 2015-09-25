@@ -89,7 +89,8 @@ vio2_internal_conf = {
         waitfor_disassoc=15.0,
         waitfor_assoc=5.0,
         waitfor_connectivity=120.0,
-        flat_alloc_pool_dict='gateway:10.34.57.1,start:10.34.57.216,end:10.34.57.220,cidr:10.34.57.0/24',
+        flat_alloc_pool_dict='gateway:10.34.57.1,start:10.34.57.216,'
+                             'end:10.34.57.220,cidr:10.34.57.0/24',
     ),
     'nsxv': dict(
         manager_uri='https://10.133.236.115',
@@ -223,34 +224,22 @@ def init_vio3(cli_mgr, **kwargs):
 def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf,
                          conf_defaults=None, **kwargs):
     xnet_name = kwargs.pop('public_net_name', 'public')
-    xsubnet_name = kwargs.pop('public_subnet_name', 'public-subnet')
     use_internal_dns = kwargs.pop('use_internal_dns', False)
     img_name = kwargs.pop('image_name', 'cirros-0.3.3-x86_64-disk')
     from_template = kwargs.pop('tempest_sample',
                                'itempest/etc/tempest-internal.conf.sample')
     tempest_conf = kwargs.pop('tempest_conf',
                               'itempest/etc/itempest-internal.conf')
-    net = cli_mgr.qsvc('net-list', name=xnet_name)
-    if len(net) == 0:
-        net = cli_mgr.qsvc('net-create', xnet_name,
-                           **{'router:external': True, 'shared': False})
-    else:
-        net = net[0]
-    snet = cli_mgr.qsvc('subnet-list', name=xsubnet_name)
-    if len(snet) == 0:
-        dns_nameservers = (
-            vio_net_conf['nameservers_internal'] if use_internal_dns else
-            vio_net_conf['nameservers'])
-        snet = cli_mgr.qsvc('subnet-create', net['id'],
-                            name=xsubnet_name,
-                            cidr=vio_net_conf['cidr'],
-                            gateway_ip=vio_net_conf['gateway'],
-                            dns_nameservers=dns_nameservers,
-                            allocation_pools=vio_net_conf['alloc_pools'],
-                            enable_dhcp=False)
-    else:
-        snet = snet[0]
-    # get image by img_name, otherwise random get one
+    dns_nameservers = (
+        vio_net_conf['nameservers_internal'] if use_internal_dns else
+        vio_net_conf['nameservers'])
+
+    net, subnet = show_or_create_external_network(
+        cli_mgr, xnet_name,
+        cidr=vio_net_conf['cidr'],
+        gateway_ip=vio_net_conf['gateway'],
+        dns_nameservers=dns_nameservers,
+        allocation_pools=vio_net_conf['alloc_pools'])
     try:
         img = U.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
     except Exception:
@@ -263,3 +252,27 @@ def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf,
                                    conf_defaults, **vio_iconf)
     net = cli_mgr.qsvc('net-list', name=xnet_name)[0]
     return (conf_name, net)
+
+
+def show_or_create_external_network(cli_mgr, net_name='public',
+                                    subnet_name=None,
+                                    cidr=None, gateway_ip=None,
+                                    dns_nameservers=None,
+                                    allocation_pools=None,
+                                    enable_dhcp=False):
+    net = cli_mgr.qsvc('net-list', name=net_name)
+    if len(net) == 0:
+        net = cli_mgr.qsvc('net-create', net_name,
+                           **{'router:external': True, 'shared': False})
+    else:
+        net = net[0]
+    subnet_name = subnet_name if subnet_name else net_name + "-subnet"
+    snet = cli_mgr.qsvc('subnet-list', name=subnet_name)
+    if len(snet) == 0:
+        subnet_config = dict(name=subnet_name,
+                             cidr=cidr, gateway_ip=gateway_ip,
+                             dns_servers=dns_nameservers,
+                             allocation_pools=allocation_pools,
+                             enable_dhcp=enable_dhcp)
+        snet = cli_mgr.qsvc('subnet-create', net['id'], **subnet_config)
+    return (net, snet)
