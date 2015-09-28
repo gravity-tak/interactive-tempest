@@ -322,6 +322,7 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True):
                          nova=nova,
                          keys=keys,
                          lbv1=lbv1)
+    mcli.is_admin = manager.identity_client.has_admin_extensions()
     return mcli
 
 def get_glance_command(client_mgr, log_header="OS-Glance", **kwargs):

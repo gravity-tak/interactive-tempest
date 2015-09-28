@@ -271,7 +271,7 @@ def show_or_create_external_network(cli_mgr, net_name='public',
     if len(snet) == 0:
         subnet_config = dict(name=subnet_name,
                              cidr=cidr, gateway_ip=gateway_ip,
-                             dns_servers=dns_nameservers,
+                             dns_nameservers=dns_nameservers,
                              allocation_pools=allocation_pools,
                              enable_dhcp=enable_dhcp)
         snet = cli_mgr.qsvc('subnet-create', net['id'], **subnet_config)
