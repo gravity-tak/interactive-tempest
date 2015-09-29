@@ -240,7 +240,7 @@ def server_create(mgr_or_client, name, *args, **kwargs):
             kwargs['user_data'] = base64.standard_b64encode(data)
     # commit#f2d436e changed to only use **kwargs
     server = server_client.create_server(
-        name=name, image=image_id, flavor=flavor_id, **kwargs)
+        name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
     if wait_on_boot:
         server_client.wait_for_server_status(
             server_id=server['id'], status='ACTIVE')
