@@ -229,7 +229,7 @@ def boot(mgr_or_client, name, *args, **kwargs):
 def server_create(mgr_or_client, name, *args, **kwargs):
     """Please see create_server_on_interface() and c_server()"""
     server_client = _g_servers_client(mgr_or_client)
-    image_id = kwargs.pop('image_id')
+    image_id = kwargs.pop('image_id', kwargs.pop('image', None))
     flavor_id = kwargs.pop('flavor_id', kwargs.pop('flavor', 2))
     wait_on_boot = kwargs.pop('wait_on_boot', True)
     if 'user_data' in kwargs:
@@ -238,8 +238,9 @@ def server_create(mgr_or_client, name, *args, **kwargs):
             # not encoded with base64 yet
             data = open(kwargs['user_data'], 'r').read()
             kwargs['user_data'] = base64.standard_b64encode(data)
+    # commit#f2d436e changed to only use **kwargs
     server = server_client.create_server(
-        name, image_id, flavor_id, **kwargs)
+        name=name, image=image_id, flavor=flavor_id, **kwargs)
     if wait_on_boot:
         server_client.wait_for_server_status(
             server_id=server['id'], status='ACTIVE')
