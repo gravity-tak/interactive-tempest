@@ -241,6 +241,7 @@ def server_create(mgr_or_client, name, *args, **kwargs):
     # commit#f2d436e changed to only use **kwargs
     server = server_client.create_server(
         name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
+    server = server['server'] if 'server' in server else server
     if wait_on_boot:
         server_client.wait_for_server_status(
             server_id=server['id'], status='ACTIVE')
@@ -275,6 +276,8 @@ def server_show(mgr_or_client, server_id, *args, **kwargs):
         server = servers_client.get_server(server_id, **kwargs)
     except Exception:
         server = servers_client.show_server(server_id, **kwargs)
+    if 'server' in server:
+        return server['server']
     return server
 
 
