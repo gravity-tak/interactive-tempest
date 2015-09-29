@@ -203,7 +203,7 @@ class SimpleTenantNetworks(object):
 
     def d_routers(self):
         for nid, router in self.routers.items():
-            self.qsvc('d-this-router', router)
+            self.qsvc('delete-this-router', router)
 
     def d_networks(self):
         for nid, network in self.networks.items():
