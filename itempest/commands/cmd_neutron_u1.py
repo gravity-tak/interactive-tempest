@@ -55,8 +55,8 @@ def create_flat_network(mgr_or_client,
 
 def create_security_group_loginable(mgr_or_client, name, **kwargs):
     sg = Q.security_group_create(mgr_or_client, name)
-    Q.c_security_group_ssh_rule(mgr_or_client, sg['id'])
-    Q.c_security_group_icmp_rule(mgr_or_client, sg['id'])
+    create_security_group_ssh_rule(mgr_or_client, sg['id'])
+    create_security_group_icmp_rule(mgr_or_client, sg['id'])
     return Q.security_group_show(mgr_or_client, sg['id'])
 
 

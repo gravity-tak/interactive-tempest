@@ -51,7 +51,7 @@ def _list_lb(mgr_or_client, lb_resource):
     body = json.loads(body)
     result = service_client.ResponseBody(resp, body)
     if resource_name_p in result:
-        return result[lb_resource]
+        return result[resource_name_p]
     return result
 
 
@@ -63,8 +63,8 @@ def _show_lb(mgr_or_client, lb_resource, resource_id):
     net_client.expected_success(200, resp.status)
     body = json.loads(body)
     result = service_client.ResponseBody(resp, body)
-    if lb_resource in result:
-        return result[lb_resource]
+    if resource_name_s in result:
+        return result[resource_name_s]
     return result
 
 
@@ -87,7 +87,10 @@ def _create_lb(mgr_or_client, lb_resource, **kwargs):
     resp, body = net_client.post(req_uri, body)
     net_client.expected_success(201, resp.status)
     body = json.loads(body)
-    return service_client.ResponseBody(resp, body)
+    result = service_client.ResponseBody(resp, body)
+    if resource_name_s in result:
+        return result[resource_name_s]
+    return result
 
 
 # itempest keyword show_then_update so you can control not to
