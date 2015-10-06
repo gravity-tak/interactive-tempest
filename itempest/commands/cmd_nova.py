@@ -132,7 +132,14 @@ def keypair_add(mgr_or_client, name, **kwargs):
     name = name or data_utils.rand_name('itempest')
     keypair_client = _g_keypairs_client(mgr_or_client)
     pub_key = kwargs.pop('pub_key', None)
-    keypair = keypair_client.create_keypair(name, pub_key=pub_key)
+    try:
+        keypair = keypair_client.create_keypair(name, pub_key=pub_key)
+    except Exception:
+        post_body = {'name': name}
+        if pub_key:
+            post_body['public_key'] = pub_key
+        keypair = keypair_client.create_keypair(**post_body)
+    keypair = keypair['keypair'] if 'keypair' in keypair else keypair
     return keypair
 
 
@@ -238,12 +245,12 @@ def server_create(mgr_or_client, name, *args, **kwargs):
             data = open(kwargs['user_data'], 'r').read()
             kwargs['user_data'] = base64.standard_b64encode(data)
     try:
-        server = server_client.create_server(
-            name, image_id, flavor_id, **kwargs)
-    except Exception:
         # commit#f2d436e changed to only use **kwargs
         server = server_client.create_server(
             name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
+    except Exception:
+        server = server_client.create_server(
+            name, image_id, flavor_id, **kwargs)
     server = server['server'] if 'server' in server else server
     if wait_on_boot:
         server_client.wait_for_server_status(
