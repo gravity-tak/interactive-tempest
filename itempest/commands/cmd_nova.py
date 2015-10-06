@@ -28,7 +28,6 @@ from tempest.services.compute.json.servers_client import ServersClient
 from tempest.services.image.v1.json.image_client import ImageClient
 from tempest.services.image.v2.json.image_client import ImageClientV2
 
-
 LOG = oslog.getLogger(__name__)
 
 
@@ -110,7 +109,7 @@ def image_delete(mgr_or_client, image_id, *args, **kwargs):
 
 
 def image_meta(mgr_or_client, *args, **kwargs):
-    raise(Exception("Not implemented yet!"))
+    raise (Exception("Not implemented yet!"))
 
 
 def image_show(mgr_or_client, image_id, *args, **kwargs):
@@ -218,7 +217,7 @@ def server_list_metadata(mgr_or_client, server_id, **kwargs):
 
 def server_set_metadata(mgr_or_client, server_id, meta,
                         no_metadata_field=False, **kwargs):
-    raise(Exception("Not implemented yet!"))
+    raise (Exception("Not implemented yet!"))
 
 
 def boot(mgr_or_client, name, *args, **kwargs):
@@ -238,9 +237,13 @@ def server_create(mgr_or_client, name, *args, **kwargs):
             # not encoded with base64 yet
             data = open(kwargs['user_data'], 'r').read()
             kwargs['user_data'] = base64.standard_b64encode(data)
-    # commit#f2d436e changed to only use **kwargs
-    server = server_client.create_server(
-        name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
+    try:
+        server = server_client.create_server(
+            name, image_id, flavor_id, **kwargs)
+    except Exception:
+        # commit#f2d436e changed to only use **kwargs
+        server = server_client.create_server(
+            name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
     server = server['server'] if 'server' in server else server
     if wait_on_boot:
         server_client.wait_for_server_status(
@@ -344,8 +347,8 @@ def server_get_password(mgr_or_client, server_id):
 # following commands are user-defined-commands
 # user_data will be handled by server_created()
 def create_server_on_interface(mgr_or_client, networks, image_id,
-                          flavor=2, name=None, security_groups=None,
-                          wait_on_boot=True, **kwargs):
+                               flavor=2, name=None, security_groups=None,
+                               wait_on_boot=True, **kwargs):
     """Example:
 
         image_id = u'30aea0b3-ff23-4f9c-b7c8-cadeb91cc957' # cirros-0.3.3
@@ -364,7 +367,7 @@ def create_server_on_interface(mgr_or_client, networks, image_id,
     create_kwargs = {
         'networks': network_ifs,
         'security_groups': security_groups,
-        }
+    }
     create_kwargs.update(kwargs)
     msg_p = "itempest creae-server-on-interface name=%s, image=%s"
     msg_p += ", flavor=%s, create_kwargs=%s"
