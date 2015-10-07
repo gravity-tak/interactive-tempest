@@ -308,6 +308,14 @@ def show_toplogy(cli_mgr, return_topo=False):
     return topo if return_topo else {}
 
 
+def get_user_data_of_server(server_ipaddr,
+                            username='cirros', password='cubswin:)'):
+    ud_cmd = 'curl -v http://169.254.169.254/openstack/latest/user_data'
+    s_client = remote_client.RemoteClient(server_ipaddr, username, password)
+    user_data = s_client.exec_command(ud_cmd)
+    return user_data
+
+
 def wipeout(cli_mgr, tenant_id=None, force_rm_fip=True):
     t0 = time.time()
     kwargs = {}
