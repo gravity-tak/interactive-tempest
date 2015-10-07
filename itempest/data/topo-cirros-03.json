@@ -1,5 +1,5 @@
 {
-  "name": "cirros-side2",
+  "name": "cirros-side3",
   "networks": [
     {
       "name": "acct-network",
@@ -61,7 +61,7 @@
     {
       "name": "expo-router",
       "gateway": "public",
-      "router_type": "exclusive",
+      "distribute": true,
       "interfaces": [
         "acct-network",
         "service-network",

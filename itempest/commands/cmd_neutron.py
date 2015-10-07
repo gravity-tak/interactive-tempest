@@ -32,9 +32,17 @@ NET_CONSTANTS = {
     }
 
 
-def _g_net_client(mgr_or_client):
+def _g_neutron_client(mgr_or_client):
     if isinstance(mgr_or_client, NetworkClient):
         return mgr_or_client
+    return mgr_or_client.network_client
+
+
+def _g_network_client(mgr_or_client):
+    if isinstance(mgr_or_client, NetworkClient):
+        return mgr_or_client
+    if hasattr(mgr_or_client, 'networks_client'):
+        return mgr_or_client.networks_client
     return mgr_or_client.network_client
 
 
@@ -44,7 +52,7 @@ def ext_list(mgr_or_client,
 
         neutron ext-list
     """
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     result = net_client.list_extensions()
     return result['extensions']
 
@@ -57,7 +65,7 @@ def network_create(mgr_or_client, name=None, tenant_id=None, **kwargs):
 
 
 def net_create(mgr_or_client, name=None, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-network')
     result = net_client.create_network(name=name, **kwargs)
     return result['network']
@@ -74,7 +82,7 @@ def net_list(mgr_or_client, *args, **kwargs):
         neutron net-list
         neutron net-list --tenant-id e926a5b12756476da297fea7d930fb05
     """
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     body = net_client.list_networks(*args, **kwargs)
     return body['networks']
 
@@ -104,19 +112,19 @@ def network_delete(mgr_or_client, network_id, *args, **kwargs):
 
 
 def net_delete(mgr_or_client, network_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     body = net_client.delete_network(
         network_id, *args, **kwargs)
     return body
 
 
 def network_show(mgr_or_client, network_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     return net_show(net_client, network_id, *args, **kwargs)
 
 
 def net_show(mgr_or_client, network_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     body = net_client.show_network(network_id, *args, **kwargs)
     return body['network']
 
@@ -126,14 +134,14 @@ def network_update(mgr_or_client, network_id, *args, **kwargs):
 
 
 def net_update(mgr_or_client, network_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_network_client(mgr_or_client)
     return net_client.update_network(network_id, *args, **kwargs)
 
 
 # subnet
 def subnet_create(mgr_or_client, network_id, cidr,
                   **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     name = kwargs.pop('name', None) or data_utils.rand_name('itempest-subnet')
     ip_version = kwargs.pop('ip_version', None) or 4
     subnet = dict(
@@ -149,7 +157,7 @@ def subnet_create(mgr_or_client, network_id, cidr,
 
 def subnet_create_safe(mgr_or_client, network_id,
                        **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     # tenant_id = kwargs.pop('tenant_id', None) or _g_tenant_id(net_client)
     tenant_id = kwargs.pop('tenant_id', None)
     name = kwargs.pop('name', None) or data_utils.rand_name('itempest-subnet')
@@ -206,25 +214,25 @@ def subnet_create_safe(mgr_or_client, network_id,
 
 
 def subnet_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_subnets(*args, **kwargs)
     return body['subnets']
 
 
 def subnet_show(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_subnet(subnet_id, **kwargs)
     return body['subnet']
 
 
 def subnet_delete(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_subnet(subnet_id, **kwargs)
     return body
 
 
 def subnet_update(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_subnet(subnet_id, **kwargs)
     return body['subnet']
 
@@ -232,7 +240,7 @@ def subnet_update(mgr_or_client, subnet_id, **kwargs):
 # floatingip - support ip4 only
 def floatingip_create(mgr_or_client, public_network_id,
                       **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     result = net_client.create_floatingip(
         floating_network_id=public_network_id,
         **kwargs)
@@ -241,48 +249,48 @@ def floatingip_create(mgr_or_client, public_network_id,
 
 def floatingip_associate(mgr_or_client, floatingip_id, server_id,
                          **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     result = net_client.associate_floating_ip_to_server(
         floatingip_id, server_id)
     return result
 
 
 def floatingip_disassociate(mgr_or_client, floatingip_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     result = net_client.update_floatingip(
         floatingip_id, port_id=None)
     return result
 
 
 def floatingip_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_floatingips(*args, **kwargs)
     return body['floatingips']
 
 
 def floatingip_show(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_floatingip(floatingip_id,
                                       *args, **kwargs)
     return body['floatingip']
 
 
 def floatingip_delete(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_floatingip(floatingip_id,
                                         *args, **kwargs)
     return body
 
 
 def floatingip_update(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     return net_client.update_floatingip(floatingip_id, **kwargs)
 
 
 # port
 def port_create(mgr_or_client, network_id,
                 name=None, tenant_id=None, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-port')
     tenant_id = tenant_id or _g_tenant_id(net_client)
     result = net_client.create_port(
@@ -291,25 +299,25 @@ def port_create(mgr_or_client, network_id,
 
 
 def port_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_ports(*args, **kwargs)
     return body['ports']
 
 
 def port_show(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_port(port_id, *args, **kwargs)
     return body['port']
 
 
 def port_delete(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_port(port_id, *args, **kwargs)
     return body
 
 
 def port_update(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_port(port_id, *args, **kwargs)
     return body['port']
 
@@ -317,7 +325,7 @@ def port_update(mgr_or_client, port_id, *args, **kwargs):
 # security-group
 def security_group_create(mgr_or_client,
                           name=None, tenant_id=None, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-sg')
     tenant_id = tenant_id or _g_tenant_id(net_client)
     desc = (kwargs.pop('desc', None) or
@@ -329,14 +337,14 @@ def security_group_create(mgr_or_client,
 
 
 def security_group_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_security_groups(*args, **kwargs)
     return body['security_groups']
 
 
 def security_group_show(mgr_or_client, security_group_id,
                         *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_security_group(security_group_id,
                                           *args, **kwargs)
     return body['security_group']
@@ -344,7 +352,7 @@ def security_group_show(mgr_or_client, security_group_id,
 
 def security_group_delete(mgr_or_client, security_group_id,
                           *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_security_group(security_group_id,
                                             *args, **kwargs)
     return body
@@ -352,7 +360,7 @@ def security_group_delete(mgr_or_client, security_group_id,
 
 def security_group_update(mgr_or_client, security_group_id,
                           *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_security_group(security_group_id,
                                             *args, **kwargs)
     return body['security_group']
@@ -361,7 +369,7 @@ def security_group_update(mgr_or_client, security_group_id,
 # security-group-rule
 def security_group_rule_create(mgr_or_client, security_group_id,
                                tenant_id=None, skip_None=True, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     tenant_id = tenant_id or _g_tenant_id(net_client)
     rule_dict = dict(security_group_id=security_group_id,
                      tenant_id=tenant_id)
@@ -374,13 +382,13 @@ def security_group_rule_create(mgr_or_client, security_group_id,
 
 # router
 def router_create(mgr_or_client, name, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.create_router(name, *args, **kwargs)
     return body['router']
 
 
 def router_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_routers(*args, **kwargs)
     return body['routers']
 
@@ -391,19 +399,19 @@ def router_list_on_l3_agent(mgr_or_client, *args, **kwargs):
 
 
 def router_show(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_router(router_id, *args, **kwargs)
     return body['router']
 
 
 def router_delete(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_router(router_id, *args, **kwargs)
     return body
 
 
 def router_update(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_router(router_id, **kwargs)
     return body['router']
 
@@ -411,7 +419,7 @@ def router_update(mgr_or_client, router_id, *args, **kwargs):
 # extra routes (static routes) only available from router_update
 def router_update_extra_routes_future(mgr_or_client, router_id,
                                       nexthop, destination):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_extra_routes(router_id,
                                           nexthop, destination)
     return body['router']
@@ -420,21 +428,21 @@ def router_update_extra_routes_future(mgr_or_client, router_id,
 # NOT AVAILABLE NOW!
 # fixed by https://bugs.launchpad.net/tempest/+bug/1468600
 def router_update_extra_routes(mgr_or_client, router_id, routes):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_extra_routes(router_id,
                                           routes)
     return body['router']
 
 
 def router_delete_extra_routes(mgr_or_client, router_id):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     return net_client.delete_extra_routes(router_id)
 
 
 # user-defined-command
 def router_add_extra_route(mgr_or_client, router_id,
                            nexthop, destination):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     extra_route = dict(nexthop=nexthop, destination=destination)
     # TODO(akang): retrieve from router_id, and update with extra_route
     body = net_client.update_extra_routes(router_id,
@@ -445,7 +453,7 @@ def router_add_extra_route(mgr_or_client, router_id,
 # router sub-commands
 def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
     """Remove an external network gateway from a router."""
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     return net_client.update_router(router_id,
                                     external_gateway_info=dict())
 
@@ -455,7 +463,7 @@ def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
 def router_gateway_set(mgr_or_client, router_id, external_network_id,
                        **kwargs):
     """Set the external network gateway for a router."""
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     external_gateway_info = dict(network_id=external_network_id)
     en_snat = 'enable_snat'
     if en_snat in kwargs:
@@ -468,7 +476,7 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
 # user defined command
 # this command might need admin priv for mgr_or_client
 def router_gateway_snat_set(mgr_or_client, router, enable):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     external_gateway_info = router['external_gateway_info']
     external_gateway_info['enable_snat'] = enable
     return net_client.update_router(
@@ -498,7 +506,7 @@ def router_gateway_ipaddr_get(mgr_or_client, router_id):
 def router_interface_add(mgr_or_client, router_id, subnet_id,
                          *args, **kwargs):
     """Add an internal network interface to a router."""
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     try:
         return net_client.add_router_interface_with_subnbet_id(
             router_id,
@@ -513,7 +521,7 @@ def router_interface_add(mgr_or_client, router_id, subnet_id,
 def router_interface_delete(mgr_or_client, router_id, subnet_id,
                             *args, **kwargs):
     """Remove an internal network interface from a router."""
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     try:
         return net_client.remove_router_interface_with_subnbet_id(
             router_id,
@@ -527,7 +535,7 @@ def router_interface_delete(mgr_or_client, router_id, subnet_id,
 
 # CLI : neutron router-port-list <router-name-or-id>
 def router_interface_list(mgr_or_client, router_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     try:
         result = net_client.list_router_interfaces(router_id)
     except Exception:
@@ -544,25 +552,25 @@ def router_port_list(mgr_or_client, router_id, *args, **kwargs):
 
 # quota
 def quota_list(mgr_or_client, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.list_quotas(**kwargs)
     return body['quotas']
 
 
 def quota_show(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.show_quota(tenant_id, **kwargs)
     return body['quota']
 
 
 def quota_update(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.update_quota(tenant_id, **kwargs)
     return body['quota']
 
 
 def quota_delete(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_quota(tenant_id, **kwargs)
     return body
 
@@ -581,7 +589,7 @@ def quota_incr_by(mgr_or_client, tenant_id, multi_by=2, **kwargs):
 # parent calss NetworkClientBase's method __getattr__ is used to
 # determine which method should be called.
 def netclient_do(mgr_or_client, method_name, *args, **kwargs):
-    net_client = _g_net_client(mgr_or_client)
+    net_client = _g_neutron_client(mgr_or_client)
     nc_method = getattr(net_client, method_name, None)
     if nc_method is None:
         raise Exception("Method[%s] is not defined at instance[%s]" %

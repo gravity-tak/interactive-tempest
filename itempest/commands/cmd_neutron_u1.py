@@ -183,7 +183,7 @@ def destroy_myself(mgr_or_client, **kwargs):
     if force_rm_fip:
         skip_fip = False
     spattern = Q.mdata.get_name_search_pattern(**kwargs)
-    net_client = Q._g_net_client(mgr_or_client)
+    net_client = Q._g_neutron_client(mgr_or_client)
     tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
     # rm floatingips: be aware that VMs' might have FIP attached
     # if fail, caller of d_myself should sleep then retry again

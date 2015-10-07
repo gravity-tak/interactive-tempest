@@ -80,8 +80,8 @@
       "interface": "acct-network"
     },
     {
-      "name": "helo-web",
-      "interface": "guest-network"
+      "name": "service-web",
+      "interface": "service-network"
     },
     {
       "name": "guest-bee",
