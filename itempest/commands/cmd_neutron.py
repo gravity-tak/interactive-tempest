@@ -475,8 +475,9 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
 
 # user defined command
 # this command might need admin priv for mgr_or_client
-def router_gateway_snat_set(mgr_or_client, router, enable):
+def router_gateway_snat_set(mgr_or_client, router_id, enable):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
     external_gateway_info = router['external_gateway_info']
     external_gateway_info['enable_snat'] = enable
     return net_client.update_router(

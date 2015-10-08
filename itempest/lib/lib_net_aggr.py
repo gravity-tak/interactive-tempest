@@ -93,6 +93,22 @@ def get_tenant_of_orphan_networks(cli_mgr):
     return o_tenant_list
 
 
+def create_server_on_interface(cli_mgr, server_name, network_id,
+                               image_id, flavor_id=2,
+                               security_group_name_or_id=None,
+                               wait_on_boot=True, **kwargs):
+    security_group_name_or_id =  security_group_name_or_id or 'default'
+    network = cli_mgr.qsvc('net-show', network_id)
+    create_kwargs = {
+        'networks': [{'uuid': network['id']}],
+        'security_groups': [{'name': security_group_name_or_id}],
+    }
+    create_kwargs.update(**kwargs)
+    return cli_mgr.nova('server_create', server_name, image_id=image_id,
+                         flavor_id=flavor_id, wait_on_boot=wait_on_boot,
+                         **create_kwargs)
+
+
 def add_floatingip_to_server(cli_mgr, server_id,
                              public_id=None, security_group_id=None,
                              **kwargs):
@@ -266,7 +282,7 @@ def dest_is_reachable(ssh_client, dest_ip):
 
 def show_toplogy(cli_mgr, return_topo=False):
     tenant_name = cli_mgr.manager.credentials.tenant_name
-    FMT_ROUTER = "%s>> router: {name} {id} {router_type}" % (' ' * 2)
+    FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 10)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
@@ -316,7 +332,7 @@ def get_user_data_of_server(server_ipaddr,
     return user_data
 
 
-def wipeout(cli_mgr, tenant_id=None, force_rm_fip=True):
+def wipeout_servers(cli_mgr, tenant_id=None, force_rm_fip=True):
     t0 = time.time()
     kwargs = {}
     if tenant_id:

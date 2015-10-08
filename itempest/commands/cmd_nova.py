@@ -232,7 +232,7 @@ def boot(mgr_or_client, name, *args, **kwargs):
 
 
 # nova boot
-def server_create(mgr_or_client, name, *args, **kwargs):
+def server_create(mgr_or_client, name, **kwargs):
     """Please see create_server_on_interface() and c_server()"""
     server_client = _g_servers_client(mgr_or_client)
     image_id = kwargs.pop('image_id', kwargs.pop('image', None))
