@@ -283,6 +283,8 @@ def dest_is_reachable(ssh_client, dest_ip):
 def show_toplogy(cli_mgr, return_topo=False):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
+    FMT_X_GW = ("%sGW: snat_enabled: {enable_snat} "
+                "fixed_ip: {external_fixed_ips}" % (' ' * 5) )
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 10)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
@@ -293,9 +295,13 @@ def show_toplogy(cli_mgr, return_topo=False):
     router_list = cli_mgr.qsvc('router-list')
     sorted(router_list, key=itemgetter('name'))
     for router in router_list:
-        rtr = _g_by_attr(router, ('id', 'name', 'router_type'))
+        rtr = _g_by_attr(router, ('id', 'name', 'router_type', 'distributed'))
         rtr['networks'] = []
+        if 'distributed' in router and router['distributed']:
+            rtr['router_type'] = 'distributed'
         topo_line.append(FMT_ROUTER.format(**rtr))
+        if type(router['external_gateway_info']) is dict:
+            topo_line.append(FMT_X_GW.format(**rtr['external_gateway_info']))
         rp_list = cli_mgr.qsvc('router-port-list', router['id'])
         for rp in rp_list:
             network = cli_mgr.qsvc('net-show', rp['network_id'])
