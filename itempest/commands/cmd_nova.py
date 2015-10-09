@@ -91,8 +91,14 @@ def image_create(mgr_or_client, name, container_format, disk_format,
     if 'is_public' in kwargs:
         is_public = kwargs.pop('is_public', True)
         kwargs['visibility'] = 'public' if is_public else 'private'
-    return image_client.create_image(name, container_format, disk_format,
-                                     **kwargs)
+    file_path = kwargs.pop('file', None)
+    img = image_client.create_image(name, container_format, disk_format,
+                                    **kwargs)
+    if file_path:
+        image_file = open(file_path, 'rb')
+        image_client.update_image(img['id'], data=image_file)
+        img = image_show(mgr_or_client, img['id'])
+    return img
 
 
 def image_list(mgr_or_client, *args, **kwargs):
