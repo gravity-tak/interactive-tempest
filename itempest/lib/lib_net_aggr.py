@@ -97,7 +97,7 @@ def create_server_on_interface(cli_mgr, server_name, network_id,
                                image_id, flavor_id=2,
                                security_group_name_or_id=None,
                                wait_on_boot=True, **kwargs):
-    security_group_name_or_id =  security_group_name_or_id or 'default'
+    security_group_name_or_id = security_group_name_or_id or 'default'
     network = cli_mgr.qsvc('net-show', network_id)
     create_kwargs = {
         'networks': [{'uuid': network['id']}],
@@ -105,8 +105,8 @@ def create_server_on_interface(cli_mgr, server_name, network_id,
     }
     create_kwargs.update(**kwargs)
     return cli_mgr.nova('server_create', server_name, image_id=image_id,
-                         flavor_id=flavor_id, wait_on_boot=wait_on_boot,
-                         **create_kwargs)
+                        flavor_id=flavor_id, wait_on_boot=wait_on_boot,
+                        **create_kwargs)
 
 
 def add_floatingip_to_server(cli_mgr, server_id,
@@ -156,7 +156,7 @@ def del_server_floatingip(cli_mgr, server):
     for if_name, if_addresses in server['addresses'].items():
         for addr in if_addresses:
             if ('OS-EXT-IPS:type' in addr and
-                        addr['OS-EXT-IPS:type'] == u'floating'):
+                    addr['OS-EXT-IPS:type'] == u'floating'):
                 fip = cli_mgr.qsvc('floatingip-list',
                                    floating_network_address=addr['addr'])
                 cli_mgr.qsvc('floatingip_disassociate', fip[0]['id'])
@@ -283,8 +283,8 @@ def dest_is_reachable(ssh_client, dest_ip):
 def show_toplogy(cli_mgr, return_topo=False):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
-    FMT_X_GW = ("%sGW: snat_enabled: {enable_snat} "
-                "fixed_ip: {external_fixed_ips}" % (' ' * 5) )
+    FMT_X_GW1 = "%sGW: snat_enabled: {enable_snat}" % (' ' * 5)
+    FMT_X_GW2 = "%sfixed_ip: {external_fixed_ips}" % (' ' * (5 + 4))
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 10)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
@@ -295,13 +295,16 @@ def show_toplogy(cli_mgr, return_topo=False):
     router_list = cli_mgr.qsvc('router-list')
     sorted(router_list, key=itemgetter('name'))
     for router in router_list:
-        rtr = _g_by_attr(router, ('id', 'name', 'router_type', 'distributed'))
+        rtr = _g_by_attr(router,
+                         ('id', 'name', 'router_type', 'distributed'))
         rtr['networks'] = []
         if 'distributed' in router and router['distributed']:
             rtr['router_type'] = 'distributed'
         topo_line.append(FMT_ROUTER.format(**rtr))
         if type(router['external_gateway_info']) is dict:
-            topo_line.append(FMT_X_GW.format(**rtr['external_gateway_info']))
+            xnet_info = router['external_gateway_info']
+            topo_line.append(FMT_X_GW1.format(**xnet_info))
+            topo_line.append(FMT_X_GW2.format(**xnet_info))
         rp_list = cli_mgr.qsvc('router-port-list', router['id'])
         for rp in rp_list:
             network = cli_mgr.qsvc('net-show', rp['network_id'])
