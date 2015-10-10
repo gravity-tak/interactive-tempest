@@ -87,13 +87,15 @@ def flavor_list(mgr_or_client, *args, **kwargs):
 def image_create(mgr_or_client, name, container_format, disk_format,
                  **kwargs):
     """Create a new image."""
-    image_client = _g_image_v2_client(mgr_or_client)
+    image_client = _g_image_client(mgr_or_client)
     if 'is_public' in kwargs:
         is_public = kwargs.pop('is_public', True)
         kwargs['visibility'] = 'public' if is_public else 'private'
     file_path = kwargs.pop('file', None)
     img = image_client.create_image(name, container_format, disk_format,
                                     **kwargs)
+    if 'image' in img:
+        img = img['image']
     if file_path:
         image_file = open(file_path, 'rb')
         image_client.update_image(img['id'], data=image_file)
@@ -102,7 +104,7 @@ def image_create(mgr_or_client, name, container_format, disk_format,
 
 
 def image_list(mgr_or_client, *args, **kwargs):
-    image_client = _g_image_v2_client(mgr_or_client)
+    image_client = _g_image_client(mgr_or_client)
     result = image_client.list_images(*args, **kwargs)
     if 'images' in result:
         return result['images']
@@ -110,7 +112,7 @@ def image_list(mgr_or_client, *args, **kwargs):
 
 
 def image_delete(mgr_or_client, image_id, *args, **kwargs):
-    image_client = _g_image_v2_client(mgr_or_client)
+    image_client = _g_image_client(mgr_or_client)
     return image_client.delete_image(image_id)
 
 
@@ -119,10 +121,12 @@ def image_meta(mgr_or_client, *args, **kwargs):
 
 
 def image_show(mgr_or_client, image_id, *args, **kwargs):
-    image_client = _g_image_v2_client(mgr_or_client)
+    image_client = _g_image_client(mgr_or_client)
     # TODO(akang): what is the client and command?
-    resp = image_client.show_image(image_id, *args, **kwargs)
-    return resp
+    result = image_client.show_image(image_id, *args, **kwargs)
+    if 'image' in result:
+        return result['image']
+    return result
 
 
 def keypair_list(mgr_or_client, *args, **kwargs):
