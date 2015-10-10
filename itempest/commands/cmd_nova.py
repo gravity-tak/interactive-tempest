@@ -112,7 +112,7 @@ def image_list(mgr_or_client, *args, **kwargs):
 
 
 def image_delete(mgr_or_client, image_id, *args, **kwargs):
-    image_client = _g_image_client(mgr_or_client)
+    image_client = _g_images_client(mgr_or_client)
     return image_client.delete_image(image_id)
 
 
@@ -121,8 +121,8 @@ def image_meta(mgr_or_client, *args, **kwargs):
 
 
 def image_show(mgr_or_client, image_id, *args, **kwargs):
-    image_client = _g_image_client(mgr_or_client)
-    # TODO(akang): what is the client and command?
+    # Q: show command need to use v2 or images_client, not image_client
+    image_client = _g_images_client(mgr_or_client)
     result = image_client.show_image(image_id, *args, **kwargs)
     if 'image' in result:
         return result['image']
