@@ -22,7 +22,8 @@ from itempest.lib import utils
 DEFAULT_IMAGE_NAME = os.environ.get('OS_IMAGE_NAME',
                                     'cirros-0.3.3-x86_64-disk')
 DEFAULT_IMAGE_FILE = os.environ.get(
-    'OS_IMAGE_FILE', '~/images/cirros-0.3.3-x86_64-disk.vmdk')
+    'OS_IMAGE_FILE',
+    '/home/stack/images/cirros-0.3.3-x86_64-disk.vmdk')
 DEFAULT_PUBLIC_NETWORK_NAME = os.environ.get(
     'OS_PUBLIC_NETWORK_NAME', 'public')
 os_auth_url = os.environ.get('OS_AUTH_URL', None)

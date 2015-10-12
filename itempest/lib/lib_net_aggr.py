@@ -304,7 +304,11 @@ def show_toplogy(cli_mgr, return_topo=False):
         if type(router['external_gateway_info']) is dict:
             xnet_info = router['external_gateway_info']
             topo_line.append(FMT_X_GW1.format(**xnet_info))
-            topo_line.append(FMT_X_GW2.format(**xnet_info))
+            try:
+                topo_line.append(FMT_X_GW2.format(**xnet_info))
+            except:
+                utils.log_msg("GW does not have external_fixed_ips: %s"
+                              % xnet_info)
         rp_list = cli_mgr.qsvc('router-port-list', router['id'])
         for rp in rp_list:
             network = cli_mgr.qsvc('net-show', rp['network_id'])
