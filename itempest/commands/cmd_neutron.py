@@ -41,8 +41,9 @@ def _g_neutron_client(mgr_or_client):
 def _g_network_client(mgr_or_client):
     if isinstance(mgr_or_client, NetworkClient):
         return mgr_or_client
-    if hasattr(mgr_or_client, 'networks_client'):
-        return mgr_or_client.networks_client
+    # todo: seem upstream changed back to network_client 2015-10-15
+    #  if hasattr(mgr_or_client, 'networks_client'):
+    #    return mgr_or_client.networks_client
     return mgr_or_client.network_client
 
 
