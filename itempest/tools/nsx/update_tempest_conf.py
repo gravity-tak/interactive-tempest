@@ -132,7 +132,7 @@ def update_tempest_conf(cli_mgr, public_net_dict, tempest_conf=None,
 
 
 def get_net_conf(cli_mgr, public_net_conf, xnet_name='public',
-                 use_internal_dns=False):
+                 use_internal_dns=True):
     dns_nameservers = (public_net_conf['nameservers_internal']
                        if use_internal_dns else public_net_conf[
         'nameservers'])

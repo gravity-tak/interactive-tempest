@@ -1,0 +1,178 @@
+{
+  "name": "cirros-side1",
+  "networks": [
+    {
+      "name": "face-network",
+      "subnets": [
+        {
+          "name": "face-subnet",
+          "cidr": "10.168.11.0/24",
+          "gateway_ip": "10.168.11.1",
+          "dns_nameservers": [
+            "10.132.71.1",
+            "10.132.71.2"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "10.168.11.2",
+              "end": "10.168.11.99"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-network",
+      "subnets": [
+        {
+          "name": "service-subnet",
+          "cidr": "192.168.11.0/24",
+          "dns_nameservers": [
+            "10.132.71.2"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "192.168.11.2",
+              "end": "192.168.11.90"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fun-network",
+      "subnets": [
+        {
+          "name": "fun-subnet",
+          "cidr": "192.168.22.0/24",
+          "gateway_ip": "192.168.22.99",
+          "dns_nameservers": [
+            "10.132.71.2"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "192.168.22.2",
+              "end": "192.168.22.90"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "guest-network",
+      "subnets": [
+        {
+          "name": "guest-subnet",
+          "cidr": "192.168.33.0/24",
+          "dns_nameservers": [
+            "10.132.71.1"
+          ],
+          "enable_dhcp": true
+        }
+      ]
+    }
+  ],
+  "router-options": {
+  },
+  "routers": [
+    {
+      "name": "expo-router",
+      "gateway": "public",
+      "interfaces": [
+        "face-network",
+        "service-network",
+        "fun-network",
+        "guest-network"
+      ]
+    }
+  ],
+  "server-options": {
+    "image": "cirros-0.3.3-x86_64-disk",
+    "flavor": "m1.tiny",
+    "user_data": "./metadata/itempest-userdata"
+  },
+  "servers": [
+    {
+      "name": "face-acct",
+      "interface": "face-network"
+    },
+    {
+      "name": "worker-bee",
+      "interface": "service-network"
+    },
+    {
+      "name": "fun-bee",
+      "interface": "fun-network"
+    },
+    {
+      "name": "guest-bee",
+      "interface": "guest-network"
+    }
+  ],
+  "security-groups": [
+    {
+      "name": "loginable",
+      "rules": [
+        "ingress-ssh",
+        "ingress-icmp"
+      ]
+    },
+    {
+      "name": "transfer",
+      "rules": [
+        "ingress-ftp"
+      ]
+    },
+    {
+      "name": "w-w-w",
+      "rules": [
+        "ingress-http",
+        "ingress-https"
+      ]
+    }
+  ],
+  "security-group-rules": [
+    {
+      "name": "ingress-ftp",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 20,
+      "port_range_max": 21
+    },
+    {
+      "name": "ingress-ssh",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 22,
+      "port_range_max": 22
+    },
+    {
+      "name": "ingress-http",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 80,
+      "port_range_max": 80
+    },
+    {
+      "name": "ingress-https",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 443,
+      "port_range_max": 443
+    },
+    {
+      "name": "ingress-icmp",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "icmp"
+    }
+  ]
+}
+
