@@ -44,13 +44,13 @@ def wipeout_net_resources_of_orphan_networks(cli_mgr, **kwargs):
     tenant_list = get_tenant_of_orphan_networks(cli_mgr)
     times_used = 0
     for tenant_id in tenant_list:
-        times_used += wipeout_tenant_net_resources(
-            tenant_id, cli_mgr, force_rm_fip=force_rm_fip, **kwargs)
+        times_used += wipeout_tenant_net_resources(cli_mgr, tenant_id,
+                                                   force_rm_fip=force_rm_fip)
     return times_used
 
 
-def wipeout_tenant_net_resources(tenant_id, cli_mgr,
-                                 force_rm_fip=False, **kwargs):
+def wipeout_tenant_net_resources(cli_mgr, tenant_id, force_rm_fip=False,
+                                 **kwargs):
     t0 = time.time()
     kwargs = {'tenant_id': tenant_id}
     # delete servers
@@ -345,7 +345,7 @@ def get_user_data_of_server(server_ipaddr,
     return user_data
 
 
-def wipeout_servers(cli_mgr, tenant_id=None, force_rm_fip=True):
+def wipeout(cli_mgr, tenant_id=None, force_rm_fip=True):
     t0 = time.time()
     kwargs = {}
     if tenant_id:

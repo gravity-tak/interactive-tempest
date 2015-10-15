@@ -68,6 +68,7 @@ vio1_internal_conf = {
     ),
     'network': dict(
         public_network_id='',
+        dns_servers='10.132.71.1,10.132.71.2',
     ),
     'nsxv': dict(
         manager_uri='https://10.133.236.114',
@@ -239,7 +240,7 @@ def init_vio3(cli_mgr, **kwargs):
 def init_vio_tempest_env(cli_mgr, vio_net_conf, conf_conf,
                          conf_defaults=None, **kwargs):
     xnet_name = kwargs.pop('public_net_name', 'public')
-    use_internal_dns = kwargs.pop('use_internal_dns', False)
+    use_internal_dns = kwargs.pop('use_internal_dns', True)
     img_name = kwargs.pop('image_name', 'cirros-0.3.3-x86_64-disk')
     from_template = kwargs.pop('tempest_sample',
                                'itempest/etc/tempest-internal.conf.sample')
