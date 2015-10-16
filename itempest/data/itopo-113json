@@ -1,0 +1,72 @@
+{
+  "name": "se-side3",
+  "networks": [
+    {
+      "name": "se3-network",
+      "subnets": [
+        {
+          "name": "se3-subnet",
+          "cidr": "192.168.11.0/24",
+          "gateway_ip": "192.168.33.1",
+          "dns_nameservers": [
+            "10.132.71.1",
+            "10.132.71.2"
+          ],
+          "enable_dhcp": true,
+          "allocation_pools": [
+            {
+              "start": "192.168.33.2",
+              "end": "192.168.33.99"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "router-options": {
+  },
+  "routers": [
+    {
+      "name": "se3-router",
+      "gateway": "public",
+      "interfaces": ["se3-network"]
+    }
+  ],
+  "server-options": {
+    "image": "cirros-0.3.3-x86_64-disk",
+    "flavor": "m1.tiny",
+    "user_data": "./metadata/itempest-userdata"
+  },
+  "servers": [
+    {
+      "name": "se3-server",
+      "interface": "se3-network"
+    }
+  ],
+  "security-groups": [
+    {
+      "name": "loginable",
+      "rules": [
+        "ingress-ssh",
+        "ingress-icmp"
+      ]
+    }
+  ],
+  "security-group-rules": [
+    {
+      "name": "ingress-ssh",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "tcp",
+      "port_range_min": 22,
+      "port_range_max": 22
+    },
+    {
+      "name": "ingress-icmp",
+      "direction": "ingress",
+      "ethertype": "IPv4",
+      "protocol": "icmp"
+    }
+  ]
+}
+
