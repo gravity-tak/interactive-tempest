@@ -17,6 +17,42 @@
 from itempest.commands import cmd_neutron as Q
 
 
+# user defined command
+def show_or_create_network(mgr_or_client, name, **kwargs):
+    sc_list = Q.network_list(mgr_or_client, name=name)
+    if len(sc_list) > 0:
+        return Q.network_show(mgr_or_client, sc_list[0]['id'])
+    return Q.net_create(mgr_or_client, name, **kwargs)
+
+
+def show_or_create_subnet(mgr_or_client, **kwargs):
+    s_args = {}
+    if 'name' in kwargs:
+        s_args['name'] = kwargs.get('name')
+    if 'id' in kwargs:
+        s_args['id'] = kwargs.get('id')
+    sc_list = Q.subnet_list(mgr_or_client, **s_args)
+    if len(sc_list) > 0:
+        return Q.subnet_show(mgr_or_client, sc_list[0]['id'])
+    return Q.subnet_create(mgr_or_client, **kwargs)
+
+
+def show_or_create_router(mgr_or_client, name, **kwargs):
+    sc_list = Q.router_list(mgr_or_client, name=name)
+    if len(sc_list) > 0:
+        return Q.router_show(mgr_or_client, sc_list[0]['id'])
+    return Q.router_create(mgr_or_client, name, **kwargs)
+
+
+def show_or_create_security_group(mgr_or_client, name,
+                                  tenant_id=None, **kwargs):
+    sc_list = Q.security_group_list(mgr_or_client, name)
+    if len(sc_list) > 0:
+        return Q.security_group_show(mgr_or_client, sc_list[0]['id'])
+    return Q.security_group_create(mgr_or_client, name,
+                                   tenant_id=tenant_id, **kwargs)
+
+
 # user defined commands
 def create_external_network(mgr_or_client,
                             name=None,
@@ -210,5 +246,5 @@ def destroy_myself(mgr_or_client, **kwargs):
 
     for sg in Q.security_group_list(mgr_or_client, tenant_id=tenant_id):
         if (Q.mdata.is_in_spattern(sg['name'], spattern) and
-                    sg['name'] not in ['default']):
+                sg['name'] not in ['default']):
             Q.security_group_delete(mgr_or_client, sg['id'])
