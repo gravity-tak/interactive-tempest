@@ -29,6 +29,7 @@ from tempest.services.image.v1.json.image_client import ImageClient
 from tempest.services.image.v2.json.image_client import ImageClientV2
 
 LOG = oslog.getLogger(__name__)
+GATES = {'version': 'Liberty'}
 
 
 def _g_flavors_client(mgr_or_client):
@@ -243,14 +244,6 @@ def boot(mgr_or_client, name, *args, **kwargs):
 
 # nova boot
 def server_create(mgr_or_client, name, **kwargs):
-    return _server_create(mgr_or_client, 'Liberty', name, **kwargs)
-
-
-def server1_create(mgr_or_client, name, **kwargs):
-    return _server_create(mgr_or_client, 'a', name, **kwargs)
-
-
-def _server_create(mgr_or_client, rpath, name, **kwargs):
     """Please see create_server_on_interface() and c_server()"""
     server_client = _g_servers_client(mgr_or_client)
     image_id = kwargs.pop('image_id', kwargs.pop('image', None))
@@ -262,7 +255,7 @@ def _server_create(mgr_or_client, rpath, name, **kwargs):
             # not encoded with base64 yet
             data = open(kwargs['user_data'], 'r').read()
             kwargs['user_data'] = base64.standard_b64encode(data)
-    if rpath.startswith('L'):
+    if GATES['version'].startswith('L'):
         # commit#f2d436e changed to only use **kwargs
         server = server_client.create_server(
             name=name, imageRef=image_id, flavorRef=flavor_id, **kwargs)
