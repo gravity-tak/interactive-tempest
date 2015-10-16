@@ -6,7 +6,7 @@
       "subnets": [
         {
           "name": "se3-subnet",
-          "cidr": "192.168.11.0/24",
+          "cidr": "192.168.33.0/24",
           "gateway_ip": "192.168.33.1",
           "dns_nameservers": [
             "10.132.71.1",
