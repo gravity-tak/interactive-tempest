@@ -21,15 +21,13 @@ from tempest_lib import exceptions
 
 from tempest.services.network.json.network_client import NetworkClient
 
-import itempest.lib.man_data as mdata
-
-
+GATES = {'version': 'Liberty'}
 NET_CONSTANTS = {
     'dns_list': ['8.8.8.8', '8.8.4,4'],
     'host_routes': [{
         'destination': os.environ.get('HOST_ROUTES_DEST', '10.20.0.0/32'),
         'nexthop': os.environ.get('HOST_ROUTES_NEXTHOP', '10.100.1.1')}],
-    }
+}
 
 
 def _g_neutron_client(mgr_or_client):
@@ -42,8 +40,9 @@ def _g_network_client(mgr_or_client):
     if isinstance(mgr_or_client, NetworkClient):
         return mgr_or_client
     # todo: seem upstream changed back to network_client 2015-10-15
-    #  if hasattr(mgr_or_client, 'networks_client'):
-    #    return mgr_or_client.networks_client
+    if (GATES['version'].startswith('L') and
+            hasattr(mgr_or_client, 'networks_client')):
+        return mgr_or_client.networks_client
     return mgr_or_client.network_client
 
 
@@ -143,7 +142,8 @@ def net_update(mgr_or_client, network_id, *args, **kwargs):
 def subnet_create(mgr_or_client, network_id, cidr,
                   **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
-    name = kwargs.pop('name', None) or data_utils.rand_name('itempest-subnet')
+    name = kwargs.pop('name', None) or data_utils.rand_name(
+        'itempest-subnet')
     ip_version = kwargs.pop('ip_version', None) or 4
     subnet = dict(
         name=name,
@@ -161,7 +161,8 @@ def subnet_create_safe(mgr_or_client, network_id,
     net_client = _g_neutron_client(mgr_or_client)
     # tenant_id = kwargs.pop('tenant_id', None) or _g_tenant_id(net_client)
     tenant_id = kwargs.pop('tenant_id', None)
-    name = kwargs.pop('name', None) or data_utils.rand_name('itempest-subnet')
+    name = kwargs.pop('name', None) or data_utils.rand_name(
+        'itempest-subnet')
     tenant_network_mask_bits = kwargs.pop('mask_bits', None) or 26
     tenant_network_cidr = kwargs.pop('cidr', None) or '192.168.123.0/24'
     pfix = tenant_network_cidr.find("/")
@@ -180,7 +181,8 @@ def subnet_create_safe(mgr_or_client, network_id,
         :return True if subnet with cidr already exist in tenant
             False else
         """
-        cidr_in_use = subnet_list(net_client, tenant_id=tenant_id, cidr=cidr)
+        cidr_in_use = subnet_list(net_client, tenant_id=tenant_id,
+                                  cidr=cidr)
         return len(cidr_in_use) != 0
 
     tenant_cidr = netaddr.IPNetwork(tenant_network_cidr)
@@ -396,7 +398,7 @@ def router_list(mgr_or_client, *args, **kwargs):
 
 def router_list_on_l3_agent(mgr_or_client, *args, **kwargs):
     """List the routers on a L3 agent."""
-    raise("Not implemented yet!")
+    raise ("Not implemented yet!")
 
 
 def router_show(mgr_or_client, router_id, *args, **kwargs):

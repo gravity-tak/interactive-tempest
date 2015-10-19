@@ -15,6 +15,7 @@
 
 
 from itempest.commands import cmd_neutron as Q
+from itempest.lib import man_data as mdata
 
 
 # user defined command
@@ -221,7 +222,7 @@ def destroy_myself(mgr_or_client, **kwargs):
     force_rm_fip = kwargs.pop('force_rm_fip', False)
     if force_rm_fip:
         skip_fip = False
-    spattern = Q.mdata.get_name_search_pattern(**kwargs)
+    spattern = mdata.get_name_search_pattern(**kwargs)
     net_client = Q._g_neutron_client(mgr_or_client)
     tenant_id = kwargs.pop('tenant_id', net_client.tenant_id)
     # rm floatingips: be aware that VMs' might have FIP attached
@@ -235,16 +236,16 @@ def destroy_myself(mgr_or_client, **kwargs):
     # rm routers
     routers = Q.router_list(mgr_or_client, tenant_id=tenant_id)
     for router in routers:
-        if Q.mdata.is_in_spattern(router['name'], spattern):
+        if mdata.is_in_spattern(router['name'], spattern):
             delete_this_router(mgr_or_client, router)
     # rm networks/subnets
     for network in Q.network_list(mgr_or_client, tenant_id=tenant_id):
-        if Q.mdata.is_in_spattern(network['name'], spattern):
+        if mdata.is_in_spattern(network['name'], spattern):
             # TODO(akang): if ports assoc to net, delete them first
             # look for network's subnet which is in port
             Q.network_delete(mgr_or_client, network['id'])
 
     for sg in Q.security_group_list(mgr_or_client, tenant_id=tenant_id):
-        if (Q.mdata.is_in_spattern(sg['name'], spattern) and
+        if (mdata.is_in_spattern(sg['name'], spattern) and
                 sg['name'] not in ['default']):
             Q.security_group_delete(mgr_or_client, sg['id'])

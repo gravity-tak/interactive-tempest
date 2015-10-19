@@ -17,8 +17,8 @@ from oslo_log import log as logging
 from tempest_lib.common.utils import data_utils
 
 from tempest.common import cred_provider
-from tempest.common.dynamic_creds \
-    import DynamicCredentialProvider as TempestCredsProvider
+from tempest.common.isolated_creds import \
+    IsolatedCreds as TempestCredsProvider
 from tempest import config
 
 CONF = config.CONF
@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 # this class requires correct [compute-admin] and [identity] in tempest.conf
-class ItempestCreds(TempestCredsProvider):
+class ItempestCreds(cred_provider.CredentialProvider):
     """ItempestIsoLatedCreds overwirtes IsolatedCreds so that its credentail
     type of admin, primary and alt will create project/user name from provided
     param with_name and suffixed with -A for admin, -P for primary and -T for
@@ -39,15 +39,14 @@ class ItempestCreds(TempestCredsProvider):
                  network_resources=None, cleanup_atexit=False):
         # super create self.cred_client
         self.password = password
-        super(ItempestCreds, self).__init__(identity_version,
-                                            name,
-                                            network_resources)
+        super(ItempestCreds, self).__init__(
+            identity_version, name, network_resources)
         self.num_of_users = num_of_users
         self.cleanup_atexit = cleanup_atexit
 
     def __del__(self):
         if self.cleanup_atexit:
-            self.clear_creds()
+            self.clear_isolated_creds()
 
     def _create_creds(self, with_name, suffix="", admin=False, roles=None):
         """Create credentials with specific name:
