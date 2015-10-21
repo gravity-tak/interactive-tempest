@@ -65,6 +65,8 @@ def create_external_network(mgr_or_client,
                         **kwargs)
 
 
+# kwargs={'provider:physical_network': 'dvs-222'}
+# create_vlan_network(adm, 201, 'vlan-201', **kwargs)
 def create_vlan_network(mgr_or_client,
                         vlan_id=888, name=None,
                         shared=True, **kwargs):
@@ -214,7 +216,7 @@ def delete_this_router(mgr_or_client, router):
 
 # qsvc('destroy-myself', name_startswith='page2-')
 # To delete network resources of tenant=Mars:
-# mars = utils.fgrep(keyAdmin('tenant-list'), name='Mars')[0]
+# mars = keys('tenant_get_by_name', 'Mars')
 # qsvcAdmin('destroy-myself', tenant_id=mars['id'])
 def destroy_myself(mgr_or_client, **kwargs):
     skip_fip = kwargs.pop('skip_fip',

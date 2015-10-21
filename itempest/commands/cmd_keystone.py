@@ -26,8 +26,11 @@ try:
     from tempest_lib.services.identity.v2.token_client import TokenClient
     from tempest_lib.services.identity.v3.token_client import V3TokenClient
 except Exception:
-    from tempest_lib.services.identity.v2.token_client import TokenClientJSON as TokenClient
-    from tempest_lib.services.identity.v3.token_client import V3TokenClientJSON as V3TokenClient
+    from tempest_lib.services.identity.v2.token_client \
+        import TokenClientJSON as TokenClient
+    from tempest_lib.services.identity.v3.token_client \
+        import V3TokenClientJSON as V3TokenClient
+
 
 def _g_identity_client(mgr_or_client):
     if isinstance(mgr_or_client, IdentityClient):
@@ -65,22 +68,31 @@ def _g_token_client(mgr_or_client):
     return mgr_or_client.token_client
 
 
+def _return_result(result, of_attr):
+    if of_attr in result:
+        return result[of_attr]
+    return result
+
+
 # endpoint
 def endpoint_list(mgr_or_client, *args, **kwargs):
     endpoint_client = _g_endpoint_client(mgr_or_client)
-    return endpoint_client.list_endpoints(**kwargs)
+    result = endpoint_client.list_endpoints(**kwargs)
+    return _return_result(result, 'endpoints')
 
 
 def endpoint_get(mgr_or_client, *args, **kwargs):
     endpoint_client = _g_endpoint_client(mgr_or_client)
-    return endpoint_client.list_endpoints(*args, **kwargs)
+    result = endpoint_client.list_endpoints(*args, **kwargs)
+    return _return_result(result, 'endpoint')
 
 
 # kw: region, force_enabled, enabled
 def endpoint_create(mgr_or_client, service_id, interface, url, **kwargs):
     endpoint_client = _g_endpoint_client(mgr_or_client)
-    return endpoint_client.create_endpoints(service_id, interface, url,
-                                            **kwargs)
+    result = endpoint_client.create_endpoints(service_id, interface, url,
+                                              **kwargs)
+    return _return_result(result, 'endpoint')
 
 
 def endpoint_delete(mgr_or_client, *args, **kwargs):
@@ -96,12 +108,14 @@ def endpoint_update(mgr_or_client, endpoint_id, **kwargs):
 
 def ext_list(mgr_or_client, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.list_extensions()
+    result = identity_client.list_extensions()
+    return _return_result(result, 'extensions')
 
 
 def role_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.list_roles(**kwargs)
+    result = identity_client.list_roles(**kwargs)
+    return _return_result(result, 'roles')
 
 
 def role_delete(mgr_or_client, role_id, **kwargs):
@@ -111,23 +125,27 @@ def role_delete(mgr_or_client, role_id, **kwargs):
 
 def role_get(mgr_or_client, role_id, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_role(role_id)
+    result = identity_client.get_role(role_id)
+    return _return_result(result, 'role')
 
 
 def service_list(mgr_or_client, *args, **kwargs):
     service_client = _g_service_client(mgr_or_client)
-    return service_client.list_services(**kwargs)
+    result = service_client.list_services(**kwargs)
+    return _return_result(result, 'services')
 
 
 def service_get(mgr_or_client, service_id, *args, **kwargs):
     service_client = _g_service_client(mgr_or_client)
-    return service_client.create_service(service_id, *args, **kwargs)
+    result = service_client.create_service(service_id, *args, **kwargs)
+    return _return_result(result, 'service')
 
 
 # service_create('ec2', 'ec2', description='EC2 Compatibility Layer')
 def service_create(mgr_or_client, serv_type, **kwargs):
     service_client = _g_service_client(mgr_or_client)
-    return service_client.create_service(serv_type, **kwargs)
+    result = service_client.create_service(serv_type, **kwargs)
+    return _return_result(result, 'service')
 
 
 def service_delete(mgr_or_client, service_id, *args, **kwargs):
@@ -144,13 +162,13 @@ def service_update(mgr_or_client, service_id, **kwargs):
 def tenant_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
     result = identity_client.list_tenants()
-    if 'tenants' in result:
-        return result['tenants']
-    return result
+    return _return_result(result, 'tenants')
+
 
 def tenant_get(mgr_or_client, tenant_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_tenant(tenant_id)
+    result = identity_client.get_tenant(tenant_id)
+    return _return_result(result, 'tenant')
 
 
 def tenant_get_by_name(mgr_or_client, tenant_name, **kwargs):
@@ -160,7 +178,8 @@ def tenant_get_by_name(mgr_or_client, tenant_name, **kwargs):
 
 def tenant_create(mgr_or_client, name, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.create_tenant(name, **kwargs)
+    result = identity_client.create_tenant(name, **kwargs)
+    return _return_result(result, 'tenant')
 
 
 def tenant_delete(mgr_or_client, tenant_id, *args, **kwargs):
@@ -184,20 +203,19 @@ def user_list(mgr_or_client, *args, **kwargs):
         return user_list_of_tenant(mgr_or_client, tenant_id)
     identity_client = _g_identity_client(mgr_or_client)
     result = identity_client.get_users()
-    if 'users' in result:
-        return result['users']
-    return result
+    return _return_result(result, 'users')
 
 
 def user_list_of_tenant(mgr_or_client, tenant_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
     result = identity_client.list_users_for_tenant(tenant_id)
-    return result
+    return _return_result(result, 'users')
 
 
 def user_get(mgr_or_client, user_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_user(user_id)
+    result = identity_client.get_user(user_id)
+    return _return_result(result, 'user')
 
 
 def user_get_by_name(mgr_or_client, tenant_id, user_name, *args, **kwargs):
@@ -208,8 +226,9 @@ def user_get_by_name(mgr_or_client, tenant_id, user_name, *args, **kwargs):
 def user_create(mgr_or_client, name, password, tenant_id, email,
                 *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.create_user(name, password, tenant_id, email,
-                                       **kwargs)
+    result = identity_client.create_user(name, password, tenant_id, email,
+                                         **kwargs)
+    return _return_result(result, 'user')
 
 
 def user_delete(mgr_or_client, user_id, *args, **kwargs):
@@ -224,7 +243,8 @@ def user_update(mgr_or_client, user_id, *args, **kwargs):
 
 def user_role_list(mgr_or_client, tenant_id, user_id, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.list_user_roles(tenant_id, user_id, **kwargs)
+    result = identity_client.list_user_roles(tenant_id, user_id, **kwargs)
+    return _return_result(result, 'roles')
 
 
 def user_role_add(mgr_or_client, tenant_id, user_id, role_id):
@@ -241,25 +261,23 @@ def user_role_remove(mgr_or_client, tenant_id, user_id, role_id):
 def project_list(mgr_or_client, *args, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
     result = identity_client.list_projects()
-    if 'projects' in result:
-        return result['projects']
-    return result
+    return _return_result(result, 'projects')
 
 
 def project_get(mgr_or_client, project_id, *args, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
-    return identity_client.get_project(project_id)
-
+    result = identity_client.get_project(project_id)
+    return _return_result(result, 'project')
 
 
 def project_create(mgr_or_client, name, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
-    return identity_client.create_tenant(name, **kwargs)
+    return identity_client.create_project(name, **kwargs)
 
 
 def project_delete(mgr_or_client, project_id, **kwargs):
     identity_client = _g_identity_v3_client(mgr_or_client)
-    return identity_client.delete_tenant(project_id, **kwargs)
+    return identity_client.delete_project(project_id, **kwargs)
 
 
 # user defined commands

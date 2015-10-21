@@ -46,6 +46,15 @@ def _g_network_client(mgr_or_client):
     return mgr_or_client.network_client
 
 
+def _g_subnet_client(mgr_or_client):
+    if isinstance(mgr_or_client, NetworkClient):
+        return mgr_or_client
+    # todo: seem upstream changed back to network_client 2015-10-15
+    if hasattr(mgr_or_client, 'subnets_client'):
+        return mgr_or_client.subnets_client
+    return mgr_or_client.network_client
+
+
 def ext_list(mgr_or_client,
              *args, **kwargs):
     """CLI list all extensions:
@@ -119,13 +128,16 @@ def net_delete(mgr_or_client, network_id, *args, **kwargs):
 
 
 def network_show(mgr_or_client, network_id, *args, **kwargs):
-    net_client = _g_network_client(mgr_or_client)
-    return net_show(net_client, network_id, *args, **kwargs)
+    return net_show(mgr_or_client, network_id, *args, **kwargs)
 
 
 def net_show(mgr_or_client, network_id, *args, **kwargs):
     net_client = _g_network_client(mgr_or_client)
-    body = net_client.show_network(network_id, *args, **kwargs)
+    try:
+        body = net_client.show_network(network_id, *args, **kwargs)
+    except Exception:
+        nobj = network_list(mgr_or_client, name=network_id)[0]
+        body = net_client.show_network(nobj['id'], *args, **kwargs)
     return body['network']
 
 
@@ -141,7 +153,7 @@ def net_update(mgr_or_client, network_id, *args, **kwargs):
 # subnet
 def subnet_create(mgr_or_client, network_id, cidr,
                   **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_subnet_client(mgr_or_client)
     name = kwargs.pop('name', None) or data_utils.rand_name(
         'itempest-subnet')
     ip_version = kwargs.pop('ip_version', None) or 4
@@ -158,7 +170,7 @@ def subnet_create(mgr_or_client, network_id, cidr,
 
 def subnet_create_safe(mgr_or_client, network_id,
                        **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_subnet_client(mgr_or_client)
     # tenant_id = kwargs.pop('tenant_id', None) or _g_tenant_id(net_client)
     tenant_id = kwargs.pop('tenant_id', None)
     name = kwargs.pop('name', None) or data_utils.rand_name(
@@ -217,14 +229,18 @@ def subnet_create_safe(mgr_or_client, network_id,
 
 
 def subnet_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_subnet_client(mgr_or_client)
     body = net_client.list_subnets(*args, **kwargs)
     return body['subnets']
 
 
 def subnet_show(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.show_subnet(subnet_id, **kwargs)
+    net_client = _g_subnet_client(mgr_or_client)
+    try:
+        body = net_client.show_subnet(subnet_id, **kwargs)
+    except:
+        nobj = subnet_show(mgr_or_client, name=subnet_id)[0]
+        body = net_client.show_subnet(nobj['id'], **kwargs)
     return body['subnet']
 
 
@@ -235,7 +251,7 @@ def subnet_delete(mgr_or_client, subnet_id, **kwargs):
 
 
 def subnet_update(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_subnet_client(mgr_or_client)
     body = net_client.update_subnet(subnet_id, **kwargs)
     return body['subnet']
 
@@ -348,8 +364,13 @@ def security_group_list(mgr_or_client, *args, **kwargs):
 def security_group_show(mgr_or_client, security_group_id,
                         *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.show_security_group(security_group_id,
-                                          *args, **kwargs)
+    try:
+        body = net_client.show_security_group(security_group_id,
+                                              *args, **kwargs)
+    except Exception:
+        nobj = security_group_list(mgr_or_client, name=security_group_id)[0]
+        body = net_client.show_security_group(nobj['id'],
+                                              *args, **kwargs)
     return body['security_group']
 
 

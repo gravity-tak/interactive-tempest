@@ -17,8 +17,7 @@ from oslo_log import log as logging
 from tempest_lib.common.utils import data_utils
 
 from tempest.common import cred_provider
-from tempest.common.dynamic_creds \
-    import DynamicCredentialProvider as TempestCredsProvider
+from tempest.common.dynamic_creds import DynamicCredentialProvider
 from tempest import config
 
 CONF = config.CONF
@@ -26,12 +25,12 @@ LOG = logging.getLogger(__name__)
 
 
 # this class requires correct [compute-admin] and [identity] in tempest.conf
-class ItempestCreds(TempestCredsProvider):
-    """ItempestIsoLatedCreds overwirtes IsolatedCreds so that its credentail
-    type of admin, primary and alt will create project/user name from provided
-    param with_name and suffixed with -A for admin, -P for primary and -T for
-    alt.  If with_name is not provided at calling get_xxx_creds() then name
-    will be used.
+class ItempestCredProvider(DynamicCredentialProvider):
+    """ItempestCreds overwirtes DynamicCredentialProvider
+    so that its credentail type of admin, primary and alt will create
+    project/user name from provided param with_name and suffixed
+    with -A for admin, -P for primary and -T for alt.  If with_name is
+    not provided at calling get_xxx_creds() then name will be used.
     """
 
     def __init__(self, name, identity_version=None,
@@ -39,9 +38,9 @@ class ItempestCreds(TempestCredsProvider):
                  network_resources=None, cleanup_atexit=False):
         # super create self.cred_client
         self.password = password
-        super(ItempestCreds, self).__init__(identity_version,
-                                            name,
-                                            network_resources)
+        super(ItempestCredProvider, self).__init__(identity_version,
+                                                   name,
+                                                   network_resources)
         self.num_of_users = num_of_users
         self.cleanup_atexit = cleanup_atexit
 
@@ -82,9 +81,13 @@ class ItempestCreds(TempestCredsProvider):
         email = username + "@itempest.net"
         user = self.creds_client.create_user(
             username, self.password, project, email)
+        if 'user' in user:
+            user = user['user']
+        role_assigned = False
         if admin:
             self.creds_client.assign_user_role(user, project,
                                                CONF.identity.admin_role)
+            role_assigned = True
         # Add roles specified in config file
         for conf_role in CONF.auth.tempest_roles:
             self.creds_client.assign_user_role(user, project, conf_role)
@@ -92,13 +95,19 @@ class ItempestCreds(TempestCredsProvider):
         if roles:
             for role in roles:
                 self.creds_client.assign_user_role(user, project, role)
+        # NOTE(mtreinish) For a user to have access to a project with v3 auth
+        # it must beassigned a role on the project. So we need to ensure that
+        # our newly created user has a role on the newly created project.
+        if self.identity_version == 'v3' and not role_assigned:
+            self.creds_client.create_user_role('Member')
+            self.creds_client.assign_user_role(user, project, 'Member')
         return user
 
     def get_credentials(self, credential_type,
                         with_name=None, create_network=False):
         # default we don't create network, unless specified
-        if self.isolated_creds.get(str(credential_type)):
-            credentials = self.isolated_creds[str(credential_type)]
+        if self._creds.get(str(credential_type)):
+            credentials = self._creds[str(credential_type)]
         else:
             if credential_type in ['primary', 'alt', 'admin']:
                 is_admin = (credential_type == 'admin')
@@ -107,14 +116,12 @@ class ItempestCreds(TempestCredsProvider):
             else:
                 credentials = self._create_creds(with_name,
                                                  roles=credential_type)
-            self.isolated_creds[str(credential_type)] = credentials
+            self._creds[str(credential_type)] = credentials
             # Maintained until tests are ported
             LOG.info("Acquired isolated creds:\n credentials: %s"
                      % credentials)
             if create_network:
-                # tempest_lib will change CONF attributes into input
-                # parameters per conversation with Andrea Frittoli
-                # at 2015-05 summit
+                # if you really want it!
                 network, subnet, router = self._create_network_resources(
                     credentials.tenant_id)
                 credentials.set_resources(network=network,
@@ -139,11 +146,11 @@ class ItempestCreds(TempestCredsProvider):
     def get_creds_by_roles(self, roles, force_new=False, with_name=None):
         """Check parent class for changes"""
         roles = list(set(roles))
-        exist_creds = self.isolated_creds.get(str(roles))
+        exist_creds = self._creds.get(str(roles))
         if exist_creds and force_new:
             new_index = str(roles) + '-' + str(len(self.isolated_creds))
-            self.isolated_creds[new_index] = exist_creds
-            del self.isolated_creds[str(roles)]
+            self._creds[new_index] = exist_creds
+            del self._creds[str(roles)]
         with_name = with_name or data_utils.rand_name(self.name)
         return self.get_credentials(roles, with_name=with_name)
 
@@ -151,8 +158,8 @@ class ItempestCreds(TempestCredsProvider):
 def create_test_projects(name, password='itemepst8@OS',
                          identity_version='v2',
                          **kwargs):
-    creds = ItempestCreds(name, password=password,
-                          identity_version=identity_version)
+    creds = ItempestCredProvider(name, password=password,
+                                 identity_version=identity_version)
     creds_a = creds.get_admin_creds()
     creds_p = creds.get_primary_creds()
     creds_t = creds.get_alt_creds()
@@ -162,18 +169,18 @@ def create_test_projects(name, password='itemepst8@OS',
 def create_primary_project(name, password='itempest8@OS',
                            identity_version='v2', num_of_users=1,
                            **kwargs):
-    creds = ItempestCreds(name, password=password,
-                          identity_version=identity_version,
-                          num_of_users=num_of_users, **kwargs)
+    creds = ItempestCredProvider(name, password=password,
+                                 identity_version=identity_version,
+                                 num_of_users=num_of_users, **kwargs)
     p = creds.get_primary_creds(name)
     return p
 
 
 def create_admin_project(name, password='itempest8@OS',
                          identity_version='v2', **kwargs):
-    creds = ItempestCreds(name, password=password,
-                          identity_version=identity_version,
-                          **kwargs)
+    creds = ItempestCredProvider(name, password=password,
+                                 identity_version=identity_version,
+                                 **kwargs)
     p = creds.get_admin_creds(name)
     return p
 
@@ -184,7 +191,7 @@ def create_project_users(adm_mgr, project_name, num_of_users,
                          group_name=None):
     p = adm_mgr.identity_client.get_tenant_by_name(project_name)
 
-    proj_cred = ItempestCreds(project_name)
+    proj_cred = ItempestCredProvider(project_name)
     user_list = []
     for uid in range(1, num_of_users):
         user_list.append(proj_cred._create_user(p, uid=uid,

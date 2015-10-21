@@ -15,6 +15,7 @@
 
 import base64
 import os
+import sys
 
 import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
@@ -294,9 +295,15 @@ def server_delete(mgr_or_client, server_id, *args, **kwargs):
 def server_show(mgr_or_client, server_id, *args, **kwargs):
     servers_client = _g_servers_client(mgr_or_client)
     try:
-        server = servers_client.get_server(server_id, **kwargs)
-    except Exception:
         server = servers_client.show_server(server_id, **kwargs)
+    except Exception:
+        # exc_info = sys.exc_info()
+        sobjs = server_list(mgr_or_client, name=server_id)
+        if len(sobjs) == 1:
+            server = servers_client.show_server(sobjs[0]['id'], **kwargs)
+        else:
+            # throw the exception last caught
+            raise
     if 'server' in server:
         return server['server']
     return server
