@@ -280,13 +280,14 @@ def dest_is_reachable(ssh_client, dest_ip):
         return False
 
 
-def show_toplogy(cli_mgr, return_topo=False):
+def show_toplogy(cli_mgr, return_topo=False, detail=True):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
     FMT_X_GW1 = "%sGW: snat_enabled: {enable_snat}" % (' ' * 5)
     FMT_X_GW2 = "%sfixed_ip: {external_fixed_ips}" % (' ' * (5 + 4))
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 8)
+    FMT_SNET_ADDR = "%s subnets: {cidr} {gateway_ip} {name}" % (' ' * 8)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
     topo = []
@@ -316,7 +317,11 @@ def show_toplogy(cli_mgr, return_topo=False):
             netwk['port_id'] = rp['id']
             netwk['servers'] = []
             topo_line.append(FMT_INTERFACE.format(**netwk))
-            topo_line.append(FMT_SUBNETS.format(**netwk))
+            if detail:
+                for subnet in netwk['subnets']:
+                    topo_line.append(FMT_SNET_ADDR.format(*subnet))
+            else:
+                topo_line.append(FMT_SUBNETS.format(**netwk))
             if_name = network['name']
             if_servers = [s for s in s_list if if_name in s['addresses']]
             for s in if_servers:
