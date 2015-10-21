@@ -136,7 +136,7 @@ def net_show(mgr_or_client, network_id, *args, **kwargs):
     try:
         body = net_client.show_network(network_id, *args, **kwargs)
     except Exception:
-        nobj = network_list(mgr_or_client, name=network_id)[0]
+        nobj = net_list(mgr_or_client, name=network_id)[0]
         body = net_client.show_network(nobj['id'], *args, **kwargs)
     return body['network']
 
@@ -239,7 +239,7 @@ def subnet_show(mgr_or_client, subnet_id, **kwargs):
     try:
         body = net_client.show_subnet(subnet_id, **kwargs)
     except:
-        nobj = subnet_show(mgr_or_client, name=subnet_id)[0]
+        nobj = subnet_list(mgr_or_client, name=subnet_id)[0]
         body = net_client.show_subnet(nobj['id'], **kwargs)
     return body['subnet']
 
@@ -424,7 +424,11 @@ def router_list_on_l3_agent(mgr_or_client, *args, **kwargs):
 
 def router_show(mgr_or_client, router_id, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.show_router(router_id, *args, **kwargs)
+    try:
+        body = net_client.show_router(router_id, *args, **kwargs)
+    except Exception:
+        nobj = router_list(mgr_or_client, name=router_id)[0]
+        body = net_client.show_router(nobj['id'], **kwargs)
     return body['router']
 
 
@@ -467,10 +471,10 @@ def router_delete_extra_routes(mgr_or_client, router_id):
 def router_add_extra_route(mgr_or_client, router_id,
                            nexthop, destination):
     net_client = _g_neutron_client(mgr_or_client)
-    extra_route = dict(nexthop=nexthop, destination=destination)
+    router = router_show(mgr_or_client, router_id)
+    router['routes'].append(dict(nexthop=nexthop, destination=destination))
     # TODO(akang): retrieve from router_id, and update with extra_route
-    body = net_client.update_extra_routes(router_id,
-                                          nexthop, destination)
+    body = net_client.update_extra_routes(router_id, router['routes'])
     return body['router']
 
 

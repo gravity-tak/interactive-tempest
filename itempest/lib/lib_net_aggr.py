@@ -287,7 +287,7 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True):
     FMT_X_GW2 = "%sfixed_ip: {external_fixed_ips}" % (' ' * (5 + 4))
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
     FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 8)
-    FMT_SNET_ADDR = "%s subnets: {cidr} {gateway_ip} {name}" % (' ' * 8)
+    FMT_SNET_ADDR = "%s subnet: cidr={cidr} gw={gateway_ip} {name}" % (' ' * 8)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
     topo = []
