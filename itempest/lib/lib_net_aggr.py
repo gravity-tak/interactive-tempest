@@ -320,7 +320,7 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True):
             if detail:
                 for subnet_id in netwk['subnets']:
                     subnet = cli_mgr.qsvc('subnet-show', subnet_id)
-                    topo_line.append(FMT_SNET_ADDR.format(*subnet))
+                    topo_line.append(FMT_SNET_ADDR.format(**subnet))
             else:
                 topo_line.append(FMT_SUBNETS.format(**netwk))
             if_name = network['name']
