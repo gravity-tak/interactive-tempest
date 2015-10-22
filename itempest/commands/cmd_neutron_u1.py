@@ -60,9 +60,11 @@ def create_external_network(mgr_or_client,
                             shared=True, **kwargs):
     kwargs['shared'] = shared
     kwargs['router:external'] = True
-    return Q.net_create(mgr_or_client,
-                        name=name,
-                        **kwargs)
+    subnet = kwargs.pop('subnet', None)
+    nobj = Q.net_create(mgr_or_client, name=name, **kwargs)
+    if subnet:
+        Q.subnet_create(mgr_or_client, nobj['id'], **subnet)
+    return Q.net_show(mgr_or_client, nobj['id'])
 
 
 # kwargs={'provider:physical_network': 'dvs-222'}
@@ -70,26 +72,35 @@ def create_external_network(mgr_or_client,
 def create_vlan_network(mgr_or_client,
                         vlan_id=888, name=None,
                         shared=True, **kwargs):
+    subnet = kwargs.pop('subnet', None)
     kwargs.update({
         'shared': shared,
         'provider:network_type': 'vlan',
         'provider:segmentation_id': vlan_id})
     name = name or Q.data_utils.rand_name('vlan-%s-network' % vlan_id)
-    return Q.net_create(mgr_or_client,
-                        name=name,
-                        **kwargs)
+    nobj = Q.net_create(mgr_or_client,  name=name, **kwargs)
+    if subnet:
+        Q.subnet_create(mgr_or_client, nobj['id'], **subnet)
+    return Q.net_show(mgr_or_client, nobj['id'])
 
 
 def create_flat_network(mgr_or_client,
                         name=None,
                         shared=True, **kwargs):
+    subnet = kwargs.pop('subnet', None)
     kwargs.update({
         'shared': shared,
         'provider:network_type': 'flat'})
     name = name or Q.data_utils.rand_name('flat-network')
-    return Q.net_create(mgr_or_client,
-                        name=name,
-                        **kwargs)
+    nobj = Q.net_create(mgr_or_client,  name=name, **kwargs)
+    if subnet:
+        Q.subnet_create(mgr_or_client, nobj['id'], **subnet)
+    return Q.net_show(mgr_or_client, nobj['id'])
+
+
+def create_subnet(mgr_or_client, network_id, **kwargs):
+    cidr = kwargs.pop('cidr')
+    return Q.subnet_create(mgr_or_client, network_id, cidr, **kwargs)
 
 
 def create_security_group_loginable(mgr_or_client, name, **kwargs):
