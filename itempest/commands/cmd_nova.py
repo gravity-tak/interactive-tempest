@@ -75,6 +75,11 @@ def _g_kval(_dict, k):
     return None
 
 
+def _g_server_id(mgr_or_client, server_id):
+    server = server_show(mgr_or_client, server_id)
+    return server['id']
+
+
 def flavor_list(mgr_or_client, *args, **kwargs):
     flavor_client = _g_flavors_client(mgr_or_client)
     result = flavor_client.list_flavors(**kwargs)
@@ -275,17 +280,22 @@ def server_create(mgr_or_client, name, **kwargs):
 
 
 def server_add_security_group(mgr_or_client, server_id, name):
+    server_id = _g_server_id(mgr_or_client, server_id)
     server_client = _g_servers_client(mgr_or_client)
-    return server_client.add_security_group(server_id, name)
+    server_client.add_security_group(server_id, name)
+    return server_show(mgr_or_client, server_id)
 
 
 def server_remove_security_group(mgr_or_client, server_id, name):
+    server_id = _g_server_id(mgr_or_client, server_id)
     server_client = _g_servers_client(mgr_or_client)
-    return server_client.remove_security_group(server_id, name)
+    server_client.remove_security_group(server_id, name)
+    return server_show(mgr_or_client, server_id)
 
 
 # nova delete
 def server_delete(mgr_or_client, server_id, *args, **kwargs):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.delete_server(server_id, **kwargs)
     return server
@@ -311,6 +321,7 @@ def server_show(mgr_or_client, server_id, *args, **kwargs):
 
 # nova start
 def server_start(mgr_or_client, server_id, *args, **kwargs):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.start(server_id, **kwargs)
     return server
@@ -318,6 +329,7 @@ def server_start(mgr_or_client, server_id, *args, **kwargs):
 
 # nova stop
 def server_stop(mgr_or_client, server_id, *args, **kwargs):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.stop(server_id, **kwargs)
     return server
@@ -332,6 +344,7 @@ def server_rename(mgr_or_client, server_id, new_name):
 
 # nova reboot
 def server_reboot(mgr_or_client, server_id, reboot_type):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.reboot(server_id, reboot_type)
     return server
@@ -340,6 +353,7 @@ def server_reboot(mgr_or_client, server_id, reboot_type):
 # nova rename, ...
 # kwargs are name, meta, accessIPv4, accessIPv6, disk_config
 def server_update(mgr_or_client, server_id, **kwargs):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.update_server(server_id, **kwargs)
     return server
@@ -352,18 +366,21 @@ def server_console_url(mgr_or_client, server_id,
         CLI: nova get-vnc-console <sever_id> novnc
         API: server_console_url(xadm, server_id)
     """
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     body = servers_client.get_vnc_console(server_id, console_type)
     return body['url']
 
 
 def server_get_console_output(mgr_or_client, server_id, length=None):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     body = servers_client.get_console_output(server_id, length)
     return body
 
 
 def server_get_password(mgr_or_client, server_id):
+    server_id = _g_server_id(mgr_or_client, server_id)
     servers_client = _g_servers_client(mgr_or_client)
     body = servers_client.get_password(server_id)
     return body

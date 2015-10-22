@@ -280,20 +280,27 @@ def dest_is_reachable(ssh_client, dest_ip):
         return False
 
 
-def show_toplogy(cli_mgr, return_topo=False, detail=True):
+# return_topo return list of router-info
+def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
     FMT_X_GW1 = "%sGW: snat_enabled: {enable_snat}" % (' ' * 5)
     FMT_X_GW2 = "%sfixed_ip: {external_fixed_ips}" % (' ' * (5 + 4))
+    FMT_X_ROUT = "%sroutes: {routes}" % (' ' * (5 + 4))
     FMT_INTERFACE = "%s>> interface: {name} {id}" % (' ' * 6)
-    FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 8)
-    FMT_SNET_ADDR = "%s subnet: cidr={cidr} gw={gateway_ip} {name}" % (' ' * 8)
+    # FMT_SUBNETS = "%s subnets: {subnets}" % (' ' * 8)
+    FMT_SNET_ADDR = "%s subnet: cidr={cidr} gw={gateway_ip} {name}" % (
+        ' ' * 8)
     FMT_SERVER = "%s>> server: {name} {id}" % (' ' * 10)
     FMT_SERV_ADDR = "%s>> network: %s "
     topo = []
     topo_line = ["\nNetwork topology of tenant[%s]" % tenant_name]
     s_list = cli_mgr.nova('server-list-with-detail')
     router_list = cli_mgr.qsvc('router-list')
+    if prefix:
+        sername = "^%s" % prefix
+        s_list = utils.fgrep(s_list, name=sername)
+        router_list = utils.fgrep(router_list, name=sername)
     sorted(router_list, key=itemgetter('name'))
     for router in router_list:
         rtr = _g_by_attr(router,
@@ -304,25 +311,32 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True):
         topo_line.append(FMT_ROUTER.format(**rtr))
         if type(router['external_gateway_info']) is dict:
             xnet_info = router['external_gateway_info']
+            rtr['gateway'] = xnet_info
             topo_line.append(FMT_X_GW1.format(**xnet_info))
             try:
                 topo_line.append(FMT_X_GW2.format(**xnet_info))
             except:
                 utils.log_msg("GW does not have external_fixed_ips: %s"
                               % xnet_info)
+        rtr['routes'] = router['routes']
+        if (type(router['routes']) in [list, tuple] and
+                len(router['routes']) > 0):
+            topo_line.append(FMT_X_ROUT.format(**router))
         rp_list = cli_mgr.qsvc('router-port-list', router['id'])
         for rp in rp_list:
             network = cli_mgr.qsvc('net-show', rp['network_id'])
-            netwk = _g_by_attr(network, ('name', 'id', 'subnets'))
+            netwk = _g_by_attr(network, ('name', 'id'))
+            subnet_list = network['subnets']
             netwk['port_id'] = rp['id']
             netwk['servers'] = []
             topo_line.append(FMT_INTERFACE.format(**netwk))
-            if detail:
-                for subnet_id in netwk['subnets']:
-                    subnet = cli_mgr.qsvc('subnet-show', subnet_id)
-                    topo_line.append(FMT_SNET_ADDR.format(**subnet))
-            else:
-                topo_line.append(FMT_SUBNETS.format(**netwk))
+            netwk['subnets'] = []
+            for subnet_id in subnet_list:
+                subnet = cli_mgr.qsvc('subnet-show', subnet_id)
+                subnet = _g_by_attr(subnet, ('id', 'cidr', 'gateway_ip',
+                                             'allocation_pools', 'name'))
+                topo_line.append(FMT_SNET_ADDR.format(**subnet))
+                netwk['subnets'].append(subnet)
             if_name = network['name']
             if_servers = [s for s in s_list if if_name in s['addresses']]
             for s in if_servers:
@@ -331,7 +345,7 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True):
                 serv = _g_by_attr(s, ('name', 'id'))
                 serv['#interface'] = no_if
                 topo_line.append(
-                    FMT_SERVER.format(**s) + " #network=%s" % no_if)
+                    FMT_SERVER.format(**s) + " #interface=%s" % no_if)
                 if if_name in addr_dict:
                     serv['interface'] = addr_dict[if_name]
                     topo_line.append(
