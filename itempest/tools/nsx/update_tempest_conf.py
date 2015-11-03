@@ -44,25 +44,42 @@ def update_conf_by_id(env_id, cli_mgr=None, **kwargs):
 def update_vio1_tempest_conf(cli_mgr, tempest_conf=None,
                              net_conf=None, img_name=None, **kwargs):
     public_net_dict = net_conf if net_conf else vio_env.VIO1
-    update_tempest_conf(cli_mgr, public_net_dict,
-                        tempest_conf=tempest_conf, img_name=img_name,
-                        **kwargs)
+    return update_tempest_conf(cli_mgr, public_net_dict,
+                               tempest_conf=tempest_conf, img_name=img_name,
+                               **kwargs)
 
 
 def update_vio2_tempest_conf(cli_mgr, tempest_conf=None,
                              net_conf=None, img_name=None, **kwargs):
     public_net_dict = net_conf if net_conf else vio_env.VIO2
-    update_tempest_conf(cli_mgr, public_net_dict,
-                        tempest_conf=tempest_conf, img_name=img_name,
-                        **kwargs)
+    return update_tempest_conf(cli_mgr, public_net_dict,
+                               tempest_conf=tempest_conf, img_name=img_name,
+                               **kwargs)
 
 
 def update_vio3_tempest_conf(cli_mgr, tempest_conf=None,
                              net_conf=None, img_name=None, **kwargs):
     public_net_dict = net_conf if net_conf else vio_env.VIO3
-    update_tempest_conf(cli_mgr, public_net_dict,
-                        tempest_conf=tempest_conf, img_name=img_name,
-                        **kwargs)
+    return update_tempest_conf(cli_mgr, public_net_dict,
+                               tempest_conf=tempest_conf, img_name=img_name,
+                               **kwargs)
+
+
+# cli_mgr needs to have admin privilege
+def update_devstack_tempest_conf(cli_mgr, **kwargs):
+    img_name = kwargs.pop('image_name', None)
+    tempest_conf = get_tempest_conf()
+    xnet = cli_mgr.qsvc('net-external-list')[0]
+    snet = cli_mgr.qsvc('subnet-show', xnet['subnets'][0])
+    public_net_dict = dict(
+        gateway=snet['gateway_ip'],
+        nameservers=snet['dns_nameservers'],
+        cidr=snet['cidr'],
+        alloc_pools=snet['allocation_pools'],
+    )
+    return update_tempest_conf(cli_mgr, public_net_dict,
+                               tempest_conf=tempest_conf, img_name=img_name,
+                               **kwargs)
 
 
 def find_tempest_conf():
@@ -80,9 +97,8 @@ def find_tempest_conf():
     return conf_file
 
 
-def get_tempest_conf(cli_mgr, tempest_conf=None):
-    tempest_conf = (tempest_conf if tempest_conf else
-                    find_tempest_conf())
+def get_tempest_conf(tempest_conf=None):
+    tempest_conf = tempest_conf if tempest_conf else find_tempest_conf()
     if os.path.isfile(tempest_conf):
         return tempest_conf
     return None
@@ -95,7 +111,8 @@ def show_or_create_vmdk_image(cli_mgr, img_name=None, img_file=None):
         img = utils.fgrep(cli_mgr.nova('image-list'), name=img_name)[0]
     except Exception:
         property = dict(vmware_disktype='sparse',
-                        vmware_adaptertype='ide')
+                        vmware_adaptertype='ide',
+                        hw_vif_model='e1000')
         img = cli_mgr.nova('image-create', img_name, file=img_file,
                            container_format='bare', disk_format='vmdk',
                            is_public=True, property=property)
@@ -108,7 +125,7 @@ def update_tempest_conf(cli_mgr, public_net_dict, tempest_conf=None,
                                      DEFAULT_PUBLIC_NETWORK_NAME)
     img_name = kwargs.pop('image_name', DEFAULT_IMAGE_NAME)
     img_file = kwargs.pop('image_file', DEFAULT_IMAGE_FILE)
-    tempest_conf = get_tempest_conf(cli_mgr, tempest_conf)
+    tempest_conf = get_tempest_conf(tempest_conf)
     cp = ConfigParser.ConfigParser()
     cp.readfp(open(tempest_conf))
     # update compute.image_ref
@@ -133,17 +150,16 @@ def update_tempest_conf(cli_mgr, public_net_dict, tempest_conf=None,
 
 def get_net_conf(cli_mgr, public_net_conf, xnet_name='public',
                  use_internal_dns=True):
-    dns_nameservers = (public_net_conf['nameservers_internal']
-                       if use_internal_dns else public_net_conf[
-        'nameservers'])
-
+    if 'nameservers_internal' in public_net_conf and use_internal_dns:
+        dns_nameservers = public_net_conf['nameservers_internal']
+    else:
+        dns_nameservers = public_net_conf['nameservers']
     net, subnet = vio_env.show_or_create_external_network(
         cli_mgr, xnet_name,
         cidr=public_net_conf['cidr'],
         gateway_ip=public_net_conf['gateway'],
         dns_nameservers=dns_nameservers,
         allocation_pools=public_net_conf['alloc_pools'])
-
     net = cli_mgr.qsvc('net-list', name=xnet_name)[0]
     return net
 
@@ -154,7 +170,6 @@ def get_mimic_manager_cli(auth_url=None, username=None,
     username = username if username else os_username
     password = password if password else os_password
     tenant_name = tenant_name if tenant_name else username
-    cli_mgr = utils.get_mimic_manager_cli(os_auth_url, os_username,
-                                          os_password,
-                                          os_tenant_name)
+    cli_mgr = utils.get_mimic_manager_cli(auth_url, username,
+                                          password, tenant_name)
     return cli_mgr

@@ -186,7 +186,8 @@ def create_image(glance, img_name, **create_kwargs):
     if disk_format == 'vmdk':
         create_kwargs['property'] = dict(
             vmware_disktype='sparse',
-            vmware_adaptertype='ide')
+            vmware_adaptertype='ide',
+            hw_vif_model='e1000')
     img = glance('image-create', img_name, container_format, disk_format,
                  **create_kwargs)
     return img
