@@ -57,6 +57,8 @@ class SimpleTenantNetworks(object):
             kwargs.pop('suffix_name', kwargs.pop("suffix", None)))
         self.no_servers = kwargs.pop('no_server',
                                      kwargs.pop('no_servers', False))
+        self._no_user_data = kwargs.pop('no_user_data', False)
+        self._skip_router = kwargs.pop('skip_router', False)
         self.router_cfg_options = kwargs.pop("router_options", None)
 
     def prepare_prefix_name(self, with_name=None):
@@ -120,6 +122,8 @@ class SimpleTenantNetworks(object):
 
     def b_routers(self, routers=None):
         self.routers = {}
+        if self._skip_router:
+            return self.routers
         routers_cfg = self.g_routers_cfg()
         for router in routers_cfg:
             if self.router_cfg_options:
@@ -166,12 +170,14 @@ class SimpleTenantNetworks(object):
         s_opts = copy.deepcopy(server_opts)
         for s_opt in s_opts:
             if 'user_data' in s_opt:
-                if not os.path.isabs(s_opt['user_data']):
+                if self._no_user_data:
+                    s_opt.pop('user_data')
+                elif not os.path.isabs(s_opt['user_data']):
                     s_opt['user_data'] = os.path.realpath(
                         os.path.join(self.dirname_json_file,
                                      s_opt['user_data']))
-                data = open(s_opt['user_data'], 'r').read()
-                s_opt['user_data'] = base64.standard_b64encode(data)
+                    data = open(s_opt['user_data'], 'r').read()
+                    s_opt['user_data'] = base64.standard_b64encode(data)
         if len(s_opts) > 0:
             return s_opts[0]
         return {}
