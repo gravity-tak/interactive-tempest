@@ -320,7 +320,10 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True):
                          nova=nova,
                          keys=keys,
                          lbv1=lbv1)
-    mcli.is_admin = manager.identity_client.has_admin_extensions()
+    try:
+        mcli.is_admin = manager.identity_client.has_admin_extensions()
+    except Exception:
+        mcli.is_admin = None
     return mcli
 
 
