@@ -22,9 +22,9 @@ from oslo_log import log as oslog
 
 from tempest_lib.common.utils import data_utils
 
-from tempest.services.compute.json.flavors_client import FlavorsClient
-from tempest.services.compute.json.images_client import ImagesClient
-from tempest.services.compute.json.keypairs_client import KeyPairsClient
+from tempest_lib.services.compute.flavors_client import FlavorsClient
+from tempest_lib.services.compute.images_client import ImagesClient
+from tempest_lib.services.compute.keypairs_client import KeyPairsClient
 from tempest.services.compute.json.servers_client import ServersClient
 from tempest.services.image.v1.json.image_client import ImageClient
 from tempest.services.image.v2.json.image_client import ImageClientV2
