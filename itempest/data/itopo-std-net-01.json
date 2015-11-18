@@ -1,11 +1,11 @@
 {
-  "name": "std-network",
+  "name": "std-net-01",
   "networks": [
     {
-      "name": "std-network",
+      "name": "std-net-01",
       "subnets": [
         {
-          "name": "std-subnet",
+          "name": "std-subnet-01",
           "cidr": "192.168.99.0/24",
           "gateway_ip": "192.168.99.253",
           "dns_nameservers": [
@@ -16,7 +16,7 @@
           "allocation_pools": [
             {
               "start": "192.168.99.101",
-              "end": "192.168.99.199"
+              "end": "192.168.99.130"
             }
           ]
         }
@@ -27,9 +27,9 @@
   },
   "routers": [
     {
-      "name": "std-router",
+      "name": "std-router-01",
       "gateway": "public",
-      "interfaces": ["std-network"]
+      "interfaces": ["std-net-01"]
     }
   ],
   "server-options": {
@@ -39,12 +39,12 @@
   },
   "servers": [
     {
-      "name": "std-Ka-server",
-      "interface": "std-network"
+      "name": "std-01A-server",
+      "interface": "std-net-01"
     },
     {
-      "name": "std-Sa-server",
-      "interface": "std-network"
+      "name": "std-01B-server",
+      "interface": "std-net-01"
     }
   ],
   "security-groups": [
