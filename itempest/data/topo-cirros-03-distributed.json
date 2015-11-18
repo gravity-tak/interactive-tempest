@@ -1,5 +1,5 @@
 {
-  "name": "cirros-side2",
+  "name": "cirros-side3",
   "networks": [
     {
       "name": "acct-network",
@@ -9,8 +9,8 @@
           "cidr": "10.168.22.0/24",
           "gateway_ip": "10.168.22.1",
           "dns_nameservers": [
-            "10.132.71.1",
-            "10.132.71.2"
+            "8.8.8.8",
+            "8.8.4.4"
           ],
           "enable_dhcp": true,
           "allocation_pools": [
@@ -29,7 +29,7 @@
           "name": "service-subnet",
           "cidr": "192.168.22.0/24",
           "dns_nameservers": [
-            "10.132.71.2"
+            "8.8.4.4"
           ],
           "enable_dhcp": true,
           "allocation_pools": [
@@ -48,7 +48,7 @@
           "name": "guest-subnet",
           "cidr": "192.168.44.0/24",
           "dns_nameservers": [
-            "10.132.71.1"
+            "8.8.8.8"
           ],
           "enable_dhcp": true
         }
@@ -59,9 +59,9 @@
   },
   "routers": [
     {
-      "name": "expo-router",
+      "name": "distributed-router",
       "gateway": "public",
-      "router_type": "exclusive",
+      "distribute": true,
       "interfaces": [
         "acct-network",
         "service-network",

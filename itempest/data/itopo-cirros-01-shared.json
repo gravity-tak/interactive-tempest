@@ -79,7 +79,7 @@
   },
   "routers": [
     {
-      "name": "expo-router",
+      "name": "shared-router",
       "gateway": "public",
       "interfaces": [
         "face-network",

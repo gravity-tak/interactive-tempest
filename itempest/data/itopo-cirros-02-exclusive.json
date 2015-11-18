@@ -9,8 +9,8 @@
           "cidr": "10.168.22.0/24",
           "gateway_ip": "10.168.22.1",
           "dns_nameservers": [
-            "8.8.8.8",
-            "8.8.4.4"
+            "10.132.71.1",
+            "10.132.71.2"
           ],
           "enable_dhcp": true,
           "allocation_pools": [
@@ -29,7 +29,7 @@
           "name": "service-subnet",
           "cidr": "192.168.22.0/24",
           "dns_nameservers": [
-            "8.8.4.4"
+            "10.132.71.2"
           ],
           "enable_dhcp": true,
           "allocation_pools": [
@@ -48,7 +48,7 @@
           "name": "guest-subnet",
           "cidr": "192.168.44.0/24",
           "dns_nameservers": [
-            "8.8.8.8"
+            "10.132.71.1"
           ],
           "enable_dhcp": true
         }
@@ -59,7 +59,7 @@
   },
   "routers": [
     {
-      "name": "expo-router",
+      "name": "exclusive-router",
       "gateway": "public",
       "router_type": "exclusive",
       "interfaces": [
