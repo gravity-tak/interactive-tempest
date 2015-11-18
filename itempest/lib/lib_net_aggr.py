@@ -186,7 +186,7 @@ def check_servers_are_reachable(cli_mgr, server_id_list,
             action=action,
             check_interval=check_interval,
             check_duration=check_duration)
-        n_failure += 0 if fip_result[1] else 0
+        n_failure += 0 if fip_result[1] else 1
         if del_fip:
             del_server_floatingip_by_id(cli_mgr, server_id)
     return (n_failure, result)
