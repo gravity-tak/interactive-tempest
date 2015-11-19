@@ -61,7 +61,7 @@
     {
       "name": "distributed-router",
       "gateway": "public",
-      "distribute": true,
+      "distributed": true,
       "interfaces": [
         "acct-network",
         "service-network",

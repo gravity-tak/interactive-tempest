@@ -18,6 +18,7 @@ import traceback
 
 from itempest import icreds
 from itempest.lib import utils
+from itempest.tools import simple_tenant_networks as stn
 
 
 # import load_our_solar_system as osn
@@ -25,6 +26,16 @@ from itempest.lib import utils
 def delete_tenants(tenant_pool):
     for tenant_name in tenant_pool:
         adm.keys('delete-tenant-by-name', tenant_name)
+
+
+def get_mcli(tenant_name, **kwargs):
+    psw = kwargs.pop('password', 'itempest8@OS')
+    mcli_mgr = utils.get_mimic_manager_cli(os_auth_url, tenant_name, psw)
+    return mcli_mgr
+
+
+def get_stn(mcli_mgr, jfile, prefix):
+    return stn.SimpleTenantNetworks(mcli_mgr.manager, jfile, prefix=prefix)
 
 
 # sun-has-8-planets, earth-is-the-3rd and has-1-moon
