@@ -41,6 +41,7 @@ def get_stn(mcli_mgr, jfile, prefix):
 # sun-has-8-planets, earth-is-the-3rd and has-1-moon
 os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
 os_password = os.environ.get('OS_PASSWORD', 'itempest8@OS')
+tenant_max_instances = os.environ.get('OS_TENANT_MAX_INSTANCES', 20)
 
 # accounts created by devstack
 adm = utils.get_mimic_manager_cli(os_auth_url, 'admin', os_password)
@@ -74,5 +75,8 @@ for planet in sun_planets + dwarf_planets + ["Moon"]:
         # tenant not exist, create it; default password=itempest
         tenant = icreds.create_primary_project(planet)
         tenants[planet] = adm.keys('tenant_get_by_name', planet)
+        # by default tenant can only have instances=10
+        adm.nova('quota-update', planet, instances=tenant_max_instances)
+        adm.qsvc('quota-incr-by', tenant['id'], 2)
     else:
         tenants[planet] = tenant[0]

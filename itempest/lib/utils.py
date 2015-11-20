@@ -339,7 +339,7 @@ def get_qsvc_command(client_mgr, log_header="OS-Neutron", **kwargs):
 
 
 def get_nova_command(client_mgr, log_header="OS-Nova", **kwargs):
-    return command_wrapper(client_mgr, cmd_nova,
+    return command_wrapper(client_mgr, cmd_nova, nova_flavor=True,
                            log_header=log_header)
 
 

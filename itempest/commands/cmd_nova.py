@@ -20,14 +20,17 @@ import sys
 import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
 
-from tempest_lib.common.utils import data_utils
+import cmd_keystone as keys
 
+from tempest_lib.common.utils import data_utils
 from tempest_lib.services.compute.flavors_client import FlavorsClient
 from tempest_lib.services.compute.images_client import ImagesClient
 from tempest_lib.services.compute.keypairs_client import KeyPairsClient
+from tempest.services.compute.json.quotas_client import QuotasClient
 from tempest.services.compute.json.servers_client import ServersClient
 from tempest.services.image.v1.json.image_client import ImageClient
 from tempest.services.image.v2.json.image_client import ImageClientV2
+
 
 LOG = oslog.getLogger(__name__)
 GATES = {'version': 'Liberty'}
@@ -61,6 +64,12 @@ def _g_keypairs_client(mgr_or_client):
     if isinstance(mgr_or_client, KeyPairsClient):
         return mgr_or_client
     return mgr_or_client.keypairs_client
+
+
+def _g_quotas_client(mgr_or_client):
+    if isinstance(mgr_or_client, QuotasClient):
+        return mgr_or_client
+    return mgr_or_client.quotas_client
 
 
 def _g_servers_client(mgr_or_client):
@@ -138,10 +147,9 @@ def image_show(mgr_or_client, image_id, *args, **kwargs):
 
 def keypair_list(mgr_or_client, *args, **kwargs):
     keypair_client = _g_keypairs_client(mgr_or_client)
-    result = keypair_client.list_keypairs(**kwargs)
-    if 'keypairs' in result:
-        return result['keypairs']
-    return result
+    keypairs = keypair_client.list_keypairs(**kwargs)
+    keypairs = keypairs['keypairs'] if 'keypairs' in keypairs else keypairs
+    return keypairs
 
 
 def keypair_add(mgr_or_client, name, **kwargs):
@@ -161,8 +169,9 @@ def keypair_add(mgr_or_client, name, **kwargs):
 
 
 def keypair_create(mgr_or_client, name, **kwargs):
-    return keypair_add(mgr_or_client, name, **kwargs)
-
+    keypair = keypair_add(mgr_or_client, name, **kwargs)
+    keypair = keypair['keypair'] if 'keypair' in keypair else keypair
+    return keypair
 
 def keypair_delete(mgr_or_client, key_name):
     keypair_client = _g_keypairs_client(mgr_or_client)
@@ -173,7 +182,60 @@ def keypair_delete(mgr_or_client, key_name):
 def keypair_show(mgr_or_client, key_name, **kwargs):
     keypair_client = _g_keypairs_client(mgr_or_client)
     keypair = keypair_client.show_keypair(key_name)
+    keypair = keypair['keypair'] if 'keypair' in keypair else keypair
     return keypair
+
+
+# tempest/services/compute/json/quotas_client.py
+# usage: nova quota-show [--tenant <tenant-id>] [--user <user-id>]
+def quota_show(mgr_or_client, **kwargs):
+    quota_client = _g_quotas_client(mgr_or_client)
+    tenant_id = kwargs.pop('tenant', 'admin')
+    try:
+        tenant_id = keys.tenant_get_by_name(mgr_or_client, tenant_id) ['id']
+    except Exception:
+        pass
+    quotas = quota_client.show_quota_set(tenant_id, **kwargs)
+    quotas = quotas['quota_set'] if 'quota_set' in quotas else quotas
+    return quotas
+
+
+# usage: nova quota-defaults [--tenant <tenant-id>]
+def quota_defaults(mgr_or_client, **kwargs):
+    quota_client = _g_quotas_client(mgr_or_client)
+    tenant_id = kwargs.pop('tenant', None)
+    if tenant_id is None:
+        tenant_id = keys.tenant_get_by_name(mgr_or_client, 'admin')['id']
+    quota = quota_client.show_default_quota_set(tenant_id)
+    quota = quota['quota_set'] if 'quota_set' in quota else quota
+    return quota
+
+
+# usage: nova quota-update [options ...] <tenant-id>
+def quota_update(mgr_or_client, tenant_id, **kwargs):
+    quota_client = _g_quotas_client(mgr_or_client)
+    try:
+        tenant_id = keys.tenant_get_by_name(mgr_or_client, tenant_id) ['id']
+    except Exception:
+        pass
+    quota = quota_client.update_quota_set(tenant_id, **kwargs)
+    quota = quota['quota_set'] if 'quota_set' in quota else quota
+    return quota
+
+
+# usage: nova quota-delete --tenant <tenant-id> [--user <user-id>]
+def quota_delete(mgr_or_client, **kwargs):
+    quota_client = _g_quotas_client(mgr_or_client)
+    tenant_id = kwargs.pop('tenant', None)
+    if tenant_id is None:
+        raise Exception("error: argument --tenant is required.")
+    try:
+        tenant_id = keys.tenant_get_by_name(mgr_or_client, tenant_id) ['id']
+    except Exception:
+        pass
+    quota = quota_client.delete_quota_set(tenant_id)
+    quota = quota['quota_set'] if 'quota_set' in quota else quota
+    return quota
 
 
 # server
