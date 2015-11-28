@@ -77,6 +77,9 @@ for planet in sun_planets + dwarf_planets + ["Moon"]:
         tenants[planet] = adm.keys('tenant_get_by_name', planet)
         # by default tenant can only have instances=10
         adm.nova('quota-update', planet, instances=tenant_max_instances)
-        adm.qsvc('quota-incr-by', tenant['id'], 2)
+        try:
+            adm.qsvc('quota-incr-by', tenant['id'], 2)
+        except Exception:
+            pass
     else:
         tenants[planet] = tenant[0]

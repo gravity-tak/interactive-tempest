@@ -87,6 +87,9 @@ def find_tempest_conf():
         cdir = os.environ['TEMPEST_CONFIG_DIR']
     elif 'TEMPEST_ROOT_DIR' in os.environ:
         cdir = os.environ['TEMPEST_ROOT_DIR'] + "/etc"
+    elif os.path.isdir('etc') and os.path.isfile('etc/tempest.conf'):
+        # i'm at tempest repo directory
+        cdir = os.path.abspath('etc')
     else:
         cdir = '/opt/stack/tempest/etc'
     if 'TEMPEST_CONFIG' in os.environ:
