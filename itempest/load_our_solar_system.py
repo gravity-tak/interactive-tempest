@@ -76,7 +76,7 @@ for planet in sun_planets + dwarf_planets + ["Moon"]:
         tenant = icreds.create_primary_project(planet)
         tenants[planet] = adm.keys('tenant_get_by_name', planet)
         # by default tenant can only have instances=10
-        adm.nova('quota-update', planet, instances=tenant_max_instances)
+        adm.nova('quota-update', tenant['id'], instances=tenant_max_instances)
         try:
             adm.qsvc('quota-incr-by', tenant['id'], 2)
         except Exception:

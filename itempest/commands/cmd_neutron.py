@@ -588,16 +588,17 @@ def quota_list(mgr_or_client, **kwargs):
 
 def quota_show(mgr_or_client, tenant_id, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.show_quota(tenant_id, **kwargs)
+    body = net_client.show_quotas(tenant_id, **kwargs)
     return body['quota']
 
 
 def quota_update(mgr_or_client, tenant_id, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.update_quota(tenant_id, **kwargs)
+    body = net_client.update_quotas(tenant_id, **kwargs)
     return body['quota']
 
 
+# delete_quota() is not defined?
 def quota_delete(mgr_or_client, tenant_id, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
     body = net_client.delete_quota(tenant_id, **kwargs)
