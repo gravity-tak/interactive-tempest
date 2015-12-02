@@ -74,7 +74,8 @@ for planet in sun_planets + dwarf_planets + ["Moon"]:
     if len(tenant) < 1:
         # tenant not exist, create it; default password=itempest
         tenant = icreds.create_primary_project(planet)
-        tenants[planet] = adm.keys('tenant_get_by_name', planet)
+        tenant = adm.keys('tenant_get_by_name', planet)
+        tenants[planet] = tenant
         # by default tenant can only have instances=10
         adm.nova('quota-update', tenant['id'], instances=tenant_max_instances)
         try:
