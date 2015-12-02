@@ -609,7 +609,8 @@ def quota_delete(mgr_or_client, tenant_id, **kwargs):
 def quota_incr_by(mgr_or_client, tenant_id, multi_by=2, **kwargs):
     qta = quota_show(mgr_or_client, tenant_id)
     for k in qta.keys():
-        qta[k] *= multi_by
+        if qta[k] > 0:
+            qta[k] *= multi_by
     return quota_update(mgr_or_client, tenant_id, **qta)
 
 
