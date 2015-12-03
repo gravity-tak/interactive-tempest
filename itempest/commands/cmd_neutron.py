@@ -92,6 +92,7 @@ def net_list(mgr_or_client, *args, **kwargs):
         neutron net-list --tenant-id e926a5b12756476da297fea7d930fb05
     """
     net_client = _g_network_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_networks(*args, **kwargs)
     return body['networks']
 
@@ -230,6 +231,7 @@ def subnet_create_safe(mgr_or_client, network_id,
 
 def subnet_list(mgr_or_client, *args, **kwargs):
     net_client = _g_subnet_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_subnets(*args, **kwargs)
     return body['subnets']
 
@@ -283,6 +285,7 @@ def floatingip_disassociate(mgr_or_client, floatingip_id, **kwargs):
 
 def floatingip_list(mgr_or_client, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_floatingips(*args, **kwargs)
     return body['floatingips']
 
@@ -319,6 +322,7 @@ def port_create(mgr_or_client, network_id,
 
 def port_list(mgr_or_client, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_ports(*args, **kwargs)
     return body['ports']
 
@@ -357,6 +361,7 @@ def security_group_create(mgr_or_client,
 
 def security_group_list(mgr_or_client, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_security_groups(*args, **kwargs)
     return body['security_groups']
 
@@ -413,6 +418,7 @@ def router_create(mgr_or_client, name, *args, **kwargs):
 
 def router_list(mgr_or_client, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    _x_tenant_id(net_client, kwargs)
     body = net_client.list_routers(*args, **kwargs)
     return body['routers']
 
@@ -482,8 +488,9 @@ def router_add_extra_route(mgr_or_client, router_id,
 def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
     """Remove an external network gateway from a router."""
     net_client = _g_neutron_client(mgr_or_client)
-    return net_client.update_router(router_id,
+    body = net_client.update_router(router_id,
                                     external_gateway_info=dict())
+    return body['router']
 
 
 # depending on your OS neutron policy, you might need to use admin-priv
@@ -496,9 +503,10 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
     en_snat = 'enable_snat'
     if en_snat in kwargs:
         external_gateway_info[en_snat] = kwargs.pop(en_snat)
-    return net_client.update_router(
+    body = net_client.update_router(
         router_id,
         external_gateway_info=external_gateway_info)
+    return body['router']
 
 
 # user defined command
@@ -508,9 +516,10 @@ def router_gateway_snat_set(mgr_or_client, router_id, enable):
     router = router_show(mgr_or_client, router_id)
     external_gateway_info = router['external_gateway_info']
     external_gateway_info['enable_snat'] = enable
-    return net_client.update_router(
+    body = net_client.update_router(
         router['id'],
         external_gateway_info=external_gateway_info)
+    return body['router']
 
 
 # user-defined-command
@@ -635,3 +644,11 @@ def _g_tenant_id(os_client):
     except Exception:
         # should not come over here.
         return os_client.rest_client.tenant_id
+
+
+# list command return nothing if tenant_id is the os_client itself
+def _x_tenant_id(os_client, kwdict):
+    if 'tenant_id' in kwdict:
+        if kwdict['tenant_id'] == _g_tenant_id(os_client):
+            kwdict.pop('tenant_id')
+    return kwdict
