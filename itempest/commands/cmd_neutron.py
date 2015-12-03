@@ -122,8 +122,8 @@ def network_delete(mgr_or_client, network_id, *args, **kwargs):
 
 def net_delete(mgr_or_client, network_id, *args, **kwargs):
     net_client = _g_network_client(mgr_or_client)
-    body = net_client.delete_network(
-        network_id, *args, **kwargs)
+    net = net_show(mgr_or_client, network_id)
+    body = net_client.delete_network(net['id'], *args, **kwargs)
     return body
 
 
@@ -147,7 +147,8 @@ def network_update(mgr_or_client, network_id, *args, **kwargs):
 
 def net_update(mgr_or_client, network_id, *args, **kwargs):
     net_client = _g_network_client(mgr_or_client)
-    return net_client.update_network(network_id, *args, **kwargs)
+    net = net_show(mgr_or_client, network_id)
+    return net_client.update_network(net['id'], *args, **kwargs)
 
 
 # subnet
@@ -434,12 +435,16 @@ def router_show(mgr_or_client, router_id, *args, **kwargs):
 
 def router_delete(mgr_or_client, router_id, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     body = net_client.delete_router(router_id, *args, **kwargs)
     return body
 
 
 def router_update(mgr_or_client, router_id, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     body = net_client.update_router(router_id, **kwargs)
     return body['router']
 
@@ -448,6 +453,8 @@ def router_update(mgr_or_client, router_id, *args, **kwargs):
 def router_update_extra_routes_future(mgr_or_client, router_id,
                                       nexthop, destination):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     body = net_client.update_extra_routes(router_id,
                                           nexthop, destination)
     return body['router']
@@ -457,6 +464,8 @@ def router_update_extra_routes_future(mgr_or_client, router_id,
 # fixed by https://bugs.launchpad.net/tempest/+bug/1468600
 def router_update_extra_routes(mgr_or_client, router_id, routes):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     body = net_client.update_extra_routes(router_id,
                                           routes)
     return body['router']
@@ -464,6 +473,8 @@ def router_update_extra_routes(mgr_or_client, router_id, routes):
 
 def router_delete_extra_routes(mgr_or_client, router_id):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     return net_client.delete_extra_routes(router_id)
 
 
@@ -472,6 +483,7 @@ def router_add_extra_route(mgr_or_client, router_id,
                            nexthop, destination):
     net_client = _g_neutron_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     router['routes'].append(dict(nexthop=nexthop, destination=destination))
     # TODO(akang): retrieve from router_id, and update with extra_route
     body = net_client.update_extra_routes(router_id, router['routes'])
@@ -482,6 +494,8 @@ def router_add_extra_route(mgr_or_client, router_id,
 def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
     """Remove an external network gateway from a router."""
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     body = net_client.update_router(router_id,
                                     external_gateway_info=dict())
     return body['router']
@@ -493,6 +507,8 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
                        **kwargs):
     """Set the external network gateway for a router."""
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     external_gateway_info = dict(network_id=external_network_id)
     en_snat = 'enable_snat'
     if en_snat in kwargs:
