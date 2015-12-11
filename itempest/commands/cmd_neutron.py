@@ -55,6 +55,36 @@ def _g_subnet_client(mgr_or_client):
     return mgr_or_client.network_client
 
 
+def _g_port_client(mgr_or_client):
+    if hasattr(mgr_or_client, 'ports_client'):
+        return mgr_or_client.ports_client
+    return mgr_or_client.network_client
+
+
+def _g_floating_ip_client(mgr_or_client):
+    if hasattr(mgr_or_client, 'floating_ips_client'):
+        return mgr_or_client.floating_ips_client
+    return mgr_or_client.network_client
+
+
+def _g_router_client(mgr_or_client):
+    if hasattr(mgr_or_client, 'routers_client'):
+        return mgr_or_client.routers_client
+    return mgr_or_client.network_client
+
+
+def _g_security_group_client(mgr_or_client):
+    if hasattr(mgr_or_client, 'security_groups_client'):
+        return mgr_or_client.security_groups_client
+    return mgr_or_client.network_client
+
+
+def _g_security_group_rule_client(mgr_or_client):
+    if hasattr(mgr_or_client, 'security_group_rules_client'):
+        return mgr_or_client.security_group_rules_client
+    return mgr_or_client.network_client
+
+
 def ext_list(mgr_or_client,
              *args, **kwargs):
     """CLI list all extensions:
@@ -260,7 +290,7 @@ def subnet_update(mgr_or_client, subnet_id, **kwargs):
 # floatingip - support ip4 only
 def floatingip_create(mgr_or_client, public_network_id,
                       **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     result = net_client.create_floatingip(
         floating_network_id=public_network_id,
         **kwargs)
@@ -269,48 +299,48 @@ def floatingip_create(mgr_or_client, public_network_id,
 
 def floatingip_associate(mgr_or_client, floatingip_id, server_id,
                          **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     result = net_client.associate_floating_ip_to_server(
         floatingip_id, server_id)
     return result
 
 
 def floatingip_disassociate(mgr_or_client, floatingip_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     result = net_client.update_floatingip(
         floatingip_id, port_id=None)
     return result
 
 
 def floatingip_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     body = net_client.list_floatingips(*args, **kwargs)
     return body['floatingips']
 
 
 def floatingip_show(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     body = net_client.show_floatingip(floatingip_id,
                                       *args, **kwargs)
     return body['floatingip']
 
 
 def floatingip_delete(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     body = net_client.delete_floatingip(floatingip_id,
                                         *args, **kwargs)
     return body
 
 
 def floatingip_update(mgr_or_client, floatingip_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_floating_ip_client(mgr_or_client)
     return net_client.update_floatingip(floatingip_id, **kwargs)
 
 
 # port
 def port_create(mgr_or_client, network_id,
                 name=None, tenant_id=None, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_port_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-port')
     tenant_id = tenant_id or _g_tenant_id(net_client)
     result = net_client.create_port(
@@ -319,25 +349,25 @@ def port_create(mgr_or_client, network_id,
 
 
 def port_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_port_client(mgr_or_client)
     body = net_client.list_ports(*args, **kwargs)
     return body['ports']
 
 
 def port_show(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_port_client(mgr_or_client)
     body = net_client.show_port(port_id, *args, **kwargs)
     return body['port']
 
 
 def port_delete(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_port_client(mgr_or_client)
     body = net_client.delete_port(port_id, *args, **kwargs)
     return body
 
 
 def port_update(mgr_or_client, port_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_port_client(mgr_or_client)
     body = net_client.update_port(port_id, *args, **kwargs)
     return body['port']
 
@@ -460,7 +490,6 @@ def router_update_extra_routes_future(mgr_or_client, router_id,
     return body['router']
 
 
-# NOT AVAILABLE NOW!
 # fixed by https://bugs.launchpad.net/tempest/+bug/1468600
 def router_update_extra_routes(mgr_or_client, router_id, routes):
     net_client = _g_neutron_client(mgr_or_client)
@@ -555,6 +584,8 @@ def router_interface_add(mgr_or_client, router_id, subnet_id,
                          *args, **kwargs):
     """Add an internal network interface to a router."""
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     try:
         return net_client.add_router_interface_with_subnbet_id(
             router_id,
@@ -570,6 +601,8 @@ def router_interface_delete(mgr_or_client, router_id, subnet_id,
                             *args, **kwargs):
     """Remove an internal network interface from a router."""
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     try:
         return net_client.remove_router_interface_with_subnbet_id(
             router_id,
@@ -584,6 +617,8 @@ def router_interface_delete(mgr_or_client, router_id, subnet_id,
 # CLI : neutron router-port-list <router-name-or-id>
 def router_interface_list(mgr_or_client, router_id, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
+    router = router_show(mgr_or_client, router_id)
+    router_id = router['id']
     try:
         result = net_client.list_router_interfaces(router_id)
     except Exception:

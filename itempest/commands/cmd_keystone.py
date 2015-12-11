@@ -22,6 +22,7 @@ from tempest.services.identity.v3.json.identity_client \
 from tempest.services.identity.v3.json.service_client \
     import ServiceClient
 
+from tempest_lib import exceptions as lib_exc
 try:
     from tempest_lib.services.identity.v2.token_client import TokenClient
     from tempest_lib.services.identity.v3.token_client import V3TokenClient
@@ -125,7 +126,10 @@ def role_delete(mgr_or_client, role_id, **kwargs):
 
 def role_get(mgr_or_client, role_id, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.get_role(role_id)
+    try:
+        result = identity_client.get_role(role_id)
+    except Exception:
+        result = identity_client.show_role(role_id)
     return _return_result(result, 'role')
 
 
@@ -167,13 +171,24 @@ def tenant_list(mgr_or_client, *args, **kwargs):
 
 def tenant_get(mgr_or_client, tenant_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.get_tenant(tenant_id)
+    try:
+        result = identity_client.get_tenant(tenant_id)
+    except Exception:
+        result = identity_client.show_tenant(tenant_id)
     return _return_result(result, 'tenant')
 
 
 def tenant_get_by_name(mgr_or_client, tenant_name, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_tenant_by_name(tenant_name)
+    try:
+        return identity_client.get_tenant_by_name(tenant_name)
+    except Exception:
+        # command removed
+        tenants = identity_client.list_tenants()['tenants']
+        for tenant in tenants:
+            if tenant['name'] == tenant_name:
+                return tenant
+    raise lib_exc.NotFound('No such tenant')
 
 
 def tenant_create(mgr_or_client, name, **kwargs):
@@ -194,7 +209,10 @@ def tenant_update(mgr_or_client, tenant_id, *args, **kwargs):
 
 def token_get(mgr_or_client, token_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_token(token_id, **kwargs)
+    try:
+        return identity_client.get_token(token_id, **kwargs)
+    except Exception:
+        return identity_client.show_token(token_id)
 
 
 def user_list(mgr_or_client, *args, **kwargs):
@@ -202,25 +220,42 @@ def user_list(mgr_or_client, *args, **kwargs):
     if tenant_id:
         return user_list_of_tenant(mgr_or_client, tenant_id)
     identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.get_users()
+    try:
+        result = identity_client.get_users()
+    except:
+        result = identity_client.list_users()
     return _return_result(result, 'users')
 
 
 def user_list_of_tenant(mgr_or_client, tenant_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.list_users_for_tenant(tenant_id)
+    try:
+        result = identity_client.list_users_for_tenant(tenant_id)
+    except Exception:
+        result = identity_client.list_tenant_users(tenant_id)
     return _return_result(result, 'users')
 
 
 def user_get(mgr_or_client, user_id, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.get_user(user_id)
+    try:
+        result = identity_client.get_user(user_id)
+    except Exception:
+        result = identity_client.list_users()
     return _return_result(result, 'user')
 
 
 def user_get_by_name(mgr_or_client, tenant_id, user_name, *args, **kwargs):
     identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.get_user_by_username(tenant_id, user_name)
+    try:
+        return identity_client.get_user_by_username(tenant_id, user_name)
+    except:
+        # command revmoed
+        users = user_list_of_tenant(mgr_or_client, tenant_id)
+        for user in users:
+            if user['name'] == user_name:
+                return user
+    return lib_exc.NotFound('No such user')
 
 
 def user_create(mgr_or_client, name, password, tenant_id, email,
