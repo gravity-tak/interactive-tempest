@@ -13,60 +13,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.services.identity.v2.json.identity_client \
-    import IdentityClient
-from tempest.services.identity.v3.json.endpoints_client \
-    import EndPointClient
-from tempest.services.identity.v3.json.identity_client \
-    import IdentityV3Client
-from tempest.services.identity.v3.json.service_client \
-    import ServiceClient
-
 from tempest_lib import exceptions as lib_exc
-try:
-    from tempest_lib.services.identity.v2.token_client import TokenClient
-    from tempest_lib.services.identity.v3.token_client import V3TokenClient
-except Exception:
-    from tempest_lib.services.identity.v2.token_client \
-        import TokenClientJSON as TokenClient
-    from tempest_lib.services.identity.v3.token_client \
-        import V3TokenClientJSON as V3TokenClient
 
 
 def _g_identity_client(mgr_or_client):
-    if isinstance(mgr_or_client, IdentityClient):
-        return mgr_or_client
-    return mgr_or_client.identity_client
+    return getattr(mgr_or_client, 'identity_client', mgr_or_client)
 
 
 def _g_identity_v3_client(mgr_or_client):
-    if isinstance(mgr_or_client, IdentityV3Client):
-        return mgr_or_client
-    return mgr_or_client.identity_v3_client
+    return getattr(mgr_or_client, 'identity_v3_client', mgr_or_client)
 
 
 def _g_endpoint_client(mgr_or_client):
-    if isinstance(mgr_or_client, EndPointClient):
-        return mgr_or_client
-    return mgr_or_client.endpoints_client
+    return getattr(mgr_or_client, 'endpoints_client', mgr_or_client)
 
 
 def _g_service_client(mgr_or_client):
-    if isinstance(mgr_or_client, ServiceClient):
-        return mgr_or_client
-    return mgr_or_client.service_client
+    return getattr(mgr_or_client, 'service_client', mgr_or_client)
 
 
 def _g_token_v3_client(mgr_or_client):
-    if isinstance(mgr_or_client, V3TokenClient):
-        return mgr_or_client
-    return mgr_or_client.token_v3_client
+    return getattr(mgr_or_client, 'token_v3_client', mgr_or_client)
 
 
 def _g_token_client(mgr_or_client):
-    if isinstance(mgr_or_client, TokenClient):
-        return mgr_or_client
-    return mgr_or_client.token_client
+    return getattr(mgr_or_client, 'token_client', mgr_or_client)
 
 
 def _return_result(result, of_attr):

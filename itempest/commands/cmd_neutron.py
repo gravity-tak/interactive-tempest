@@ -19,7 +19,6 @@ import os
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions
 
-from tempest.services.network.json.network_client import NetworkClient
 
 GATES = {'version': 'Liberty'}
 NET_CONSTANTS = {
@@ -30,59 +29,42 @@ NET_CONSTANTS = {
 }
 
 
+def _get_service_client(mgr_or_client, client_name):
+    s_client = getattr(mgr_or_client, client_name, None)
+    if s_client:
+        return s_client
+    return _g_neutron_client(mgr_or_client)
+
 def _g_neutron_client(mgr_or_client):
-    if isinstance(mgr_or_client, NetworkClient):
-        return mgr_or_client
-    return mgr_or_client.network_client
+    return getattr(mgr_or_client, 'network_client', mgr_or_client)
 
 
 def _g_network_client(mgr_or_client):
-    if isinstance(mgr_or_client, NetworkClient):
-        return mgr_or_client
-    # todo: seem upstream changed back to network_client 2015-10-15
-    if (GATES['version'].startswith('L') and
-            hasattr(mgr_or_client, 'networks_client')):
-        return mgr_or_client.networks_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'networks_client')
 
 
 def _g_subnet_client(mgr_or_client):
-    if isinstance(mgr_or_client, NetworkClient):
-        return mgr_or_client
-    # todo: seem upstream changed back to network_client 2015-10-15
-    if hasattr(mgr_or_client, 'subnets_client'):
-        return mgr_or_client.subnets_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'subnets_client')
 
 
 def _g_port_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'ports_client'):
-        return mgr_or_client.ports_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'ports_client')
 
 
 def _g_floating_ip_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'floating_ips_client'):
-        return mgr_or_client.floating_ips_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'floating_ips_client')
 
 
 def _g_router_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'routers_client'):
-        return mgr_or_client.routers_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'routers_client')
 
 
 def _g_security_group_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'security_groups_client'):
-        return mgr_or_client.security_groups_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'security_groups_client')
 
 
 def _g_security_group_rule_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'security_group_rules_client'):
-        return mgr_or_client.security_group_rules_client
-    return mgr_or_client.network_client
+    return _get_service_client(mgr_or_client, 'security_groups_client')
 
 
 def ext_list(mgr_or_client,

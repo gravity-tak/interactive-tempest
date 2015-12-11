@@ -15,7 +15,6 @@
 
 import base64
 import os
-import sys
 
 import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
@@ -23,13 +22,6 @@ from oslo_log import log as oslog
 import cmd_keystone as keys
 
 from tempest_lib.common.utils import data_utils
-from tempest_lib.services.compute.flavors_client import FlavorsClient
-from tempest_lib.services.compute.images_client import ImagesClient
-from tempest_lib.services.compute.keypairs_client import KeyPairsClient
-from tempest.services.compute.json.quotas_client import QuotasClient
-from tempest.services.compute.json.servers_client import ServersClient
-from tempest.services.image.v1.json.image_client import ImageClient
-from tempest.services.image.v2.json.image_client import ImageClientV2
 
 
 LOG = oslog.getLogger(__name__)
@@ -37,45 +29,32 @@ GATES = {'version': 'Liberty'}
 
 
 def _g_flavors_client(mgr_or_client):
-    if isinstance(mgr_or_client, FlavorsClient):
-        return mgr_or_client
-    return mgr_or_client.flavors_client
+    return getattr(mgr_or_client, 'flavors_client', mgr_or_client)
 
 
 def _g_image_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImageClient):
-        return mgr_or_client
+    return getattr(mgr_or_client, 'image_client', mgr_or_client)
     return mgr_or_client.image_client
 
 
 def _g_image_v2_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImageClientV2):
-        return mgr_or_client
-    return mgr_or_client.image_client_v2
+    return getattr(mgr_or_client, 'image_client_v2', mgr_or_client)
 
 
 def _g_images_client(mgr_or_client):
-    if isinstance(mgr_or_client, ImagesClient):
-        return mgr_or_client
-    return mgr_or_client.images_client
+    return getattr(mgr_or_client, 'images_client', mgr_or_client)
 
 
 def _g_keypairs_client(mgr_or_client):
-    if isinstance(mgr_or_client, KeyPairsClient):
-        return mgr_or_client
-    return mgr_or_client.keypairs_client
+    return getattr(mgr_or_client, 'keypairs_client', mgr_or_client)
 
 
 def _g_quotas_client(mgr_or_client):
-    if isinstance(mgr_or_client, QuotasClient):
-        return mgr_or_client
-    return mgr_or_client.quotas_client
+    return getattr(mgr_or_client, 'quotas_client', mgr_or_client)
 
 
 def _g_servers_client(mgr_or_client):
-    if isinstance(mgr_or_client, ServersClient):
-        return mgr_or_client
-    return mgr_or_client.servers_client
+    return getattr(mgr_or_client, 'servers_client', mgr_or_client)
 
 
 def _g_kval(_dict, k):
