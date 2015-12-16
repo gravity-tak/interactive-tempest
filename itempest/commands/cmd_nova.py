@@ -34,7 +34,6 @@ def _g_flavors_client(mgr_or_client):
 
 def _g_image_client(mgr_or_client):
     return getattr(mgr_or_client, 'image_client', mgr_or_client)
-    return mgr_or_client.image_client
 
 
 def _g_image_v2_client(mgr_or_client):
@@ -508,8 +507,8 @@ def info_server(mgr_or_client, server):
         server = server_show(mgr_or_client, server)
     s_name = server['name']
     s_info = dict(id=server['id'],
-                  status=server['status'],
-                  security_groups=server['security_groups'])
+                  status=server.get('status'),
+                  security_groups=server.get('security_groups'))
     """
     addr_dict = {}
     for net_name, net_addr_info in server['addresses'].items():

@@ -14,12 +14,17 @@
 #    under the License.
 
 
-def _g_image_v2_client(mgr_or_client):
-    if hasattr(mgr_or_client, 'image_client_v2'):
-        return mgr_or_client.image_client_v2
-    return mgr_or_client
+def _g_image_client(mgr_or_client):
+    try:
+        return getattr(mgr_or_client, 'image_client')
+    except Exception:
+        return _g_image_v2_client(mgr_or_client)
 
-# image
+
+def _g_image_v2_client(mgr_or_client):
+    return getattr(mgr_or_client, 'image_client_v2', mgr_or_client)
+
+
 # image-create ubuntu-12.04-so-x86_64 bare vmdk --is-public=True
 #       --location=http://10.34.57.171/images/ubuntu-12.04-so-x86_64.vmdk'
 def image_create(mgr_or_client, name, container_format, disk_format,

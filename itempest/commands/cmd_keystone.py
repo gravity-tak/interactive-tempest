@@ -32,6 +32,10 @@ def _g_service_client(mgr_or_client):
     return getattr(mgr_or_client, 'service_client', mgr_or_client)
 
 
+def _g_tenant_client(mgr_or_client):
+    return getattr(mgr_or_client, 'tenants_client', mgr_or_client)
+
+
 def _g_token_v3_client(mgr_or_client):
     return getattr(mgr_or_client, 'token_v3_client', mgr_or_client)
 
@@ -48,59 +52,59 @@ def _return_result(result, of_attr):
 
 # endpoint
 def endpoint_list(mgr_or_client, *args, **kwargs):
-    endpoint_client = _g_endpoint_client(mgr_or_client)
-    result = endpoint_client.list_endpoints(**kwargs)
+    _client = _g_endpoint_client(mgr_or_client)
+    result = _client.list_endpoints(**kwargs)
     return _return_result(result, 'endpoints')
 
 
 def endpoint_get(mgr_or_client, *args, **kwargs):
-    endpoint_client = _g_endpoint_client(mgr_or_client)
-    result = endpoint_client.list_endpoints(*args, **kwargs)
+    _client = _g_endpoint_client(mgr_or_client)
+    result = _client.list_endpoints(*args, **kwargs)
     return _return_result(result, 'endpoint')
 
 
 # kw: region, force_enabled, enabled
 def endpoint_create(mgr_or_client, service_id, interface, url, **kwargs):
-    endpoint_client = _g_endpoint_client(mgr_or_client)
-    result = endpoint_client.create_endpoints(service_id, interface, url,
+    _client = _g_endpoint_client(mgr_or_client)
+    result = _client.create_endpoints(service_id, interface, url,
                                               **kwargs)
     return _return_result(result, 'endpoint')
 
 
 def endpoint_delete(mgr_or_client, *args, **kwargs):
-    endpoint_client = _g_endpoint_client(mgr_or_client)
-    return endpoint_client.list_endpoints(**kwargs)
+    _client = _g_endpoint_client(mgr_or_client)
+    return _client.list_endpoints(**kwargs)
 
 
 # available kw: service_id, interface, url, region, enabled
 def endpoint_update(mgr_or_client, endpoint_id, **kwargs):
-    endpoint_client = _g_endpoint_client(mgr_or_client)
-    return endpoint_client.update_endpoint(endpoint_id, **kwargs)
+    _client = _g_endpoint_client(mgr_or_client)
+    return _client.update_endpoint(endpoint_id, **kwargs)
 
 
 def ext_list(mgr_or_client, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.list_extensions()
+    _client = _g_identity_client(mgr_or_client)
+    result = _client.list_extensions()
     return _return_result(result, 'extensions')
 
 
 def role_list(mgr_or_client, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.list_roles(**kwargs)
+    _client = _g_identity_client(mgr_or_client)
+    result = _client.list_roles(**kwargs)
     return _return_result(result, 'roles')
 
 
 def role_delete(mgr_or_client, role_id, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.delete_role(role_id)
+    _client = _g_identity_client(mgr_or_client)
+    return _client.delete_role(role_id)
 
 
 def role_get(mgr_or_client, role_id, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_identity_client(mgr_or_client)
     try:
-        result = identity_client.get_role(role_id)
+        result = _client.get_role(role_id)
     except Exception:
-        result = identity_client.show_role(role_id)
+        result = _client.show_role(role_id)
     return _return_result(result, 'role')
 
 
@@ -135,27 +139,27 @@ def service_update(mgr_or_client, service_id, **kwargs):
 
 # tenant
 def tenant_list(mgr_or_client, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.list_tenants()
+    _client = _g_tenant_client(mgr_or_client)
+    result = _client.list_tenants()
     return _return_result(result, 'tenants')
 
 
 def tenant_get(mgr_or_client, tenant_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_tenant_client(mgr_or_client)
     try:
-        result = identity_client.get_tenant(tenant_id)
+        result = _client.get_tenant(tenant_id)
     except Exception:
-        result = identity_client.show_tenant(tenant_id)
+        result = _client.show_tenant(tenant_id)
     return _return_result(result, 'tenant')
 
 
 def tenant_get_by_name(mgr_or_client, tenant_name, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_tenant_client(mgr_or_client)
     try:
-        return identity_client.get_tenant_by_name(tenant_name)
+        return _client.get_tenant_by_name(tenant_name)
     except Exception:
         # command removed
-        tenants = identity_client.list_tenants()['tenants']
+        tenants = _client.list_tenants()['tenants']
         for tenant in tenants:
             if tenant['name'] == tenant_name:
                 return tenant
@@ -163,63 +167,69 @@ def tenant_get_by_name(mgr_or_client, tenant_name, **kwargs):
 
 
 def tenant_create(mgr_or_client, name, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.create_tenant(name, **kwargs)
+    _client = _g_tenant_client(mgr_or_client)
+    result = _client.create_tenant(name, **kwargs)
     return _return_result(result, 'tenant')
 
 
 def tenant_delete(mgr_or_client, tenant_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.delete_tenant(tenant_id, **kwargs)
+    _client = _g_tenant_client(mgr_or_client)
+    return _client.delete_tenant(tenant_id, **kwargs)
 
 
 def tenant_update(mgr_or_client, tenant_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.update_tenant(tenant_id, **kwargs)
+    _client = _g_tenant_client(mgr_or_client)
+    return _client.update_tenant(tenant_id, **kwargs)
 
 
 def token_get(mgr_or_client, token_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_identity_client(mgr_or_client)
     try:
-        return identity_client.get_token(token_id, **kwargs)
+        return _client.get_token(token_id, **kwargs)
     except Exception:
-        return identity_client.show_token(token_id)
+        return _client.show_token(token_id)
 
 
 def user_list(mgr_or_client, *args, **kwargs):
     tenant_id = kwargs.pop('tenant_id', None)
     if tenant_id:
         return user_list_of_tenant(mgr_or_client, tenant_id)
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_identity_client(mgr_or_client)
     try:
-        result = identity_client.get_users()
+        result = _client.get_users()
     except:
-        result = identity_client.list_users()
+        result = _client.list_users()
     return _return_result(result, 'users')
 
 
 def user_list_of_tenant(mgr_or_client, tenant_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_tenant_client(mgr_or_client)
     try:
-        result = identity_client.list_users_for_tenant(tenant_id)
+        result = _client.list_users_for_tenant(tenant_id)
     except Exception:
-        result = identity_client.list_tenant_users(tenant_id)
+        result = _client.list_tenant_users(tenant_id)
     return _return_result(result, 'users')
 
 
+def user_show(mgr_or_client, user_id, *args, **kwargs):
+    _client = _g_identity_client(mgr_or_client)
+    result = _client.show_user(user_id)
+    return _return_result(result, 'user')
+
+
 def user_get(mgr_or_client, user_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_identity_client(mgr_or_client)
     try:
-        result = identity_client.get_user(user_id)
+        result = _client.get_user(user_id)
     except Exception:
-        result = identity_client.list_users()
+        result = user_show(mgr_or_client, user_id)
     return _return_result(result, 'user')
 
 
 def user_get_by_name(mgr_or_client, tenant_id, user_name, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
+    _client = _g_identity_client(mgr_or_client)
     try:
-        return identity_client.get_user_by_username(tenant_id, user_name)
+        return _client.get_user_by_username(tenant_id, user_name)
     except:
         # command revmoed
         users = user_list_of_tenant(mgr_or_client, tenant_id)
@@ -231,59 +241,59 @@ def user_get_by_name(mgr_or_client, tenant_id, user_name, *args, **kwargs):
 
 def user_create(mgr_or_client, name, password, tenant_id, email,
                 *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.create_user(name, password, tenant_id, email,
+    _client = _g_identity_client(mgr_or_client)
+    result = _client.create_user(name, password, tenant_id, email,
                                          **kwargs)
     return _return_result(result, 'user')
 
 
 def user_delete(mgr_or_client, user_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.delete_user(user_id)
+    _client = _g_identity_client(mgr_or_client)
+    return _client.delete_user(user_id)
 
 
 def user_update(mgr_or_client, user_id, *args, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.update_user(user_id, **kwargs)
+    _client = _g_identity_client(mgr_or_client)
+    return _client.update_user(user_id, **kwargs)
 
 
 def user_role_list(mgr_or_client, tenant_id, user_id, **kwargs):
-    identity_client = _g_identity_client(mgr_or_client)
-    result = identity_client.list_user_roles(tenant_id, user_id, **kwargs)
+    _client = _g_identity_client(mgr_or_client)
+    result = _client.list_user_roles(tenant_id, user_id, **kwargs)
     return _return_result(result, 'roles')
 
 
 def user_role_add(mgr_or_client, tenant_id, user_id, role_id):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.assign_user_role(tenant_id, user_id, role_id)
+    _client = _g_identity_client(mgr_or_client)
+    return _client.assign_user_role(tenant_id, user_id, role_id)
 
 
 def user_role_remove(mgr_or_client, tenant_id, user_id, role_id):
-    identity_client = _g_identity_client(mgr_or_client)
-    return identity_client.delete_user_role(tenant_id, user_id, role_id)
+    _client = _g_identity_client(mgr_or_client)
+    return _client.delete_user_role(tenant_id, user_id, role_id)
 
 
 # project - identity v3
 def project_list(mgr_or_client, *args, **kwargs):
-    identity_client = _g_identity_v3_client(mgr_or_client)
-    result = identity_client.list_projects()
+    _client = _g_identity_v3_client(mgr_or_client)
+    result = _client.list_projects()
     return _return_result(result, 'projects')
 
 
 def project_get(mgr_or_client, project_id, *args, **kwargs):
-    identity_client = _g_identity_v3_client(mgr_or_client)
-    result = identity_client.get_project(project_id)
+    _client = _g_identity_v3_client(mgr_or_client)
+    result = _client.get_project(project_id)
     return _return_result(result, 'project')
 
 
 def project_create(mgr_or_client, name, **kwargs):
-    identity_client = _g_identity_v3_client(mgr_or_client)
-    return identity_client.create_project(name, **kwargs)
+    _client = _g_identity_v3_client(mgr_or_client)
+    return _client.create_project(name, **kwargs)
 
 
 def project_delete(mgr_or_client, project_id, **kwargs):
-    identity_client = _g_identity_v3_client(mgr_or_client)
-    return identity_client.delete_project(project_id, **kwargs)
+    _client = _g_identity_v3_client(mgr_or_client)
+    return _client.delete_project(project_id, **kwargs)
 
 
 # user defined commands
