@@ -461,7 +461,7 @@ def get_image_id(image_name, from_images, use_any_ifnot_exist=True):
 def get_flavor_id(flavor, from_flavors):
     if type(flavor) is int:
         return flavor
-    if type(flavor) is str and flavor.is_digit():
+    if type(flavor) in (str, unicode) and flavor.isdigit():
         return int(flavor)
     for f in from_flavors:
         if f['name'] == flavor:

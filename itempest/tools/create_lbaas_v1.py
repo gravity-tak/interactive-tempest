@@ -17,7 +17,7 @@ from tempest_lib.common.utils import data_utils
 
 
 def create_testbed(cli_mgr, prefix, **kwargs):
-    prefix = prefix if prefix else data_utils('itempest-lb')
+    prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     ip_version = kwargs.pop('ip_version', 4)
     net_name = prefix + "-network"
     snet_name = prefix + "-subnet"
