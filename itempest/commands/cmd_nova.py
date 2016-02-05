@@ -41,7 +41,8 @@ def _g_image_v2_client(mgr_or_client):
 
 
 def _g_images_client(mgr_or_client):
-    return getattr(mgr_or_client, 'images_client', mgr_or_client)
+    return getattr(mgr_or_client, 'compute_images_client',
+                   getattr(mgr_or_client, 'image_client_v2'))
 
 
 def _g_keypairs_client(mgr_or_client):
