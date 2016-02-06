@@ -19,7 +19,6 @@ import os
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions
 
-
 GATES = {'version': 'Liberty'}
 NET_CONSTANTS = {
     'dns_list': ['8.8.8.8', '8.8.4,4'],
@@ -34,6 +33,7 @@ def _get_service_client(mgr_or_client, client_name):
     if s_client:
         return s_client
     return _g_neutron_client(mgr_or_client)
+
 
 def _g_neutron_client(mgr_or_client):
     return getattr(mgr_or_client, 'network_client', mgr_or_client)
@@ -64,7 +64,7 @@ def _g_security_group_client(mgr_or_client):
 
 
 def _g_security_group_rule_client(mgr_or_client):
-    return _get_service_client(mgr_or_client, 'security_groups_client')
+    return _get_service_client(mgr_or_client, 'security_group_rules_client')
 
 
 def ext_list(mgr_or_client,
@@ -357,7 +357,7 @@ def port_update(mgr_or_client, port_id, *args, **kwargs):
 # security-group
 def security_group_create(mgr_or_client,
                           name=None, tenant_id=None, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_security_group_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-sg')
     tenant_id = tenant_id or _g_tenant_id(net_client)
     desc = (kwargs.pop('desc', None) or
@@ -369,14 +369,14 @@ def security_group_create(mgr_or_client,
 
 
 def security_group_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_security_group_client(mgr_or_client)
     body = net_client.list_security_groups(*args, **kwargs)
     return body['security_groups']
 
 
 def security_group_show(mgr_or_client, security_group_id,
                         *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_security_group_client(mgr_or_client)
     try:
         body = net_client.show_security_group(security_group_id,
                                               *args, **kwargs)
@@ -389,24 +389,36 @@ def security_group_show(mgr_or_client, security_group_id,
 
 def security_group_delete(mgr_or_client, security_group_id,
                           *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.delete_security_group(security_group_id,
-                                            *args, **kwargs)
+    net_client = _g_security_group_client(mgr_or_client)
+    try:
+        body = net_client.delete_security_group(security_group_id,
+                                                *args, **kwargs)
+    except Exception:
+        body = security_group_show(mgr_or_client,
+                                   security_group_id)
+        body = net_client.delete_security_group(body['id'],
+                                                *args, **kwargs)
     return body
 
 
 def security_group_update(mgr_or_client, security_group_id,
                           *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
-    body = net_client.update_security_group(security_group_id,
-                                            *args, **kwargs)
+    net_client = _g_security_group_client(mgr_or_client)
+    try:
+        body = net_client.update_security_group(security_group_id,
+                                                *args, **kwargs)
+    except Exception:
+        body = security_group_show(mgr_or_client,
+                                   security_group_id)
+        body = net_client.update_security_group(body['id'],
+                                                *args, **kwargs)
     return body['security_group']
 
 
 # security-group-rule
 def security_group_rule_create(mgr_or_client, security_group_id,
                                tenant_id=None, skip_None=True, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_security_group_rule_client(mgr_or_client)
     tenant_id = tenant_id or _g_tenant_id(net_client)
     rule_dict = dict(security_group_id=security_group_id,
                      tenant_id=tenant_id)

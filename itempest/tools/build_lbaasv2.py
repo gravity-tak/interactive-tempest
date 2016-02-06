@@ -1,4 +1,10 @@
+import os
+import platform
+
+from itempest.commands import cmd_neutron_u1 as UQ
 from tempest_lib.common.utils import data_utils
+
+USERDATA_DIR = os.environ.get('USERDATA_DIR', '/opt/stack/data')
 
 
 def create_networks(cmgr, network_name, cidr, **kwargs):
@@ -56,9 +62,47 @@ def get_image_id(cmgr, image_name=None):
     return None
 
 
-def create_lbv2_simple(cmgr):
+def make_ssh_key_pair(cmgr, my_name):
+    hostname = platform.node().replace("-", "_").replace(".", "_")
+    ssh_key_dir = os.path.join(USERDATA_DIR, 'lbaas_itempest')
+    # os.makedirs(ssh_key_dir, 0755, exist_ok=True)
+    if not os.path.exists(ssh_key_dir):
+        os.makedirs(ssh_key_dir, 0755)
+    ssh_key_name = hostname + "_" + my_name
+    ssh_key_filename = os.path.join(ssh_key_dir, ssh_key_name)
+    ssh_key_filename_pub = ssh_key_filename + ".pub"
+    if os.path.exists(ssh_key_filename):
+        os.remove(ssh_key_filename)
+    if os.path.exists(ssh_key_filename_pub):
+        os.remove(ssh_key_filename_pub)
+    os.system('ssh-keygen -t rsa -f %s -N ""' % ssh_key_filename)
+    keypair = cmgr.nova('keypair-add', ssh_key_name,
+                        pub_key=ssh_key_filename_pub)
+    return keypair
+
+
+def setup_lbv2_simple(cmgr, x_name, **kwargs):
     # cmgr = osn.demo
-    n1,s1 = blb.create_networks(cmgr, 'lbv2-net', '10.199.99.0/24')
-    v1 = blb.create_server_on_network(cmgr, n1['id'])
-    v2 = blb.create_server_on_network(cmgr, n1['id'])
-    return(n1,s1,v1,v2)
+    my_name = data_utils.rand_name(x_name)
+    cidr = kwargs.pop('cidr', '10.199.99.0/24')
+    n1, s1 = create_networks(cmgr, my_name, cidr)
+    sg = UQ.create_security_group_loginable(cmgr.manager, my_name)
+    # ssh keypair
+    keypair = make_ssh_key_pair(cmgr, my_name)
+
+    vm1 = create_server_on_network(cmgr, n1['id'],
+                                   security_group_name_or_id=sg['name'],
+                                   key_name=keypair['name'])
+    vm2 = create_server_on_network(cmgr, n1['id'],
+                                   security_group_name_or_id=sg['name'],
+                                   key_name=keypair['name'])
+    lbv2_env = dict(name=my_name,
+                    keypair=keypair,
+                    security_group=sg,
+                    net1=n1, snet1=s1,
+                    vm1=vm1, vm2=vm2)
+    return lbv2_env
+
+
+def teardown_lbv2_simple(cmgr, env_cfg):
+    pass
