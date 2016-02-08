@@ -16,12 +16,14 @@
 import base64
 import os
 
+from tempest_lib import exceptions
 import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
 
 import cmd_keystone as keys
 
 from tempest_lib.common.utils import data_utils
+from tempest.common import waiters
 
 
 LOG = oslog.getLogger(__name__)
@@ -156,6 +158,13 @@ def keypair_delete(mgr_or_client, key_name):
     keypair_client = _g_keypairs_client(mgr_or_client)
     keypair = keypair_client.delete_keypair(key_name)
     return keypair
+
+
+def keypair_delete_silent(mgr_or_client, key_name):
+    try:
+        keypari_delete(mgr_or_client, key_name)
+    except exceptions.NotFound:
+        pass
 
 
 def keypair_show(mgr_or_client, key_name, **kwargs):
@@ -311,8 +320,8 @@ def server_create(mgr_or_client, name, **kwargs):
             name, image_id, flavor_id, **kwargs)
     server = server['server'] if 'server' in server else server
     if wait_on_boot:
-        server_client.wait_for_server_status(
-            server_id=server['id'], status='ACTIVE')
+        waiters.wait_for_server_status(
+            server_client, server['id'], 'ACTIVE')
     # The instance retrieved on creation is missing network
     # details, necessitating retrieval after it becomes active to
     # ensure correct details.
@@ -340,6 +349,13 @@ def server_delete(mgr_or_client, server_id, *args, **kwargs):
     servers_client = _g_servers_client(mgr_or_client)
     server = servers_client.delete_server(server_id, **kwargs)
     return server
+
+
+def server_delete_silent(mgr_or_client, server_id, *args, **kwargs):
+    try:
+        server_delete(mgr_or_client, server_id, *args, **kwargs)
+    except exceptions.NotFound:
+        pass
 
 
 # nova show
