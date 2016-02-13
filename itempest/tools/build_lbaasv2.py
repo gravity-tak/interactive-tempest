@@ -133,10 +133,12 @@ def setup_lbv2_simple(cmgr, x_name, **kwargs):
     vm1 = create_server_on_network(cmgr, network['id'],
                                    security_group_name_or_id=sg['name'],
                                    key_name=keypair['name'],
+                                   name=my_name+"-1",
                                    wait_on_boot=False)
     vm2 = create_server_on_network(cmgr, network['id'],
                                    security_group_name_or_id=sg['name'],
                                    key_name=keypair['name'],
+                                   name=my_name+"-2",
                                    wait_on_boot=True)
     # servers need in status=ACTIVE before assign floatingip to them
     public_network_id = get_public_network_id(cmgr)
@@ -185,8 +187,7 @@ def start_webservers(cmgr, server, env_cfg, **kwargs):
         vm_fixed_ip = floatingip['fixed_ip_address']
         ssh_client = remote_client.RemoteClient(server_ip,
                                                 username,
-                                                pkey=private_key,
-                                                password=password)
+                                                pkey=private_key)
         with tempfile.NamedTemporaryFile() as script:
             script.write(BACKEND_RESPONSE % server_name)
             script.flush()
