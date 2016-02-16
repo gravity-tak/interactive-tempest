@@ -12,6 +12,7 @@ import lib_networks as LN
 #       dns_nameservers=['10.34.35.11'], dns_search_domain='vmware.com')
 def setup_mtz_simple(cmgr, x_name, **kwargs):
     x_name = x_name or data_utils.rand_name('mtz-i')
+    wait4server_active = kwargs.pop('wait4servers', True)
     tenant_cmgr = kwargs.pop('for_tenant', None)
     if tenant_cmgr:
         tenant_id = tenant_cmgr.manager.credentials.tenant_id
@@ -50,6 +51,8 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
             server_name=network['name'])
         net_id_servers[net_id] = dict(server=vm,
                                network=network, subnet=subnet)
+    if wait4server_active:
+        wait_for_servers_active(cmgr, net_id_servers)
     return (router, net_id_servers, sg)
 
 
