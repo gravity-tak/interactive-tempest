@@ -22,6 +22,7 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
         if tenant_id:
             msg = "tenant_id not supported, use for_tenant=tenant_cmgr"
             raise exceptions.NotImplementedError(msg)
+    router_type = kwargs.pop('router_type', 'shared')
     scope_id_list = kwargs.pop('scope_id_list', [])
     mtz_ip = netaddr.IPNetwork(kwargs.pop('cidr', '10.199.1.0/24'))
     mask_bits = kwargs.pop('mask_bits', (mtz_ip.prefixlen + 3))
@@ -38,6 +39,7 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
     router = LN.create_router_and_add_interfaces(tenant_cmgr,
                                                  x_name + "-router",
                                                  net_list,
+                                                 router_type=router_type,
                                                  tenant_id=tenant_id)
     sg = LN.create_security_group_loginable(tenant_cmgr, x_name,
                                             tenant_id=tenant_id)

@@ -38,9 +38,14 @@ def create_security_group_icmp_rule(cmgr, security_group_id,
 
 
 def create_router_and_add_interfaces(cmgr, name, net_list, **kwargs):
-    tenant_id = kwargs.pop('tenant_id', None)
+    router_type = kwargs.pop('router_type', 'shared')
     name = name or data_utils.rand_name('itempz-r')
-    router = cmgr.qsvc('router-create', name, tenant_id=tenant_id)
+    router_cfg = dict(tenant_id=kwargs.pop('tenant_id', None))
+    if router_type == 'distributed':
+        router_cfg['distributed'] = True
+    elif router_type:
+        router_cfg['router_type'] = router_type
+    router = cmgr.qsvc('router-create', name, **router_cfg)
     cmgr.qsvc('router-gateway-set', router['id'],
               get_public_network_id(cmgr))
     for network, subnet in net_list:
