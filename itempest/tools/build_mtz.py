@@ -50,7 +50,7 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
             security_group_name_or_id=security_group_id,
             server_name=network['name'])
         net_id_servers[net_id] = dict(server=vm,
-                               network=network, subnet=subnet)
+                                      network=network, subnet=subnet)
     if wait4server_active:
         wait_for_servers_active(cmgr, net_id_servers)
     return (router, net_id_servers, sg)

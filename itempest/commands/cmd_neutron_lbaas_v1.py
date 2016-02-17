@@ -15,7 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# This implements load balance v1 which can not be found at libery release
+# NOTE:
+#   This module implements load balance v1 which can not be found at liberty
+#   release. It implements directly utilizing NetworkClient
 
 import json
 

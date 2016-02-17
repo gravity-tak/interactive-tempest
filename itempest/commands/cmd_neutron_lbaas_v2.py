@@ -12,6 +12,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# NOTE:
+#    unlike cmd_neutron_lbaas_v1, lbaasV2 commands utilizing the lbaas v2
+#    clients directly.
 
 
 # lbaasv2 clients

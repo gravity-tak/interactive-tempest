@@ -67,6 +67,10 @@ def _g_security_group_rule_client(mgr_or_client):
     return _get_service_client(mgr_or_client, 'security_group_rules_client')
 
 
+def _g_quota_client(mgr_or_client):
+    return _get_service_client(mgr_or_client, 'quotas_client')
+
+
 def ext_list(mgr_or_client,
              *args, **kwargs):
     """CLI list all extensions:
@@ -655,26 +659,26 @@ def router_port_list(mgr_or_client, router_id, *args, **kwargs):
 
 # quota
 def quota_list(mgr_or_client, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_quota_client(mgr_or_client)
     body = net_client.list_quotas(**kwargs)
     return body['quotas']
 
 
 def quota_show(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_quota_client(mgr_or_client)
     body = net_client.show_quotas(tenant_id, **kwargs)
     return body['quota']
 
 
 def quota_update(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_quota_client(mgr_or_client)
     body = net_client.update_quotas(tenant_id, **kwargs)
     return body['quota']
 
 
 # delete_quota() is not defined?
 def quota_delete(mgr_or_client, tenant_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_quota_client(mgr_or_client)
     body = net_client.delete_quota(tenant_id, **kwargs)
     return body
 
@@ -691,7 +695,7 @@ def quota_incr_by(mgr_or_client, tenant_id, multi_by=2, **kwargs):
 ########################################################################
 # TEMPORARY solution, keep here until I know why and fix it:
 # Methods in class NetworkClientJSON were not being called. However its
-# parent calss NetworkClientBase's method __getattr__ is used to
+# parent class NetworkClientBase's method __getattr__ is used to
 # determine which method should be called.
 def netclient_do(mgr_or_client, method_name, *args, **kwargs):
     net_client = _g_neutron_client(mgr_or_client)
