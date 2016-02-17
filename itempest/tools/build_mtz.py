@@ -1,13 +1,19 @@
 import exceptions
+
 import netaddr
 
+from itempest.lib import lib_networks as NET
 from tempest.common import waiters
 from tempest_lib.common.utils import data_utils
-import lib_networks as LN
 
 
-# scope_id_list=[None, 'vdnscope-1', 'vdnscope-2', 'vdnscope-3']
-# mtz = build_mtz.setup_mtz_simple(sun, 'mtz-s',
+# setup_mtz_simple create a network/subnet on each scope_id, and
+# attached to a router which is sepcified by the router_type arg.
+# each network will be attached a VM. VM and its network/sbunet use
+# the same name prefixed by the x_name arg.as
+# Usage:
+#    scope_id_list=[None, 'vdnscope-1', 'vdnscope-2', 'vdnscope-3']
+#    mtz = build_mtz.setup_mtz_simple(sun, 'mtz-s',
 #       for_tenant=mars, scope_id_list=scop_id_list,
 #       dns_nameservers=['10.34.35.11'], dns_search_domain='vmware.com')
 def setup_mtz_simple(cmgr, x_name, **kwargs):
@@ -36,25 +42,29 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
                                              **kwargs)
         net_list.append(network_subnet)
     # server_create does not accept tenant_id, always use tenant_cmgr
-    router = LN.create_router_and_add_interfaces(tenant_cmgr,
-                                                 x_name + "-router",
-                                                 net_list,
-                                                 router_type=router_type,
-                                                 tenant_id=tenant_id)
-    sg = LN.create_security_group_loginable(tenant_cmgr, x_name,
-                                            tenant_id=tenant_id)
+    router = NET.create_router_and_add_interfaces(tenant_cmgr,
+                                                  x_name + "-router",
+                                                  net_list,
+                                                  router_type=router_type,
+                                                  tenant_id=tenant_id)
+    sg = NET.create_security_group_loginable(tenant_cmgr, x_name,
+                                             tenant_id=tenant_id)
     security_group_id = sg['id']
     net_id_servers = {}
     for ix, (network, subnet) in enumerate(net_list):
         net_id = network['id']
-        vm = LN.create_server_on_network(
+        vm = NET.create_server_on_network(
             tenant_cmgr, net_id,
             security_group_name_or_id=security_group_id,
             server_name=network['name'])
         net_id_servers[net_id] = dict(server=vm,
                                       network=network, subnet=subnet)
     if wait4server_active:
-        wait_for_servers_active(cmgr, net_id_servers)
+        try:
+            wait_for_servers_active(cmgr, net_id_servers)
+        except Exception:
+            # if servers failed to be ACTIVE, we want to examine them
+            pass
     return (router, net_id_servers, sg)
 
 
@@ -82,24 +92,10 @@ def teardown_mtz_simple(cmgr, router, net_id_servers, sg):
     for server_id in server_list:
         waiters.wait_for_server_termination(cmgr.manager.servers_client,
                                             server_id)
-    LN.delete_this_router(cmgr.manager, router)
+    NET.delete_this_router(cmgr.manager, router)
     cmgr.qsvc('security-group-delete', sg['id'])
 
 
 def create_mtz_networks(cmgr, scope_id, cidr, name=None, **kwargs):
-    network_name = name or data_utils.rand_name('mtz-n')
-    tenant_id = kwargs.get('tenant_id', None)
-    if type(scope_id) in (str, unicode):
-        network_cfg = {
-            'provider:network_type': 'vxlan',
-            'provider:physical_network': scope_id,
-        }
-    else:
-        network_cfg = {}
-    if tenant_id:
-        network_cfg['tenant_id'] = tenant_id
-    network = cmgr.qsvc('net-create', network_name, **network_cfg)
-    subnet = cmgr.qsvc('subnet-create', network['id'], cidr,
-                       name=network_name, **kwargs)
-    network = cmgr.qsvc('net-show', network['id'])
-    return (network, subnet)
+    return NET.create_mtz_networks(cmgr, cidr, scope_id=scope_id,
+                                   name=name, **kwargs)

@@ -697,12 +697,11 @@ def quota_incr_by(mgr_or_client, tenant_id, multi_by=2, **kwargs):
 # Methods in class NetworkClientJSON were not being called. However its
 # parent class NetworkClientBase's method __getattr__ is used to
 # determine which method should be called.
-def netclient_do(mgr_or_client, method_name, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+def netclient_do(net_client, method_name, *args, **kwargs):
     nc_method = getattr(net_client, method_name, None)
     if nc_method is None:
         raise Exception("Method[%s] is not defined at instance[%s]" %
-                        method_name, str(net_client))
+                        nc_method, str(net_client))
     results = nc_method(*args, **kwargs)
     return results
 

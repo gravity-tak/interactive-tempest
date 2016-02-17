@@ -37,6 +37,29 @@ def create_security_group_icmp_rule(cmgr, security_group_id,
                      tenant_id=tenant_id, **icmp_rule)
 
 
+# it is a regular (non-MTZ) network if (scope_id == None, the default)
+def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
+    network_name = name or data_utils.rand_name('mtz-n')
+    tenant_id = kwargs.get('tenant_id', None)
+    if type(scope_id) in (str, unicode):
+        network_cfg = {
+            'provider:network_type': 'vxlan',
+            'provider:physical_network': scope_id,
+        }
+    else:
+        network_cfg = {}
+    for kw in kwargs.keys():
+        if kw.startswith('provider:'):
+            network_cfg[kw] = kwargs.pop(kw)
+    if tenant_id:
+        network_cfg['tenant_id'] = tenant_id
+    network = cmgr.qsvc('net-create', network_name, **network_cfg)
+    subnet = cmgr.qsvc('subnet-create', network['id'], cidr,
+                       name=network_name, **kwargs)
+    network = cmgr.qsvc('net-show', network['id'])
+    return (network, subnet)
+
+
 def create_router_and_add_interfaces(cmgr, name, net_list, **kwargs):
     router_type = kwargs.pop('router_type', 'shared')
     name = name or data_utils.rand_name('itempz-r')
@@ -164,8 +187,8 @@ def delete_tenant_servers(cmgr, tenant_id=None, wait_for_termination=True,
         for server_id in server_id_list:
             waiters.wait_for_server_termination(
                 cmgr.manager.servers_client, server_id)
-    else:
-        return server_id_list
+    # servers deleted or being deleted
+    return server_id_list
 
 
 def delete_router_by_id(cmgr, router_id, **kwargs):
@@ -175,20 +198,28 @@ def delete_router_by_id(cmgr, router_id, **kwargs):
     return delete_this_router(cmgr, routers[0])
 
 
-def delete_this_router(cmgr, router):
+def delete_this_router(cmgr, router, ignore_routes_if_empty=False):
     router_id = router['id']
-    cmgr.qsvc('router-delete-extra-routes', router_id)
+    if not ignore_routes_if_empty or len(router['routes']) > 0:
+        # just to make sure we can delete extra-routes even routes == []
+        cmgr.qsvc('router-delete-extra-routes', router_id)
     cmgr.qsvc('router-gateway-clear', router_id)
-    ports = cmgr.qsvc('router-port-list', router_id)
+    delete_router_interfaces(cmgr, router)
+    return cmgr.qsvc('router-delete', router_id)
+
+
+def delete_router_interfaces(cmgr, router):
+    if type(router) is not dict:
+        router = cmgr.qsvc('router-show', router)
+    ports = cmgr.qsvc('router-port-list', router['id'])
     for port in ports:
         if port['device_owner'].find(':router_interface') > 0:
             if 'fixed_ips' in port:
                 for fixed_ips in port['fixed_ips']:
                     if 'subnet_id' in fixed_ips:
                         cmgr.qsvc('router-interface-delete',
-                                  router_id,
+                                  router['id'],
                                   fixed_ips['subnet_id'])
-    return cmgr.qsvc('router-delete', router_id)
 
 
 # cmgr with admin privilege may cause resources deleted you may not want!
