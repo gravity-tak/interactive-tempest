@@ -198,7 +198,7 @@ def delete_tenant_servers(cmgr, tenant_id=None, wait_for_termination=True,
 
 
 def delete_router_by_id(cmgr, router_id, **kwargs):
-    routers = cmgr.qscv('router-list', id=router_id)
+    routers = cmgr.qsvc('router-list', id=router_id)
     if len(routers) != 1:
         return None
     return delete_this_router(cmgr, routers[0])
@@ -229,6 +229,7 @@ def delete_router_interfaces(cmgr, router):
 
 
 # cmgr with admin privilege may cause resources deleted you may not want!
+# TODO(akang): destory neutron advance services before/after delete servers
 def destroy_all_resources(cmgr, **kwargs):
     this_tenant_id = cmgr.manager.credentials.tenant_id
     tenant_id = kwargs.pop('tenant_id', this_tenant_id)
