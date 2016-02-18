@@ -39,6 +39,14 @@ def _g_neutron_client(mgr_or_client):
     return getattr(mgr_or_client, 'network_client', mgr_or_client)
 
 
+def _g_extension_client(mgr_or_client):
+    return getattr(mgr_or_client, 'network_extensions_client', mgr_or_client)
+
+
+def _g_agent_client(mgr_or_client):
+    return getattr(mgr_or_client, 'network_agents_client', mgr_or_client)
+
+
 def _g_network_client(mgr_or_client):
     return _get_service_client(mgr_or_client, 'networks_client')
 
@@ -68,7 +76,7 @@ def _g_security_group_rule_client(mgr_or_client):
 
 
 def _g_quota_client(mgr_or_client):
-    return _get_service_client(mgr_or_client, 'quotas_client')
+    return _get_service_client(mgr_or_client, 'network_quotas_client')
 
 
 def ext_list(mgr_or_client,
@@ -77,7 +85,7 @@ def ext_list(mgr_or_client,
 
         neutron ext-list
     """
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_extension_client(mgr_or_client)
     result = net_client.list_extensions()
     return result['extensions']
 

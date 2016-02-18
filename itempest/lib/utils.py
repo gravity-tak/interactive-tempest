@@ -321,8 +321,11 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True):
                          keys=keys,
                          lbv1=lbv1)
     try:
-        mcli.is_admin = manager.identity_client.has_admin_extensions()
+        # Are there other ways to validate the user's admin previledge?
+        mcli.roles = manager.roles_client.list_roles()['roles']
+        mcli.is_admin = True
     except Exception:
+        mcli.roles = None
         mcli.is_admin = None
     return mcli
 
