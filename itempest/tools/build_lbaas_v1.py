@@ -47,6 +47,10 @@ def create_testbed(cli_mgr, prefix, **kwargs):
         cli_mgr.qsvc('router-gateway-set', router['id'],
                      external_network_id=xnet_id)
         cli_mgr.qsvc('router-interface-add', router['id'], subnet['id'])
+    return dict(network=network, subnet=subnet, router=router)
+
+
+def create_lbv1(cli_mgr, subnet_list):
     # lbaas-V1
     pool_name = prefix + "-pool"
     vip_name = prefix + "-vip"
@@ -61,14 +65,11 @@ def create_testbed(cli_mgr, prefix, **kwargs):
     lb_health_monitor = cli_mgr.lbv1('lb-healthmonitor-create',
                                      delay=4, max_retries=3,
                                      type="TCP", timeout=1)
-    return dict(network=network, subnet=subnet,
-                router=router,
-                lb=dict(
-                    pool=lb_pool, member=lb_member, vip=lb_vip,
-                    healthmonitor=lb_health_monitor
-                ))
+    return dict(pool=lb_pool, member=lb_member, vip=lb_vip,
+                healthmonitor=lb_health_monitor)
 
-def delete_testbed(cli_mgr, prefix, **kwargs):
+
+def delete_lbv1(cli_mgr, prefix, **kwargs):
     name_prefix = prefix + "-"
     for lb_resource in ('healthmonitor', 'member', 'vip', 'pool'):
         for lbo in cli_mgr.lbv1('lb-%s-list' % lb_resource):

@@ -63,10 +63,12 @@ def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
     return (network, subnet)
 
 
-def create_router_and_add_interfaces(cmgr, name, net_list, **kwargs):
+def create_router_and_add_interfaces(cmgr, name, net_list,
+                                     public_network_id=None, **kwargs):
     router_type = kwargs.pop('router_type', 'shared')
     name = name or data_utils.rand_name('itempz-r')
     tenant_id=kwargs.pop('tenant_id', None)
+    public_network_id = public_network_id or get_public_network_id(cmgr)
     router_cfg = {}
     if tenant_id:
         router_cfg['tenant_id'] = tenant_id
@@ -75,8 +77,7 @@ def create_router_and_add_interfaces(cmgr, name, net_list, **kwargs):
     elif router_type:
         router_cfg['router_type'] = router_type
     router = cmgr.qsvc('router-create', name, **router_cfg)
-    cmgr.qsvc('router-gateway-set', router['id'],
-              get_public_network_id(cmgr))
+    cmgr.qsvc('router-gateway-set', router['id'], public_network_id)
     for network, subnet in net_list:
         cmgr.qsvc('router-interface-add', router['id'], subnet['id'])
     return router

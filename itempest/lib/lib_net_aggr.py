@@ -357,6 +357,7 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
     return topo if return_topo else {}
 
 
+# TODO(akang): need to handle execption, that is 404 Not Found page
 def get_user_data_of_server(server_ipaddr,
                             username='cirros', password='cubswin:)'):
     ud_cmd = 'curl -v http://169.254.169.254/openstack/latest/user_data'
