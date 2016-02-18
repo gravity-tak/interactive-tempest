@@ -53,6 +53,9 @@ def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
             network_cfg[kw] = kwargs.pop(kw)
     if tenant_id:
         network_cfg['tenant_id'] = tenant_id
+    else:
+        # pop tenant_id if cmgr does not have admin priviledge
+        kwargs.pop('tenant_id', None)
     network = cmgr.qsvc('net-create', network_name, **network_cfg)
     subnet = cmgr.qsvc('subnet-create', network['id'], cidr,
                        name=network_name, **kwargs)
@@ -63,7 +66,10 @@ def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
 def create_router_and_add_interfaces(cmgr, name, net_list, **kwargs):
     router_type = kwargs.pop('router_type', 'shared')
     name = name or data_utils.rand_name('itempz-r')
-    router_cfg = dict(tenant_id=kwargs.pop('tenant_id', None))
+    tenant_id=kwargs.pop('tenant_id', None)
+    router_cfg = {}
+    if tenant_id:
+        router_cfg['tenant_id'] = tenant_id
     if router_type == 'distributed':
         router_cfg['distributed'] = True
     elif router_type:

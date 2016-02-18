@@ -21,6 +21,7 @@ def setup_mtz_simple(cmgr, x_name, **kwargs):
     wait4server_active = kwargs.pop('wait4servers', True)
     tenant_cmgr = kwargs.pop('for_tenant', None)
     if tenant_cmgr:
+        # in this condition, cmgr must have admin privilege
         tenant_id = tenant_cmgr.manager.credentials.tenant_id
     else:
         tenant_cmgr = cmgr
