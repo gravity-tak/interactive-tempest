@@ -12,10 +12,16 @@ from tempest_lib.common.utils import data_utils
 # each network will be attached a VM. VM and its network/sbunet use
 # the same name prefixed by the x_name arg.as
 # Usage:
+#    # admin Sun create networks for non-admin client Mars
 #    scope_id_list=[None, 'vdnscope-1', 'vdnscope-2', 'vdnscope-3']
 #    mtz = build_mtz.setup_mtz_simple(sun, 'mtz-s',
 #       for_tenant=mars, scope_id_list=scop_id_list,
 #       dns_nameservers=['10.34.35.11'], dns_search_domain='vmware.com')
+#    # non-admin client Moon create networks by itself
+#    mon = build_mtz.setup_mtz_simple(moon, "mon",
+#       scope_id_list=[None, None],
+#       dns_nameservers=['10.34.35.11'], dns_search_domain='vmware.com')
+
 def setup_mtz_simple(cmgr, x_name, **kwargs):
     x_name = x_name or data_utils.rand_name('mtz-i')
     wait4server_active = kwargs.pop('wait4servers', True)
