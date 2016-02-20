@@ -16,7 +16,8 @@
 from tempest_lib.common.utils import data_utils
 
 
-def create_testbed(cli_mgr, prefix, **kwargs):
+# one network/subnet with one VM which will host 2+ servers
+def create_single_node_network(cli_mgr, prefix, **kwargs):
     prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     ip_version = kwargs.pop('ip_version', 4)
     net_name = prefix + "-network"
@@ -50,8 +51,11 @@ def create_testbed(cli_mgr, prefix, **kwargs):
     return dict(network=network, subnet=subnet, router=router)
 
 
-def create_lbv1(cli_mgr, subnet_list):
-    # lbaas-V1
+def create_lbv1_4_single_node(cli_mgr, subnet, prefix=None,
+                              protocol_port=80, ip_version=4,
+                              delay=4, max_retries=3,
+                              monitor_type="TCP", monitory_timeout=1):
+    prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     pool_name = prefix + "-pool"
     vip_name = prefix + "-vip"
     lb_pool = cli_mgr.lbv1('lb-pool-create', pool_name,
@@ -59,12 +63,15 @@ def create_lbv1(cli_mgr, subnet_list):
                            subnet_id=subnet['id'])
     lb_vip = cli_mgr.lbv1('lb-vip-create', lb_pool['id'],
                           name=vip_name, protocol="HTTP",
-                          protocol_port=80, subnet_id=subnet['id'])
-    lb_member = cli_mgr.lbv1('lb-member-create', 80, lb_pool['id'],
+                          protocol_port=protocol_port,
+                          subnet_id=subnet['id'])
+    lb_member = cli_mgr.lbv1('lb-member-create', protocol_port,
+                             lb_pool['id'],
                              ip_version)
     lb_health_monitor = cli_mgr.lbv1('lb-healthmonitor-create',
-                                     delay=4, max_retries=3,
-                                     type="TCP", timeout=1)
+                                     delay=delay, max_retries=max_retries,
+                                     type=monitor_type,
+                                     timeout=monitory_timeout)
     return dict(pool=lb_pool, member=lb_member, vip=lb_vip,
                 healthmonitor=lb_health_monitor)
 

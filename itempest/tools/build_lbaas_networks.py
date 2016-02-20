@@ -18,7 +18,8 @@ BACKEND_RESPONSE = ('echo -ne "HTTP/1.1 200 OK\r\nContent-Length: 7\r\n'
 def create_networks(cmgr, network_name, cidr, **kwargs):
     router_type = kwargs.pop('router_type', 'shared')
     public_network_id = kwargs.pop('public_network_id', None)
-    network, subnet = NET.create_mtz_networks(cmgr, cidr, name=network_name,
+    network, subnet = NET.create_mtz_networks(cmgr, cidr,
+                                              name=network_name,
                                               **kwargs)
     net_list = [(network, subnet)]
     router = NET.create_router_and_add_interfaces(
@@ -52,10 +53,6 @@ def make_ssh_keypair(cmgr, my_name):
     ssh_key_name = hostname + "_" + my_name
     keypair = cmgr.nova('keypair-create', ssh_key_name)
     return keypair
-
-
-def assign_floatingip_to_vip(cmgr, env_cfg, **kwargs):
-    pass
 
 
 # lb_env = setup_lb_servers(venus, "lbv2", num_servers=2)
@@ -99,9 +96,8 @@ def setup_lb_servers(cmgr, x_name, **kwargs):
 
     lb_env = dict(
         name=my_name, username=username, password=password,
-        keypair=keypair,
-        security_group=sg, router=router, port=port,
-        network=network, subnet=subnet,
+        keypair=keypair, security_group=sg,
+        router=router, port=port, network=network, subnet=subnet,
         servers=servers)
     return lb_env
 
@@ -111,7 +107,7 @@ def teardown_lb_servers(cmgr, env_cfg, **kwargs):
     server_list = [x['id'] for x in (E['server1'], E['server2'])]
     for obj_id in server_list:
         cmgr.nova('server-delete-silent', obj_id)
-    # make sure servers are deleted
+    # make sure all servers are terminated.
     for obj_id in server_list:
         waiters.wait_for_server_termination(cmgr.manager.servers_client,
                                             obj_id)
