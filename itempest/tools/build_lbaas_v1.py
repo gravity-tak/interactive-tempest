@@ -93,13 +93,22 @@ def create_lbv1(cmgr, subnet, member_address_list,
 
 def delete_lbv1(cmgr, prefix, **kwargs):
     name_prefix = prefix + "-"
-    # delete VIP'floatingip first
+    # after deleting VIP'floatingip
+    for vip in cmgr.lbv1('lb-vip-list'):
+        if name_prefix == "-" or vip['name'].startswith(name_prefix):
+            fip_list = cmgr.qsvc('floatingip-list',
+                                 fixed_ip_address=vip['address'])
+            for fip in fip_list:
+                cmgr.qsvc('floatingip-delete', fip['id'])
+    # then we can delete lb resources
     for lb_resource in ('healthmonitor', 'member', 'vip', 'pool'):
         for lbo in cmgr.lbv1('lb-%s-list' % lb_resource):
-            if 'name' not in lbo or lbo['name'].startswith(name_prefix):
+            if ('name' not in lbo or name_prefix == "-"
+                or lbo['name'].startswith(name_prefix)):
                 cmgr.lbv1('lb-%s-delete' % lb_resource, lbo['id'])
 
 
+# vip_fip = assign_floating_to_vip(cmgr, vip)
 def assign_floatingip_to_vip(cmgr, vip, public_network_id=None,
                              security_group_id=None):
     public_network_id = public_network_id or NET.get_public_network_id(
@@ -126,13 +135,18 @@ def get_vip_port_info(cmgr, vip_fixed_ip):
 
 
 # use this method to check lb_method being executed by loadbalancer
-def count_http_servers(web_ip, count=20):
-    web_page="http://{web_ip}/".format(web_ip=web_ip)
+# count_http_servers(vip_fip['floating_ip_address'], 50)
+def count_http_servers(web_ip, count=20, show_progress=True):
+    web_page = "http://{web_ip}/".format(web_ip=web_ip)
+    if show_progress:
+        print("lbv1 webpage: %s" % web_page)
     ctx = {}
     for x in range(count):
         data = urllib2.urlopen(web_page).read()
         m = re.search("([^\s]+)", data)
         s_ctx = m.group(1)
+        if show_progress:
+            print("%4d - %s" % (x, s_ctx))
         if s_ctx in ctx.keys():
             ctx[s_ctx] += 1
         else:
