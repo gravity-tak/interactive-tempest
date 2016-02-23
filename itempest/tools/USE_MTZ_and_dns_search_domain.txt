@@ -1,0 +1,38 @@
+Sample script to experience how to configure MTZ & dns_search_domain and testing it
+===================================================================================
+
+from itempest import load_our_solar_system as osn
+
+from itempest.lib import lib_net_aggr as libn
+from itempest.lib import lib_networks
+from itempest.tools import build_mtz
+
+
+sun = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Sun','itempest8@OS')
+mars = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Mars', 'itempest8@OS')
+
+scope_id_list = [None, "vdnscope-1", "vdnscope-2"]
+mars_cfg = dict( scope_id_list=scope_id_list, dns_search_domain='vmware.com', dns_nameservers=['10.34.35.11'])
+
+mtzm = build_mtz.setup_mtz_simple(sun, 'm-mtz', for_tenant=mars, **mars_cfg)
+
+# build_mtz.wait_for_servers_active(mars, mtzm[1])
+libn.show_topology(mtzm)
+
+servers = [v['server'] for k,v in mtzm[1].items()]
+sub0 = mars.qsvc('subnet-show', servers[0]["name"])
+
+fip = lib_networks.create_floatingip_for_server(mars, servers[0]['id'])
+sshc = lib_networks.create_ssh_client(fip['floating_ip_address'])
+sshc.get_dns_servers()
+print sshc.exec_command('ping -c3 mail')
+
+mars.qsvc('subnet-update', sub0['id'], dns_search_domain='google.com')
+sshc.renew_lease(fip['fixed_ip_address'])
+
+# ip address should be different from the first ping
+print sshc.exec_command('ping -c3 mail')
+
+
+lib_networks.destroy_all_resources(mars)
+

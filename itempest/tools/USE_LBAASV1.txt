@@ -1,5 +1,5 @@
-Following procedures demonstrate config then testing LBaasV1
-============================================================
+Sample script to experience how to configure LBaas V1 and testing it
+====================================================================
 
 from itempest import load_our_solar_system as osn
 from itempest.lib import lib_net_aggr as libn
