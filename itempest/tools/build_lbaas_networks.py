@@ -10,9 +10,9 @@ from tempest.common.utils.linux import remote_client
 from tempest.common import waiters
 
 USERDATA_DIR = os.environ.get('USERDATA_DIR', '/opt/stack/data')
-BACKEND_RESPONSE = ('echo -ne "HTTP/1.1 200 OK\r\nContent-Length: 7\r\n'
+BACKEND_RESPONSE = ('echo -ne "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n'
                     'Connection: close\r\nContent-Type: text/html; '
-                    'charset=UTF-8\r\n\r\n%s"; cat >/dev/null')
+                    'charset=UTF-8\r\n\r\n%s\r\n"; cat >/dev/null')
 
 
 def create_networks(cmgr, network_name, cidr, **kwargs):
@@ -56,7 +56,7 @@ def make_ssh_keypair(cmgr, my_name):
 
 
 # lb_env = setup_lb_servers(venus, "lbv2", num_servers=2)
-def setup_lb_servers(cmgr, x_name, **kwargs):
+def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     num_servers = kwargs.pop('num_servers', 2)
     username = kwargs.pop('username', 'cirros')
     password = kwargs.pop('password', 'cubswin:)')
@@ -70,7 +70,7 @@ def setup_lb_servers(cmgr, x_name, **kwargs):
     router, network, subnet = create_networks(cmgr, my_name, cidr,
                                               router_type=router_type,
                                               **kwargs)
-    sg = NET.create_security_group_loginable(cmgr, my_name)
+    sg = NET.create_security_group_loginable(cmgr, my_name, http=True)
     # ssh keypair
     keypair = make_ssh_keypair(cmgr, my_name)
 
@@ -136,7 +136,7 @@ def start_webservers(lb_cfg, **kwargs):
         ssh_client.validate_authentication()
         web_server_script = '/tmp/script'
         with tempfile.NamedTemporaryFile() as script:
-            script.write(BACKEND_RESPONSE % server_name)
+            script.write(BACKEND_RESPONSE % (2+len(server_name), server_name))
             script.flush()
             with tempfile.NamedTemporaryFile() as key:
                 key.write(private_key)

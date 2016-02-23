@@ -13,11 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import urllib2
+import re
+
 from tempest_lib.common.utils import data_utils
+from itempest.lib import lib_networks as NET
 
 
 # one network/subnet with one VM which will host 2+ servers
-def create_single_node_network(cli_mgr, prefix, **kwargs):
+# for clearity, please use
+# build_lbaas_networks.setup_lb_network_and_servers(cmgr, x_name)
+def setup_single_node_network(cmgr, prefix, **kwargs):
     prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     ip_version = kwargs.pop('ip_version', 4)
     net_name = prefix + "-network"
@@ -26,65 +32,109 @@ def create_single_node_network(cli_mgr, prefix, **kwargs):
     cidr = kwargs.pop('cidr', '192.168.11.0/24')
     xnet_id = kwargs.pop('public_network_id', None)
     if xnet_id is None:
-        xnet = cli_mgr.qsvc('net-external-list')[0]
+        xnet = cmgr.qsvc('net-external-list')[0]
         xnet_id = xnet['id']
-    network_list = cli_mgr.qsvc('net-list', name=net_name)
+    network_list = cmgr.qsvc('net-list', name=net_name)
     if len(network_list) > 0:
         network = network_list[0]
     else:
-        network = cli_mgr.qsvc('net-create', net_name)
-    subnet_list = cli_mgr.qsvc('subnet-list', name=snet_name)
+        network = cmgr.qsvc('net-create', net_name)
+    subnet_list = cmgr.qsvc('subnet-list', name=snet_name)
     if len(subnet_list) > 0:
         subnet = subnet_list[0]
     else:
-        subnet = cli_mgr.qsvc('subnet-create', network['id'], cidr,
-                              name=snet_name, ip_version=ip_version)
-    router_list = cli_mgr.qsvc('router-list', name=rtr_name)
+        subnet = cmgr.qsvc('subnet-create', network['id'], cidr,
+                           name=snet_name, ip_version=ip_version)
+    router_list = cmgr.qsvc('router-list', name=rtr_name)
     if len(router_list) > 0:
         router = router_list[0]
     else:
-        router = cli_mgr.qsvc('router-create', rtr_name, admin_state_up=True,
-                              router_type='exclusive')
-        cli_mgr.qsvc('router-gateway-set', router['id'],
-                     external_network_id=xnet_id)
-        cli_mgr.qsvc('router-interface-add', router['id'], subnet['id'])
+        router = cmgr.qsvc('router-create', rtr_name, admin_state_up=True,
+                           router_type='exclusive')
+        cmgr.qsvc('router-gateway-set', router['id'],
+                  external_network_id=xnet_id)
+        cmgr.qsvc('router-interface-add', router['id'], subnet['id'])
     return dict(network=network, subnet=subnet, router=router)
 
 
-def create_lbv1_4_single_node(cli_mgr, subnet, prefix=None,
-                              protocol_port=80, ip_version=4,
-                              delay=4, max_retries=3,
-                              monitor_type="TCP", monitory_timeout=1):
+def create_lbv1(cmgr, subnet, member_address_list,
+                prefix=None, protocol_port=80, ip_version=4,
+                delay=4, max_retries=3,
+                monitor_type="TCP", monitory_timeout=1):
     prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     pool_name = prefix + "-pool"
     vip_name = prefix + "-vip"
-    lb_pool = cli_mgr.lbv1('lb-pool-create', pool_name,
-                           lb_method="ROUND_ROBIN", protocol="HTTP",
-                           subnet_id=subnet['id'])
-    lb_vip = cli_mgr.lbv1('lb-vip-create', lb_pool['id'],
-                          name=vip_name, protocol="HTTP",
-                          protocol_port=protocol_port,
-                          subnet_id=subnet['id'])
-    lb_member = cli_mgr.lbv1('lb-member-create', protocol_port,
-                             lb_pool['id'],
-                             ip_version)
-    lb_health_monitor = cli_mgr.lbv1('lb-healthmonitor-create',
-                                     delay=delay, max_retries=max_retries,
-                                     type=monitor_type,
-                                     timeout=monitory_timeout)
-    return dict(pool=lb_pool, member=lb_member, vip=lb_vip,
-                healthmonitor=lb_health_monitor)
+    lb_cfg = {}
+    lb_cfg['pool'] = cmgr.lbv1('lb-pool-create', pool_name,
+                               lb_method="ROUND_ROBIN", protocol="HTTP",
+                               subnet_id=subnet['id'])
+    pool_id = lb_cfg['pool']['id']
+    lb_cfg['vip'] = cmgr.lbv1('lb-vip-create', pool_id,
+                              name=vip_name, protocol="HTTP",
+                              protocol_port=protocol_port,
+                              subnet_id=subnet['id'])
+    lb_cfg['member'] = []
+    if member_address_list:
+        for m_addr in member_address_list:
+            mbr = cmgr.lbv1('lb-member-create', pool_id, protocol_port,
+                            ip_version=ip_version, address=m_addr)
+            lb_cfg['member'].append(mbr)
+    else:
+        lb_cfg['member'].append(
+            cmgr.lbv1('lb-member-create', pool_id,
+                      protocol_port, ip_version=ip_version))
+    lb_cfg['health_monitor'] = cmgr.lbv1('lb-healthmonitor-create',
+                                         delay=delay,
+                                         max_retries=max_retries,
+                                         type=monitor_type,
+                                         timeout=monitory_timeout)
+    return lb_cfg
 
 
-def delete_lbv1(cli_mgr, prefix, **kwargs):
+def delete_lbv1(cmgr, prefix, **kwargs):
     name_prefix = prefix + "-"
+    # delete VIP'floatingip first
     for lb_resource in ('healthmonitor', 'member', 'vip', 'pool'):
-        for lbo in cli_mgr.lbv1('lb-%s-list' % lb_resource):
+        for lbo in cmgr.lbv1('lb-%s-list' % lb_resource):
             if 'name' not in lbo or lbo['name'].startswith(name_prefix):
-                cli_mgr.lbv1('lb-%s-delete' % lb_resource, lbo['id'])
-    for rtr in cli_mgr.qsvc('router-list'):
-        if rtr['name'].startswith(name_prefix):
-            cli_mgr.qsvc('delete-router', rtr['id'])
-    for net in cli_mgr.qsvc('net-list'):
-        if net['name'].startswith(name_prefix):
-            cli_mgr.qsvc('net-delete', net['id'])
+                cmgr.lbv1('lb-%s-delete' % lb_resource, lbo['id'])
+
+
+def assign_floatingip_to_vip(cmgr, vip, public_network_id=None,
+                             security_group_id=None):
+    public_network_id = public_network_id or NET.get_public_network_id(
+        cmgr)
+    port_id = vip['port_id']
+    floatingip = cmgr.qsvc('floatingip-create', public_network_id,
+                           port_id=port_id)
+    # ovs-agent is not enforcing security groups on the vip port
+    # see https://bugs.launchpad.net/neutron/+bug/1163569
+    # if caller send in security_group_id, set port
+    if security_group_id:
+        cmgr.qsvc('port-update', port_id,
+                  security_groups=[security_group_id])
+    return floatingip
+
+
+def get_vip_port_info(cmgr, vip_fixed_ip):
+    filters = dict(
+        device_owner="neutron:LOADBALANCER",
+        fixed_ips=("ip_address=%s" % (vip_fixed_ip))
+    )
+    port_list = cmgr.qsvc("port-list", **filters)
+    return port_list
+
+
+# use this method to check lb_method being executed by loadbalancer
+def count_http_servers(web_ip, count=20):
+    web_page="http://{web_ip}/".format(web_ip=web_ip)
+    ctx = {}
+    for x in range(count):
+        data = urllib2.urlopen(web_page).read()
+        m = re.search("([^\s]+)", data)
+        s_ctx = m.group(1)
+        if s_ctx in ctx.keys():
+            ctx[s_ctx] += 1
+        else:
+            ctx[s_ctx] = 1
+    return ctx

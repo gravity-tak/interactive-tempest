@@ -16,6 +16,9 @@ def create_security_group_loginable(cmgr, name, **kwargs):
         sg = cmgr.qsvc('security-group-create', name, tenant_id=tenant_id)
         create_security_group_ssh_rule(cmgr, sg['id'], tenant_id=tenant_id)
         create_security_group_icmp_rule(cmgr, sg['id'], tenant_id=tenant_id)
+        if kwargs.pop('http', False):
+            create_security_group_http_rule(cmgr, sg['id'],
+                                            tenant_id=tenant_id)
     return cmgr.qsvc('security-group-show', sg['id'])
 
 
@@ -36,6 +39,14 @@ def create_security_group_icmp_rule(cmgr, security_group_id,
                      security_group_id,
                      tenant_id=tenant_id, **icmp_rule)
 
+
+def create_security_group_http_rule(cmgr, security_group_id, tenant_id=None):
+    http_rule = dict(direction='ingress',
+                    ethertype='IPv4', protocol='tcp',
+                    port_range_min=80, port_range_max=82)
+    return cmgr.qsvc('security-group-rule-create',
+                     security_group_id,
+                     tenant_id=tenant_id, **http_rule)
 
 # it is a regular (non-MTZ) network if (scope_id == None, the default)
 def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):

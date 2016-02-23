@@ -163,7 +163,7 @@ def lb_healthmonitor_update(mgr_or_client, healthmonitor_id,
 
 # tempest create_member(self,protocol_port, pool, ip_version)
 # we use pool_id
-def lb_member_create(mgr_or_client, protocol_port, pool_id,
+def lb_member_create(mgr_or_client, pool_id, protocol_port,
                      ip_version=4, **kwargs):
     """Create a member."""
     create_kwargs = dict(
