@@ -270,7 +270,7 @@ def subnet_show(mgr_or_client, subnet_id, **kwargs):
 
 
 def subnet_delete(mgr_or_client, subnet_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_subnet_client(mgr_or_client)
     body = net_client.delete_subnet(subnet_id, **kwargs)
     return body
 

@@ -33,10 +33,10 @@ vip_fip = lbaasv1.assign_floatingip_to_vip(venus, lb_vip, security_group_id=secu
 # sshc = lib_networks.create_ssh_client(vip_fip["floating_ip_address”])
 web_ip = vip_fip["floating_ip_address"]
 
+# http "VIP address" for round-robin effects
 ctx = lbaasv1.count_http_servers(web_ip, 50)
 
 # teardown
-venus.qsvc("floatingip-delete", vip_fip[“port_id"]
 lbaasv1.delete_lbv1(venus, "lb-v”)
 
 lib_network.destroy_all_resources(venus)
