@@ -42,11 +42,12 @@ def create_security_group_icmp_rule(cmgr, security_group_id,
 
 def create_security_group_http_rule(cmgr, security_group_id, tenant_id=None):
     http_rule = dict(direction='ingress',
-                    ethertype='IPv4', protocol='tcp',
-                    port_range_min=80, port_range_max=82)
+                     ethertype='IPv4', protocol='tcp',
+                     port_range_min=80, port_range_max=82)
     return cmgr.qsvc('security-group-rule-create',
                      security_group_id,
                      tenant_id=tenant_id, **http_rule)
+
 
 # it is a regular (non-MTZ) network if (scope_id == None, the default)
 def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
@@ -78,7 +79,7 @@ def create_router_and_add_interfaces(cmgr, name, net_list,
                                      public_network_id=None, **kwargs):
     router_type = kwargs.pop('router_type', 'shared')
     name = name or data_utils.rand_name('itempz-r')
-    tenant_id=kwargs.pop('tenant_id', None)
+    tenant_id = kwargs.pop('tenant_id', None)
     public_network_id = public_network_id or get_public_network_id(cmgr)
     router_cfg = {}
     if tenant_id:
@@ -194,7 +195,8 @@ def delete_server_floatingips(cmgr, server):
 def delete_tenant_servers(cmgr, tenant_id=None, wait_for_termination=True,
                           **kwargs):
     server_id_list = []
-    for server in cmgr.nova('server-list', detail=True):
+    for server in cmgr.nova('server-list', detail=True, all_tenants=True,
+                            tenant_id=tenant_id):
         if tenant_id and server['tenant_id'] != tenant_id:
             # this works only cmgr as admin priveledge
             continue
