@@ -443,13 +443,13 @@ def security_group_rule_create(mgr_or_client, security_group_id,
 
 # router
 def router_create(mgr_or_client, name, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     body = net_client.create_router(name, *args, **kwargs)
     return body['router']
 
 
 def router_list(mgr_or_client, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     body = net_client.list_routers(*args, **kwargs)
     return body['routers']
 
@@ -460,7 +460,7 @@ def router_list_on_l3_agent(mgr_or_client, *args, **kwargs):
 
 
 def router_show(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     try:
         body = net_client.show_router(router_id, *args, **kwargs)
     except Exception:
@@ -470,7 +470,7 @@ def router_show(mgr_or_client, router_id, *args, **kwargs):
 
 
 def router_delete(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     body = net_client.delete_router(router_id, *args, **kwargs)
@@ -478,7 +478,7 @@ def router_delete(mgr_or_client, router_id, *args, **kwargs):
 
 
 def router_update(mgr_or_client, router_id, *args, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     body = net_client.update_router(router_id, **kwargs)
@@ -488,7 +488,7 @@ def router_update(mgr_or_client, router_id, *args, **kwargs):
 # extra routes (static routes) only available from router_update
 def router_update_extra_routes_future(mgr_or_client, router_id,
                                       nexthop, destination):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     body = net_client.update_extra_routes(router_id,
@@ -498,7 +498,7 @@ def router_update_extra_routes_future(mgr_or_client, router_id,
 
 # fixed by https://bugs.launchpad.net/tempest/+bug/1468600
 def router_update_extra_routes(mgr_or_client, router_id, routes):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     body = net_client.update_extra_routes(router_id,
@@ -507,7 +507,7 @@ def router_update_extra_routes(mgr_or_client, router_id, routes):
 
 
 def router_delete_extra_routes(mgr_or_client, router_id):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     return net_client.delete_extra_routes(router_id)
@@ -516,7 +516,7 @@ def router_delete_extra_routes(mgr_or_client, router_id):
 # user-defined-command
 def router_add_extra_route(mgr_or_client, router_id,
                            nexthop, destination):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     router['routes'].append(dict(nexthop=nexthop, destination=destination))
@@ -528,7 +528,7 @@ def router_add_extra_route(mgr_or_client, router_id,
 # router sub-commands
 def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
     """Remove an external network gateway from a router."""
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     body = net_client.update_router(router_id,
@@ -541,7 +541,7 @@ def router_gateway_clear(mgr_or_client, router_id, *args, **kwargs):
 def router_gateway_set(mgr_or_client, router_id, external_network_id,
                        **kwargs):
     """Set the external network gateway for a router."""
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     external_gateway_info = dict(network_id=external_network_id)
@@ -557,7 +557,7 @@ def router_gateway_set(mgr_or_client, router_id, external_network_id,
 # user defined command
 # this command might need admin priv for mgr_or_client
 def router_gateway_snat_set(mgr_or_client, router_id, enable):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     external_gateway_info = router['external_gateway_info']
     external_gateway_info['enable_snat'] = enable
@@ -589,7 +589,7 @@ def router_gateway_ipaddr_get(mgr_or_client, router_id):
 def router_interface_add(mgr_or_client, router_id, subnet_id,
                          *args, **kwargs):
     """Add an internal network interface to a router."""
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     try:
@@ -619,7 +619,7 @@ def router_interface_add(mgr_or_client, router_id, subnet_id,
 def router_interface_delete(mgr_or_client, router_id, subnet_id,
                             *args, **kwargs):
     """Remove an internal network interface from a router."""
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     try:
@@ -648,7 +648,7 @@ def router_interface_delete(mgr_or_client, router_id, subnet_id,
 
 # CLI : neutron router-port-list <router-name-or-id>
 def router_interface_list(mgr_or_client, router_id, **kwargs):
-    net_client = _g_neutron_client(mgr_or_client)
+    net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
     try:
