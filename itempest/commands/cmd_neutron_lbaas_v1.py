@@ -21,7 +21,6 @@
 
 import json
 
-from tempest.common import service_client
 from tempest.services.network.json.network_client import NetworkClient
 
 VERSION = "2.0"

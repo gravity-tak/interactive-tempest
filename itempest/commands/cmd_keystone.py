@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 
 def _g_identity_client(mgr_or_client):

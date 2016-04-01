@@ -14,11 +14,9 @@
 #    under the License.
 
 from oslo_log import log as logging
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 
 from tempest.common import cred_provider
-from tempest.common.isolated_creds import \
-    IsolatedCreds as TempestCredsProvider
 from tempest import config
 
 CONF = config.CONF

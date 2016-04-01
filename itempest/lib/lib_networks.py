@@ -1,6 +1,6 @@
 import netaddr
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
 from tempest.common.utils.linux import remote_client
 

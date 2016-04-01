@@ -1,4 +1,4 @@
-from tempest_lib import auth as l_auth
+from tempest.lib import auth as l_auth
 from tempest import clients
 
 __author__ = 'akang'

@@ -14,12 +14,12 @@
 #    under the License.
 
 from oslo_log import log as logging
-from tempest_lib.common.utils import data_utils
 
 from tempest.common import cred_provider
 from tempest.common.credentials_factory import get_configured_credentials
 from tempest.common.dynamic_creds import DynamicCredentialProvider
 from tempest import config
+from tempest.lib.common.utils import data_utils
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -46,7 +46,6 @@ class ItempestCredProvider(DynamicCredentialProvider):
                                                    network_resources,
                                                    admin_creds=admin_creds)
         self.num_of_users = num_of_users
-
 
     def __del__(self):
         if self.cleanup_atexit:

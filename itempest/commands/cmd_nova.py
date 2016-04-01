@@ -16,13 +16,13 @@
 import base64
 import os
 
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 import itempest.lib.man_data as mdata
 from oslo_log import log as oslog
 
 import cmd_keystone as keys
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
 
 

@@ -1,13 +1,17 @@
 import os
 import platform
+import shlex
+import subprocess
 import tempfile
 
 from itempest.lib import lib_networks as NET
-from tempest_lib.common.utils import data_utils
 
-from tempest.common import commands
+from tempest.lib.common.utils import data_utils
+
 from tempest.common.utils.linux import remote_client
 from tempest.common import waiters
+from tempest import exceptions
+
 
 USERDATA_DIR = os.environ.get('USERDATA_DIR', '/opt/stack/data')
 BACKEND_RESPONSE = ('echo -ne "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n'
@@ -141,10 +145,10 @@ def start_webservers(lb_cfg, **kwargs):
             with tempfile.NamedTemporaryFile() as key:
                 key.write(private_key)
                 key.flush()
-                commands.copy_file_to_host(script.name,
-                                           web_server_script,
-                                           server_ip,
-                                           username, key.name)
+                copy_file_to_host(script.name,
+                                  web_server_script,
+                                  server_ip,
+                                  username, key.name)
         # Start netcat
         start_server = ('while true; do '
                         'sudo nc -ll -p %(port)s -e sh %(server_script)s; '
@@ -153,3 +157,23 @@ def start_webservers(lb_cfg, **kwargs):
                               'server_script': web_server_script}
 
         ssh_client.exec_command(cmd)
+
+
+def copy_file_to_host(file_from, dest, host, username, pkey):
+    dest = "%s@%s:%s" % (username, host, dest)
+    cmd = "scp -v -o UserKnownHostsFile=/dev/null " \
+          "-o StrictHostKeyChecking=no " \
+          "-i %(pkey)s %(file1)s %(dest)s" % {'pkey': pkey,
+                                              'file1': file_from,
+                                              'dest': dest}
+    args = shlex.split(cmd.encode('utf-8'))
+    subprocess_args = {'stdout': subprocess.PIPE,
+                       'stderr': subprocess.STDOUT}
+    proc = subprocess.Popen(args, **subprocess_args)
+    stdout, stderr = proc.communicate()
+    if proc.returncode != 0:
+        raise exceptions.CommandFailed(cmd,
+                                       proc.returncode,
+                                       stdout,
+                                       stderr)
+    return stdout

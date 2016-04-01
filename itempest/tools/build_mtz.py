@@ -4,7 +4,7 @@ import netaddr
 
 from itempest.lib import lib_networks as NET
 from tempest.common import waiters
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 
 
 # setup_mtz_simple create a network/subnet on each scope_id, and

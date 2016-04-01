@@ -16,7 +16,7 @@
 import urllib2
 import re
 
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
 
 
