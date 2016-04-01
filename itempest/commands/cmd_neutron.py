@@ -442,9 +442,10 @@ def security_group_rule_create(mgr_or_client, security_group_id,
 
 
 # router
-def router_create(mgr_or_client, name, *args, **kwargs):
+def router_create(mgr_or_client, name=None, **kwargs):
     net_client = _g_router_client(mgr_or_client)
-    body = net_client.create_router(name, *args, **kwargs)
+    name = name or data_utils.rand_name('itempest-router')
+    body = net_client.create_router(name=name, **kwargs)
     return body['router']
 
 
@@ -654,10 +655,22 @@ def router_interface_list(mgr_or_client, router_id, **kwargs):
     try:
         result = net_client.list_router_interfaces(router_id)
     except Exception:
-        result = netclient_do(net_client,
-                              'list_router_interfaces',
-                              router_id)
+        try:
+            result = netclient_do(net_client,
+                                  'list_router_interfaces',
+                                  router_id)
+        except Exception:
+            return list_router_interfaces(mgr_or_client, router_id)
     return result['ports']
+
+
+# begins from mitaka release list_router_interfaces method is removed
+def list_router_interfaces(mgr_or_client, router_id):
+    device_owner = 'network:router_interface'
+    if_ports = port_list(mgr_or_client,
+                         device_owner=device_owner,
+                         device_id=router_id)
+    return if_ports
 
 
 def router_port_list(mgr_or_client, router_id, *args, **kwargs):
