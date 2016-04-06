@@ -29,6 +29,12 @@ import itempest.client_manager
 from itempest.commands import cmd_glance, cmd_nova, cmd_keystone
 from itempest.commands import cmd_neutron, cmd_neutron_lbaas_v1
 from itempest.commands import cmd_neutron_u1
+from itempest.commands import cmd_neutron_lbaas_v2
+from itempest.services.lbaas import load_balancers_client
+from itempest.services.lbaas import pools_client
+from itempest.services.lbaas import listeners_client
+from itempest.services.lbaas import members_client
+from itempest.services.lbaas import health_monitors_client
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -310,16 +316,19 @@ def get_mimic_manager_cli(os_auth_url, os_username, os_password,
                                                      lbaasv1=lbaasv1)
 
 
-def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True):
+def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
+                                              lbaasv2=False):
     qsvc = get_qsvc_command(manager)
     nova = get_nova_command(manager)
     keys = get_keys_command(manager)
     lbv1 = get_lbv1_command(manager) if lbaasv1 else None
+    lbv2_clients = get_lbaas_commands(manager) if lbaasv2 else {}
     mcli = AttrContainer(manager=manager,
                          qsvc=qsvc,
                          nova=nova,
                          keys=keys,
-                         lbv1=lbv1)
+                         lbv1=lbv1,
+                         **lbv2_clients)
     try:
         # Are there other ways to validate the user's admin previledge?
         mcli.roles = manager.roles_client.list_roles()['roles']
@@ -354,3 +363,19 @@ def get_keys_command(client_mgr, log_header="OS-Keystone", **kwargs):
 def get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
     return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
                            log_header=log_header)
+
+
+def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):
+    mgr = client_mgr.manager
+    mgr.load_balancers_client = load_balancers_client.get_client(client_mgr)
+    mgr.pools_client = pools_client.get_client(client_mgr),
+    mgr.listeners_client = listeners_client.get_client(client_mgr),
+    mgr.members_client = members_client.get_client(client_mgr),
+    mgr.health_monitors_client = health_monitors_client.get_client(client_mgr)
+    return dict(
+        load_balancers_client=load_balancers_client.get_client(client_mgr),
+        pools_client=pools_client.get_client(client_mgr),
+        listeners_client=listeners_client.get_client(client_mgr),
+        members_client=members_client.get_client(client_mgr),
+        health_monitors_client=health_monitors_client.get_client(client_mgr)
+    )

@@ -5,10 +5,10 @@ import subprocess
 import tempfile
 
 from itempest.lib import lib_networks as NET
-
+from itempest.lib import remote_client
 from tempest.lib.common.utils import data_utils
 
-from tempest.common.utils.linux import remote_client
+from tempest.common.utils.linux import remote_client as os_remote_client
 from tempest.common import waiters
 from tempest import exceptions
 
