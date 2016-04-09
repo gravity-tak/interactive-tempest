@@ -19,8 +19,8 @@ class MembersClient(base.BaseNetworkClient):
     resource = 'member'
     resource_plural = 'members'
     path = 'lbaas/members'
-    resource_base_path = '/lbaas/pools/%s/member'
-    resource_object_path = '/lbaas/pools/%s/member/%s'
+    resource_base_path = '/lbaas/pools/%s/members'
+    resource_object_path = '/lbaas/pools/%s/members/%s'
 
     def create_member(self, pool_id, **kwargs):
         uri = self.resource_base_path % pool_id

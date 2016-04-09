@@ -23,6 +23,8 @@ os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
 os_username = os.environ.get('OS_USERNAME', 'Earth')
 os_password = os.environ.get('OS_PASSWORD', 'itempest8@OS')
 os_tenant_name = os.environ.get('OS_TENANT_NAME', os_username)
+os_lbaasv2 = int(os.environ.get('OS_LABAASV2', 0))
 
 tenant = utils.get_mimic_manager_cli(os_auth_url, os_username, os_password,
-                                     os_tenant_name)
+                                     os_tenant_name,
+                                     lbaasv2=os_lbaasv2)

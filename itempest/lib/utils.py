@@ -108,7 +108,7 @@ def norm_it(val):
 
 
 def command_wrapper(client_manager, cmd_module,
-                    nova_flavor=False,
+                    nova_flavor=False, lbaasv2_flavor=False,
                     log_header=None, verbose=True):
     """Usage Examples:
 
@@ -141,6 +141,8 @@ def command_wrapper(client_manager, cmd_module,
         cmd, arg_list, kwargs = parse_cmdline(cmd_line, *args, **kwargs)
         if nova_flavor and cmd in NOVA_SERVER_CMDS:
             cmd = 'server_' + cmd
+        if lbaasv2_flavor and cmd.startswith('lbaas_'):
+            cmd = cmd[6:]
         for cmd_module in cmd_module_list:
             f_method = getattr(cmd_module, cmd, None)
             if f_method:
@@ -308,12 +310,16 @@ class AttrContainer(object):
 def get_mimic_manager_cli(os_auth_url, os_username, os_password,
                           os_tenant_name=None, identity_version='v2',
                           **kwargs):
+    # lbaasv{1|2} can not be accepted by get_client_manager
     lbaasv1 = kwargs.pop('lbaasv1', True)
+    lbaasv2 = kwargs.pop('lbaasv2', False)
+    lbaasv1 = False if lbaasv2 else lbaasv1
     manager = itempest.client_manager.get_client_manager(
         os_auth_url, os_username, os_password, tenant_name=os_tenant_name,
         identity_version=identity_version, **kwargs)
     return get_mimic_manager_cli_with_client_manager(manager,
-                                                     lbaasv1=lbaasv1)
+                                                     lbaasv1=lbaasv1,
+                                                     lbaasv2=lbaasv2)
 
 
 def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
@@ -322,13 +328,13 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
     nova = get_nova_command(manager)
     keys = get_keys_command(manager)
     lbv1 = get_lbv1_command(manager) if lbaasv1 else None
-    lbv2_clients = get_lbaas_commands(manager) if lbaasv2 else {}
+    lbaas = get_lbaas_commands(manager) if lbaasv2 else None
     mcli = AttrContainer(manager=manager,
                          qsvc=qsvc,
                          nova=nova,
                          keys=keys,
                          lbv1=lbv1,
-                         **lbv2_clients)
+                         lbaas=lbaas)
     try:
         # Are there other ways to validate the user's admin previledge?
         mcli.roles = manager.roles_client.list_roles()['roles']
@@ -366,16 +372,16 @@ def get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
 
 
 def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):
-    mgr = client_mgr.manager
-    mgr.load_balancers_client = load_balancers_client.get_client(client_mgr)
-    mgr.pools_client = pools_client.get_client(client_mgr),
-    mgr.listeners_client = listeners_client.get_client(client_mgr),
-    mgr.members_client = members_client.get_client(client_mgr),
-    mgr.health_monitors_client = health_monitors_client.get_client(client_mgr)
-    return dict(
-        load_balancers_client=load_balancers_client.get_client(client_mgr),
-        pools_client=pools_client.get_client(client_mgr),
-        listeners_client=listeners_client.get_client(client_mgr),
-        members_client=members_client.get_client(client_mgr),
-        health_monitors_client=health_monitors_client.get_client(client_mgr)
-    )
+    setattr(client_mgr, 'load_balancers_client',
+            load_balancers_client.get_client(client_mgr))
+    setattr(client_mgr, 'pools_client',
+            pools_client.get_client(client_mgr))
+    setattr(client_mgr, 'listeners_client',
+            listeners_client.get_client(client_mgr))
+    setattr(client_mgr, 'members_client',
+            members_client.get_client(client_mgr))
+    setattr(client_mgr, 'health_monitors_client',
+            health_monitors_client.get_client(client_mgr))
+    return command_wrapper(client_mgr, cmd_neutron_lbaas_v2,
+                           lbaasv2_flavor=True, log_header=log_header)
+

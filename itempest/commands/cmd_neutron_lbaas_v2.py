@@ -19,7 +19,7 @@
 
 
 # lbaasv2 clients
-def _g_load_balancers_client(mgr_or_client):
+def _g_loadbalancers_client(mgr_or_client):
     return getattr(mgr_or_client, 'load_balancers_client', mgr_or_client)
 
 
@@ -50,167 +50,208 @@ def loadbalancer_create(mgr_or_client, vip_subnet_id, **kwargs):
     net_client = _g_loadbalancers_client(mgr_or_client)
     kwargs['vip_subnet_id'] = vip_subnet_id
     result = net_client.create_load_balancer(**kwargs)
-    return _retrun_result(result, 'loadbalancer')
+    return _return_result(result, 'loadbalancer')
 
 
 def loadbalancer_update(mgr_or_client, load_balancer_id, **kwargs):
     net_client = _g_loadbalancers_client(mgr_or_client)
-    result = net_client.update_load_balancer(load_balancer_id, **kwargs)
-    return _retrun_result(result, 'loadbalancer')
+    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    result = net_client.update_load_balancer(nobj_id, **kwargs)
+    return _return_result(result, 'loadbalancer')
 
 
 def loadbalancer_delete(mgr_or_client, load_balancer_id):
     net_client = _g_loadbalancers_client(mgr_or_client)
-    result = net_client.delete_load_balancer(load_balancer_id)
-    return _retrun_result(result, 'loadbalancer')
+    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    result = net_client.delete_load_balancer(nobj_id)
+    return _return_result(result, 'loadbalancer')
 
 
 def loadbalancer_show(mgr_or_client, load_balancer_id, **fields):
     net_client = _g_loadbalancers_client(mgr_or_client)
-    result = net_client.show_load_balancer(load_balancer_id, **fields)
-    return _retrun_result(result, 'loadbalancer')
-
-
-# no CLI counter part
-def loadbalancer_status_tree_show(mgr_or_client, load_balancer_id, **fields):
-    net_client = _g_loadbalancer_client(mgr_or_client)
-    result = net_client.show_load_balancers_status_tree(load_balancer_id,
-                                                        **fields)
-    return _retrun_result(result, 'loadbalancer')
-
-
-# no CLI counter part
-def loadbalancer_stats_show(mgr_or_client, load_balancer_id, **fields):
-    net_client = _g_loadbalancer_client(mgr_or_client)
-    result = net_client.show_load_balancers_stats(load_balancer_id,
-                                                  **fields)
-    return _retrun_result(result, 'loadbalancer')
+    try:
+        result = net_client.show_load_balancer(load_balancer_id, **fields)
+    except Exception:
+        nobj = loadbalancer_list(mgr_or_client, name=load_balancer_id)[0]
+        result = net_client.show_load_balancer(nobj['id'], **fields)
+    return _return_result(result, 'loadbalancer')
 
 
 def loadbalancer_list(mgr_or_client, **filters):
     net_client = _g_loadbalancers_client(mgr_or_client)
-    result = net_client.list_load_balancers(**fields)
-    return _retrun_result(result, 'loadbalancers')
+    result = net_client.list_load_balancers(**filters)
+    return _return_result(result, 'loadbalancers')
+
+
+# no CLI counter part
+def loadbalancer_get_id(mgr_or_client, load_balancer_id):
+    nobj = loadbalancer_show(mgr_or_client, load_balancer_id)
+    return nobj['id']
+
+
+def loadbalancer_status_tree_show(mgr_or_client, load_balancer_id, **fields):
+    net_client = _g_loadbalancers_client(mgr_or_client)
+    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    result = net_client.show_load_balancers_status_tree(nobj_id,
+                                                        **fields)
+    return _return_result(result, 'loadbalancer')
+
+
+def loadbalancer_stats_show(mgr_or_client, load_balancer_id, **fields):
+    net_client = _g_loadbalancers_client(mgr_or_client)
+    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    result = net_client.show_load_balancers_stats(nobj_id,
+                                                  **fields)
+    return _return_result(result, 'loadbalancer')
+
 
 # listener
 def listener_create(mgr_or_client, **kwargs):
     net_client = _g_listeners_client(mgr_or_client)
     result = net_client.create_listener(**kwargs)
-    return _retrun_result(result, 'listener')
+    return _return_result(result, 'listener')
 
 
 def listener_update(mgr_or_client, listener_id, **kwargs):
     net_client = _g_listeners_client(mgr_or_client)
+    listener_id = listener_get_id(mgr_or_client, listener_id)
     result = net_client.update_listener(listener_id, **kwargs)
-    return _retrun_result(result, 'listener')
+    return _return_result(result, 'listener')
 
 
 def listener_delete(mgr_or_client, listener_id):
     net_client = _g_listeners_client(mgr_or_client)
+    listener_id = listener_get_id(mgr_or_client, listener_id)
     result = net_client.delete_listener(listener_id)
-    return _retrun_result(result, 'listener')
+    return _return_result(result, 'listener')
 
 
 def listener_show(mgr_or_client, listener_id, **fields):
     net_client = _g_listeners_client(mgr_or_client)
-    result = net_client.show_listener(listener_id, **fields)
-    return _retrun_result(result, 'listener')
+    try:
+        result = net_client.show_listener(listener_id, **fields)
+    except Exception:
+        nobj = listener_list(mgr_or_client, name=listener_id)[0]
+        result = net_client.show_listener(nobj['id'], **fields)
+    return _return_result(result, 'listener')
 
 
 def listener_list(mgr_or_client, **filters):
     net_client = _g_listeners_client(mgr_or_client)
-    result = net_client.list_listeners(**fields)
-    return _retrun_result(result, 'listeners')
+    result = net_client.list_listeners(**filters)
+    return _return_result(result, 'listeners')
+
+
+def listener_get_id(mgr_or_client, listener_id):
+    nobj = listener_show(mgr_or_client, listener_id)
+    return nobj['id']
 
 
 # pool
 def pool_create(mgr_or_client, **kwargs):
     net_client = _g_pools_client(mgr_or_client)
     result = net_client.create_pool(**kwargs)
-    return _retrun_result(result, 'pool')
+    return _return_result(result, 'pool')
 
 
 def pool_update(mgr_or_client, pool_id, **kwargs):
     net_client = _g_pools_client(mgr_or_client)
+    pool_id = pool_get_id(mgr_or_client, pool_id)
     result = net_client.update_pool(pool_id, **kwargs)
-    return _retrun_result(result, 'pool')
+    return _return_result(result, 'pool')
 
 
 def pool_delete(mgr_or_client, pool_id):
     net_client = _g_pools_client(mgr_or_client)
+    pool_id = pool_get_id(mgr_or_client, pool_id)
     result = net_client.delete_pool(pool_id)
-    return _retrun_result(result, 'pool')
+    return _return_result(result, 'pool')
 
 
 def pool_show(mgr_or_client, pool_id, **fields):
     net_client = _g_pools_client(mgr_or_client)
-    result = net_client.show_pool(pool_id, **fields)
-    return _retrun_result(result, 'pool')
+    try:
+        result = net_client.show_pool(pool_id, **fields)
+    except Exception:
+        nobj = pool_list(mgr_or_client, name=pool_id)[0]
+        result = net_client.show_pool(nobj['id'], **fields)
+    return _return_result(result, 'pool')
 
 
 def pool_list(mgr_or_client, **filters):
     net_client = _g_pools_client(mgr_or_client)
-    result = net_client.list_pools(**fields)
-    return _retrun_result(result, 'pools')
+    result = net_client.list_pools(**filters)
+    return _return_result(result, 'pools')
+
+
+def pool_get_id(mgr_or_client, pool_id):
+    nobj = pool_show(mgr_or_client, pool_id)
+    return nboj['id']
 
 
 # healthmonitor, CLI does not use health_monitor like API
 def healthmonitor_create(mgr_or_client, **kwargs):
     net_client = _g_healthmonitors_client(mgr_or_client)
     result = net_client.create_healthmonitor(**kwargs)
-    return _retrun_result(result, 'healthmonitor')
+    return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_update(mgr_or_client, healthmonitor_id, **kwargs):
     net_client = _g_healthmonitors_client(mgr_or_client)
     result = net_client.update_healthmonitor(healthmonitor_id, **kwargs)
-    return _retrun_result(result, 'healthmonitor')
+    return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_delete(mgr_or_client, healthmonitor_id):
     net_client = _g_healthmonitors_client(mgr_or_client)
     result = net_client.delete_healthmonitor(healthmonitor_id)
-    return _retrun_result(result, 'healthmonitor')
+    return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_show(mgr_or_client, healthmonitor_id, **fields):
     net_client = _g_healthmonitors_client(mgr_or_client)
     result = net_client.show_healthmonitor(healthmonitor_id, **fields)
-    return _retrun_result(result, 'healthmonitor')
+    return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_list(mgr_or_client, **filters):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.list_healthmonitors(**fields)
-    return _retrun_result(result, 'healthmonitors')
+    result = net_client.list_healthmonitors(**filters)
+    return _return_result(result, 'healthmonitors')
+
+
+def healthmonitor_get_id(mgr_or_client, healthmonitor_id):
+    nobj = healthmonitor_show(mgr_or_client, healthmonitor_id)
+    return nobj['id']
 
 
 # member
 def member_create(mgr_or_client, pool_id, **kwargs):
     net_client = _g_members_client(mgr_or_client)
     result = net_client.create_member(pool_id, **kwargs)
-    return _retrun_result(result, 'member')
+    return _return_result(result, 'member')
 
 
 def member_update(mgr_or_client, pool_id, member_id, **kwargs):
     net_client = _g_members_client(mgr_or_client)
     result = net_client.update_member(pool_id, member_id, **kwargs)
-    return _retrun_result(result, 'member')
+    return _return_result(result, 'member')
 
 
 def member_delete(mgr_or_client, pool_id, member_id):
     net_client = _g_members_client(mgr_or_client)
     result = net_client.delete_member(pool_id, member_id)
-    return _retrun_result(result, 'member')
+    return _return_result(result, 'member')
 
 
 def member_show(mgr_or_client, pool_id, member_id, **fields):
     net_client = _g_members_client(mgr_or_client)
+    pool_id = pool_get_id(mgr_or_client, pool_id)
     result = net_client.show_member(pool_id, member_id, **fields)
-    return _retrun_result(result, 'member')
+    return _return_result(result, 'member')
 
 
 def member_list(mgr_or_client, pool_id, **filters):
     net_client = _g_members_client(mgr_or_client)
-    result = net_client.list_members(pool_id, **fields)
-    return _retrun_result(result, 'members')
+    result = net_client.list_members(pool_id, **filters)
+    return _return_result(result, 'members')

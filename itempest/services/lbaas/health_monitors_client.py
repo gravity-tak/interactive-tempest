@@ -22,25 +22,25 @@ class HealthMonitorsClient(base.BaseNetworkClient):
     resource_base_path = '/%s' % path
     resource_object_path = '/%s/%%s' % path
 
-    def create_healthmonitor(self, **kwargs):
+    def create_health_monitor(self, **kwargs):
         uri = self.resource_base_path
         post_data = {self.resource: kwargs}
         return self.create_resource(uri, post_data)
 
-    def update_healthmonitor(self, health_monitor_id, **kwargs):
+    def update_health_monitor(self, health_monitor_id, **kwargs):
         uri = self.resource_object_path % health_monitor_id
         post_data = {self.resource: kwargs}
         return self.update_resource(uri, post_data)
 
-    def show_healthmonitor(self, health_monitor_id, **fields):
+    def show_health_monitor(self, health_monitor_id, **fields):
         uri = self.resource_object_path % health_monitor_id
         return self.show_resource(uri, **fields)
 
-    def delete_healthmonitor(self, health_monitor_id):
+    def delete_health_monitor(self, health_monitor_id):
         uri = self.resource_object_path % health_monitor_id
         return self.delete_resource(uri)
 
-    def list_healthmonitors(self, **filters):
+    def list_health_monitors(self, **filters):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
 

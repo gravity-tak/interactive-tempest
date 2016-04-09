@@ -30,7 +30,8 @@ def delete_tenants(tenant_pool):
 
 def get_mcli(tenant_name, **kwargs):
     psw = kwargs.pop('password', 'itempest8@OS')
-    mcli_mgr = utils.get_mimic_manager_cli(os_auth_url, tenant_name, psw)
+    mcli_mgr = utils.get_mimic_manager_cli(os_auth_url, tenant_name, psw,
+                                           **kwargs)
     return mcli_mgr
 
 
@@ -42,12 +43,15 @@ def get_stn(mcli_mgr, jfile, prefix):
 os_auth_url = os.environ.get('OS_AUTH_URL', 'http://10.8.3.1:5000/v2.0')
 os_password = os.environ.get('OS_PASSWORD', 'itempest8@OS')
 tenant_max_instances = os.environ.get('OS_TENANT_MAX_INSTANCES', 20)
+os_lbaasv2 = int(os.environ.get('OS_LABAASV2', 0))
 
 # accounts created by devstack
-adm = utils.get_mimic_manager_cli(os_auth_url, 'admin', os_password)
+adm = utils.get_mimic_manager_cli(os_auth_url, 'admin', os_password,
+                                  lbaasv2=os_lbaasv2)
 try:
     # not every Openstack and devstack create demo project/tenant
-    demo = utils.get_mimic_manager_cli(os_auth_url, 'demo', os_password)
+    demo = utils.get_mimic_manager_cli(os_auth_url, 'demo', os_password,
+                                       lbaasv2=os_lbaasv2)
 except Exception:
     pass
 
@@ -56,7 +60,8 @@ try:
     tenant = utils.fgrep(adm.keys('tenant-list'), name=r'^Sun$')
     if len(tenant) < 1:
         Sun = icreds.create_admin_project('Sun', 'itempest8@OS')
-    sun = utils.get_mimic_manager_cli(os_auth_url, 'Sun', 'itempest8@OS')
+    sun = utils.get_mimic_manager_cli(os_auth_url, 'Sun', 'itempest8@OS',
+                                      lbaasv2=os_lbaasv2)
 except Exception:
     tb_str = traceback.format_exc()
     mesg = ("ERROR creating/retriving Admin user[%s]:\n%s" % (
