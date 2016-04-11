@@ -6,9 +6,8 @@ import tempfile
 
 from itempest.lib import lib_networks as NET
 from itempest.lib import remote_client
-from tempest.lib.common.utils import data_utils
 
-# from tempest.common.utils.linux import remote_client as os_remote_client
+from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
 from tempest import exceptions
 
@@ -156,7 +155,7 @@ def start_webservers(lb_cfg, **kwargs):
         cmd = start_server % {'port': lb_cfg['port'],
                               'server_script': web_server_script}
 
-        ssh_client.exec_command(cmd)
+        ssh_client.exec_command(cmd, with_prologue='')
 
 
 def copy_file_to_host(file_from, dest, host, username, pkey):

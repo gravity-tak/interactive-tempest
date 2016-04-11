@@ -67,3 +67,20 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
         pool=pool1,
         member=member_list,
         health_monitor=healthmonitr1)
+
+
+def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
+                             security_group_id=None):
+    public_network_id = (public_network_id or
+                         NET.get_public_network_id(cmgr))
+    lb = cmgr.lbaas('loadbalancer-show', loadbalancer)
+    vip_port_id = lb['vip_port_id']
+    floatingip = cmgr.qsvc('floatingip-create', public_network_id,
+                           port_id=vip_port_id)
+    # ovs-agent is not enforcing security groups on the vip port
+    # see https://bugs.launchpad.net/neutron/+bug/1163569
+    # if caller send in security_group_id, set port
+    if security_group_id:
+        cmgr.qsvc('port-update', vip_port_id,
+                  security_groups=[security_group_id])
+    return floatingip
