@@ -89,20 +89,40 @@ def loadbalancer_get_id(mgr_or_client, load_balancer_id):
     return nobj['id']
 
 
-def loadbalancer_status_tree_show(mgr_or_client, load_balancer_id, **fields):
-    net_client = _g_loadbalancers_client(mgr_or_client)
-    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
-    result = net_client.show_load_balancers_status_tree(nobj_id,
-                                                        **fields)
-    return _return_result(result, 'loadbalancer')
+def loadbalancer_statuses(mgr_or_client, load_balancer_id, **fields):
+    return loadbalancer_status_tree(mgr_or_client, load_balancer_id,
+                                    **fields)
 
 
-def loadbalancer_stats_show(mgr_or_client, load_balancer_id, **fields):
+def loadbalancer_status_tree(mgr_or_client, load_balancer_id, **fields):
     net_client = _g_loadbalancers_client(mgr_or_client)
     nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
-    result = net_client.show_load_balancers_stats(nobj_id,
-                                                  **fields)
-    return _return_result(result, 'loadbalancer')
+    result = net_client.show_load_balancer_status_tree(nobj_id,
+                                                       **fields)
+    return _return_result(result, 'statuses')
+
+
+def loadbalancer_stats(mgr_or_client, load_balancer_id, **fields):
+    net_client = _g_loadbalancers_client(mgr_or_client)
+    nobj_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    result = net_client.show_load_balancer_stats(nobj_id,
+                                                 **fields)
+    return _return_result(result, 'stats')
+
+
+def loadbalancer_waitfor_active(mgr_or_client, load_balancer_id, **filters):
+    filters['provisioning_status'] = 'ACTIVE'
+    filters['operating_status'] = 'ONLINE'
+    return loadbalancer_waitfor_status(mgr_or_client, load_balancer_id,
+                                       **filters)
+
+
+def loadbalancer_waitfor_status(mgr_or_client, load_balancer_id, **filters):
+    net_client = _g_loadbalancers_client(mgr_or_client)
+    load_balancer_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
+    lb = net_client.wait_for_load_balancers_status(load_balancer_id,
+                                                   **filters)
+    return lb
 
 
 # listener
@@ -186,37 +206,38 @@ def pool_list(mgr_or_client, **filters):
 
 def pool_get_id(mgr_or_client, pool_id):
     nobj = pool_show(mgr_or_client, pool_id)
-    return nboj['id']
+    return nobj['id']
 
 
 # healthmonitor, CLI does not use health_monitor like API
+# required attributes: max_retires, pool_id, delay, timeout, type
 def healthmonitor_create(mgr_or_client, **kwargs):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.create_healthmonitor(**kwargs)
+    result = net_client.create_health_monitor(**kwargs)
     return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_update(mgr_or_client, healthmonitor_id, **kwargs):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.update_healthmonitor(healthmonitor_id, **kwargs)
+    result = net_client.update_health_monitor(healthmonitor_id, **kwargs)
     return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_delete(mgr_or_client, healthmonitor_id):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.delete_healthmonitor(healthmonitor_id)
+    result = net_client.delete_health_monitor(healthmonitor_id)
     return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_show(mgr_or_client, healthmonitor_id, **fields):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.show_healthmonitor(healthmonitor_id, **fields)
+    result = net_client.show_health_monitor(healthmonitor_id, **fields)
     return _return_result(result, 'healthmonitor')
 
 
 def healthmonitor_list(mgr_or_client, **filters):
     net_client = _g_healthmonitors_client(mgr_or_client)
-    result = net_client.list_healthmonitors(**filters)
+    result = net_client.list_health_monitors(**filters)
     return _return_result(result, 'healthmonitors')
 
 
@@ -255,3 +276,36 @@ def member_list(mgr_or_client, pool_id, **filters):
     net_client = _g_members_client(mgr_or_client)
     result = net_client.list_members(pool_id, **filters)
     return _return_result(result, 'members')
+
+
+def loadbalancer_delete_tree(mgr_or_client, loadbalancer=None, **filters):
+    if loadbalancer:
+        lb_list = [loadbalancer_show(mgr_or_client, loadbalancer)]
+    else:
+        lb_list = loadbalancer_list(mgr_or_client)
+    for lb in lb_list:
+        destroy_loadbalancer(mgr_or_client, lb['id'])
+    return None
+
+
+def destroy_loadbalancer(mgr_or_client, loadbalancer_id):
+    statuses = loadbalancer_status_tree(mgr_or_client, loadbalancer_id)
+    lb = statuses.get('loadbalancer', None)
+    if lb is None: return None
+    lb_id = lb.get('id')
+    for listener in lb.get('listeners', []):
+        for pool in listener.get('pools', []):
+            hm = pool.get('healthmonitor', None)
+            if hm:
+                healthmonitor_delete(mgr_or_client, hm['id'])
+                loadbalancer_waitfor_active(mgr_or_client, lb_id)
+            pool_delete(mgr_or_client, pool['id'])
+            loadbalancer_waitfor_active(mgr_or_client, lb_id)
+        listener_delete(mgr_or_client, listener['id'])
+        loadbalancer_waitfor_active(mgr_or_client, lb_id)
+    loadbalancer_delete(mgr_or_client, lb_id)
+    try:
+        loadbalancer_waitfor_active(mgr_or_client, lb_id)
+    except Exception:
+        pass
+    return None

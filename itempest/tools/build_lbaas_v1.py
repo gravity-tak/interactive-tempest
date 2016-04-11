@@ -54,7 +54,8 @@ def setup_single_node_network(cmgr, prefix, **kwargs):
         cmgr.qsvc('router-gateway-set', router['id'],
                   external_network_id=xnet_id)
         cmgr.qsvc('router-interface-add', router['id'], subnet['id'])
-    return dict(network=network, subnet=subnet, router=router)
+    return dict(network=network, subnet=subnet, router=router,
+                prefix=prefix)
 
 
 def create_lbv1(cmgr, subnet, member_address_list,
