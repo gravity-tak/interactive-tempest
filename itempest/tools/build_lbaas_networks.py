@@ -122,7 +122,7 @@ def teardown_lb_servers(cmgr, env_cfg, **kwargs):
     NET.delete_this_router(cmgr, E['router'])
     cmgr.qsvc('net-delete', E['network']['id'])
 
-
+# refer to scripts/lbs/README.txt to manually start web servers
 def start_webservers(lb_cfg, **kwargs):
     keypair = lb_cfg['keypair']
     private_key = keypair['private_key']
