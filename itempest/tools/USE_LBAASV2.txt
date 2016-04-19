@@ -4,6 +4,7 @@ from itempest import load_our_solar_system as osn
 from itempest.tools import build_lbaas_networks as lb_net
 venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus','itempest8@OS', lbaasv2=True)
 
+# using cirros/ttylinux-i386 image
 lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
 lb_net.start_webservers(lb_core_network)
 

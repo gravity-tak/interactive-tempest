@@ -21,7 +21,7 @@
 
 import json
 
-from tempest.services.network.json.network_client import NetworkClient
+from tempest.lib.services.network.base import BaseNetworkClient as NetworkClient
 
 VERSION = "2.0"
 URI_PREFIX = "v2.0"

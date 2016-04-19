@@ -1,0 +1,11 @@
+at the lb2 server /tmp directory
+
+for ttylinux-i386 images do
+scp <server contain those files>:<path to these file>/tty_*.sh .
+
+for cirros image do
+scp <server contain those files>:<path to these file>/lb_*.sh .
+
+NOTE:
+make sure all files have -x flag on; or just do
+sudo chmod +x *.sh

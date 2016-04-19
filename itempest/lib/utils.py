@@ -27,7 +27,7 @@ from oslo_log import log as oslog
 
 import itempest.client_manager
 from itempest.commands import cmd_glance, cmd_nova, cmd_keystone
-from itempest.commands import cmd_neutron, cmd_neutron_lbaas_v1
+from itempest.commands import cmd_neutron
 from itempest.commands import cmd_neutron_u1
 from itempest.commands import cmd_neutron_lbaas_v2
 from itempest.services.lbaas import load_balancers_client
@@ -35,6 +35,10 @@ from itempest.services.lbaas import pools_client
 from itempest.services.lbaas import listeners_client
 from itempest.services.lbaas import members_client
 from itempest.services.lbaas import health_monitors_client
+try:
+    from itempest.commands import cmd_neutron_lbaas_v1
+except Exception:
+    cmd_neutron_lbaas_v1 = None
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -328,6 +332,8 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
     nova = get_nova_command(manager)
     keys = get_keys_command(manager)
     lbv1 = get_lbv1_command(manager) if lbaasv1 else None
+    if not lbv1:
+        lbaasv2 = True
     lbaas = get_lbaas_commands(manager) if lbaasv2 else None
     mcli = AttrContainer(manager=manager,
                          qsvc=qsvc,
@@ -367,9 +373,11 @@ def get_keys_command(client_mgr, log_header="OS-Keystone", **kwargs):
 
 
 def get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
-    return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
+    if cmd_neutron_lbaas_v1:
+        return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
                            log_header=log_header)
-
+    else:
+        return Non
 
 def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):
     setattr(client_mgr, 'load_balancers_client',

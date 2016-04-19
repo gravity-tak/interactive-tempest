@@ -43,7 +43,7 @@ def create_security_group_icmp_rule(cmgr, security_group_id,
 def create_security_group_http_rule(cmgr, security_group_id, tenant_id=None):
     http_rule = dict(direction='ingress',
                      ethertype='IPv4', protocol='tcp',
-                     port_range_min=80, port_range_max=82)
+                     port_range_min=80, port_range_max=88)
     return cmgr.qsvc('security-group-rule-create',
                      security_group_id,
                      tenant_id=tenant_id, **http_rule)
