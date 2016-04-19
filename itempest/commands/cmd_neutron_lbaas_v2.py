@@ -67,6 +67,17 @@ def loadbalancer_delete(mgr_or_client, load_balancer_id):
     return _return_result(result, 'loadbalancer')
 
 
+# user-defined command
+def loadbalancer_delete_tree(mgr_or_client, loadbalancer=None, **filters):
+    if loadbalancer:
+        lb_list = [loadbalancer_show(mgr_or_client, loadbalancer)]
+    else:
+        lb_list = loadbalancer_list(mgr_or_client)
+    for lb in lb_list:
+        destroy_loadbalancer(mgr_or_client, lb['id'])
+    return None
+
+
 def loadbalancer_show(mgr_or_client, load_balancer_id, **fields):
     net_client = _g_loadbalancers_client(mgr_or_client)
     try:
@@ -278,16 +289,6 @@ def member_list(mgr_or_client, pool_id, **filters):
     return _return_result(result, 'members')
 
 
-def loadbalancer_delete_tree(mgr_or_client, loadbalancer=None, **filters):
-    if loadbalancer:
-        lb_list = [loadbalancer_show(mgr_or_client, loadbalancer)]
-    else:
-        lb_list = loadbalancer_list(mgr_or_client)
-    for lb in lb_list:
-        destroy_loadbalancer(mgr_or_client, lb['id'])
-    return None
-
-
 def destroy_loadbalancer(mgr_or_client, loadbalancer_id):
     statuses = loadbalancer_status_tree(mgr_or_client, loadbalancer_id)
     lb = statuses.get('loadbalancer', None)
@@ -298,6 +299,10 @@ def destroy_loadbalancer(mgr_or_client, loadbalancer_id):
             hm = pool.get('healthmonitor', None)
             if hm:
                 healthmonitor_delete(mgr_or_client, hm['id'])
+                loadbalancer_waitfor_active(mgr_or_client, lb_id)
+            member_list = pool.get('members', [])
+            for member in member_list:
+                member_delete(mgr_or_client, pool['id'], member['id'])
                 loadbalancer_waitfor_active(mgr_or_client, lb_id)
             pool_delete(mgr_or_client, pool['id'])
             loadbalancer_waitfor_active(mgr_or_client, lb_id)

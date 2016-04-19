@@ -296,4 +296,4 @@ def get_image_id(cmgr, image_name=None):
     for image in image_list:
         if image['name'].find(image_name) >= 0:
             return image['id']
-    return None
+    return image_list[0]['id']

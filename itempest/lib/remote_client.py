@@ -14,7 +14,7 @@ class RemoteClient(os_linux_client.RemoteClient):
         # path is extended for some non-cirros guest oses (centos7)
         if isinstance(with_prologue, six.string_types):
             # Allow users bypassing default behavior programmatically.
-            # If and only if prologue is instance of string.
+            # If and only if with_prologue is instance of string.
             # Known issue is that the netcat program will fail
             # with prologue of value "set -o pipefail"
             cmd = with_prologue + " " + cmd

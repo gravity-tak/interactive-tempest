@@ -1,0 +1,38 @@
+from itempest import load_our_solar_system as osn
+
+
+from itempest.tools import build_lbaas_networks as lb_net
+venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus','itempest8@OS', lbaasv2=True)
+
+lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
+lb_net.start_webservers(lb_core_network)
+
+# if using ubuntu-12.04-x86_64 image
+# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="vmware")
+
+from itempest.tools import build_lbaas_v2
+v_lb2 = build_lbaas_v2.create_lbv2(venus, lb_core_network, 'V-lb2')
+venus.lbaas('loadbalancer-statuses V-lb2')
+venus.lbaas('loadbalancer-show V-lb2')
+
+vip_port_id = venus.lbaas('loadbalancer-show V-lb2').get('vip_port_id')
+security_group_id = lb_core_network['security_group']['id']
+vip_fip = build_lbaas_v2.assign_floatingip_to_vip(venus, 'V-lb2', security_group_id=security_group_id)
+lb_fip = vip_fip['floating_ip_address']
+
+from itempest.lib import lib_net_aggr as netaggr
+from itempest.lib import lib_networks
+
+netaggr.show_toplogy(venus)
+
+
+# sun is an admin user
+sun = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Sun','itempest8@OS', lbaasv2=True)
+
+
+# destroy
+# venus.qsvc('floatingip-disassociate', vip_fip['id'])
+venus.qsvc('floatingip-delete', vip_fip['id'])
+venus.lbaas('loadbalancer-delete-tree')
+lib_networks.destroy_all_resources(venus)
+
