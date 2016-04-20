@@ -4,12 +4,16 @@ from itempest import load_our_solar_system as osn
 from itempest.tools import build_lbaas_networks as lb_net
 venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus','itempest8@OS', lbaasv2=True)
 
-# using cirros/ttylinux-i386 image
+# using cirros image "cirror / cubswin:)
+# or using ttylinux-i386 image "root / password"
 lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
-lb_net.start_webservers(lb_core_network)
-
-# if using ubuntu-12.04-x86_64 image
+# if using ubuntu-12.04-x86_64 image "root / vmware"
 # lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="vmware")
+# if using ubuntu-14.04-x86_64 image "root / !cisco"
+# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="!cisco")
+
+# if start_webservers() not working, manually start it using scripts at scripts/lb2/
+lb_net.start_webservers(lb_core_network)
 
 from itempest.tools import build_lbaas_v2
 v_lb2 = build_lbaas_v2.create_lbv2(venus, lb_core_network, 'V-lb2')
