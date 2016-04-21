@@ -314,10 +314,8 @@ class AttrContainer(object):
 def get_mimic_manager_cli(os_auth_url, os_username, os_password,
                           os_tenant_name=None, identity_version='v2',
                           **kwargs):
-    # lbaasv{1|2} can not be accepted by get_client_manager
     lbaasv1 = kwargs.pop('lbaasv1', True)
-    lbaasv2 = kwargs.pop('lbaasv2', False)
-    lbaasv1 = False if lbaasv2 else lbaasv1
+    lbaasv2 = kwargs.pop('lbaasv2', True)
     manager = itempest.client_manager.get_client_manager(
         os_auth_url, os_username, os_password, tenant_name=os_tenant_name,
         identity_version=identity_version, **kwargs)

@@ -2,7 +2,7 @@ Sample script to experience how to configure LBaas V1 and testing it
 ====================================================================
 
 from itempest import load_our_solar_system as osn
-from itempest.lib import lib_net_aggr as libn
+from itempest.lib import lib_net_aggr as netaggr
 from itempest.lib import lib_networks
 
 venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, "Venus", "itempest8@OS")
@@ -16,7 +16,7 @@ venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus', 'itempest8@OS'
 lb_rcfg = lb_net.setup_lb_network_and_servers(venus, 'lb-v')
 lb_net.start_webservers(lb_rcfg)
 
-libn.show_toplogy(venus)
+netaggr.show_toplogy(venus)
 
 web_servers = [server for server_id, server in lb_rcfg['servers'].items()]
 subnet = lb_rcfg['subnet']
