@@ -1,23 +1,8 @@
-# Copyright 2015 OpenStack Foundation
-# Copyright 2015 VMware Inc.
+# This implementation directly call RESTFUl API, and is obsoletd after
+# mitaka release (Apr 2016).
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
-#  the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-#
-# NOTE:
-#   This module implements load balance v1 which can not be found at liberty
-#   release. It implements directly utilizing NetworkClient
+# It is now replaced by cmd_neutron_lbaas_v1r1 which is implemented
+# like other advanced neutron client.
 
 import json
 

@@ -65,6 +65,7 @@ def create_lbv1(cmgr, subnet, member_address_list,
     prefix = prefix if prefix else data_utils.rand_name('itempest-lb')
     pool_name = prefix + "-pool"
     vip_name = prefix + "-vip"
+
     lb_cfg = {}
     lb_cfg['pool'] = cmgr.lbv1('lb-pool-create', pool_name,
                                lb_method="ROUND_ROBIN", protocol="HTTP",

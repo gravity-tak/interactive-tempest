@@ -16,7 +16,7 @@ from tempest.lib.common.utils import misc as misc_utils
 from tempest.lib import exceptions as lib_exc
 
 from tempest import exceptions
-from itempest.services import network_client_base as base
+from tempest.lib.services.network import base
 
 POOL_RID = 'pools'
 VIP_RID = 'vips'
@@ -105,7 +105,7 @@ class LoadBalancerV1Client(base.BaseNetworkClient):
 
     # tempest create_member(self,protocol_port, pool, ip_version)
     # we use pool_id
-    def create_member(self, protocol_port, pool_id,
+    def create_member(self, pool_id, protocol_port,
                       ip_version=4, **kwargs):
         """Create a member."""
         create_kwargs = dict(
