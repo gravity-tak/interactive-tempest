@@ -66,7 +66,7 @@ def create_lbv1(cmgr, subnet, member_address_list,
     pool_name = prefix + "-pool"
     vip_name = prefix + "-vip"
 
-    lb_cfg = {}
+    lb_cfg = dict(name=prefix)
     lb_cfg['pool'] = cmgr.lbv1('lb-pool-create', pool_name,
                                lb_method="ROUND_ROBIN", protocol="HTTP",
                                subnet_id=subnet['id'])

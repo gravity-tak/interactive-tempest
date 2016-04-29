@@ -29,8 +29,8 @@ def setup_core_network(cmgr, start_servers=True):
 def create_lbv2(cmgr, lb_core_network, prefix=None,
                 protocol='HTTP', protocol_port=80, ip_version=4,
                 delay=4, max_retries=3,
-                monitor_type="TCP", monitor_timeout=1):
-    prefix = prefix if prefix else data_utils.rand_name('taste-lb2')
+                monitor_type="HTTP", monitor_timeout=1):
+    prefix = prefix if prefix else data_utils.rand_name('kilo-lb2')
     if cmgr.lbaas is None:
         raise Exception(
             "Client manager does not have LBaasV2 clients installed.")
@@ -62,6 +62,7 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
                                timeout=monitor_timeout)
 
     return dict(
+        name=prefix,
         load_balancer=load_balancer,
         listener=listener1,
         pool=pool1,
