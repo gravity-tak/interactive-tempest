@@ -90,6 +90,8 @@ def create_lbv1(cmgr, subnet, member_address_list,
                                          max_retries=max_retries,
                                          type=monitor_type,
                                          timeout=monitory_timeout)
+    health_monitor_id = lb_cfg['health_monitor']['id']
+    cmgr.lbv1('lb-healthmonitor-associate', pool_id, health_monitor_id)
     return lb_cfg
 
 

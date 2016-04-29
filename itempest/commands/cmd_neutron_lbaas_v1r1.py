@@ -14,9 +14,12 @@ def lb_agent_hosting_pool(mgr_or_client):
     pass
 
 
-def lb_healthmonitor_associate(mgr_or_client):
+def lb_healthmonitor_associate(mgr_or_client, pool_id, health_monitor_id):
     """Create a mapping between a health monitor and a pool."""
-    pass
+    net_client = _g_net_client(mgr_or_client)
+    result = net_client.associate_health_monitor_with_pool(
+        health_monitor_id, pool_id)
+    return _return_result(result, 'health_monitor')
 
 
 def lb_healthmonitor_create(mgr_or_client, **kwargs):
@@ -33,9 +36,12 @@ def lb_healthmonitor_delete(mgr_or_client, healthmonitor_id):
     return _return_result(result, 'health_monitor')
 
 
-def lb_healthmonitor_disassociate(mgr_or_client):
+def lb_healthmonitor_disassociate(mgr_or_client, pool_id, health_monitor_id):
     """Remove a mapping from a health monitor to a pool."""
-    pass
+    net_client = _g_net_client(mgr_or_client)
+    result = net_client.disassociate_health_monitor_with_pool(
+        health_monitor_id, pool_id)
+    return _return_result(result, 'health_monitor')
 
 
 def lb_healthmonitor_list(mgr_or_client, **filters):
