@@ -14,6 +14,8 @@ from itempest.tools import build_lbaas_v1 as lbaasv1
 venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus', 'itempest8@OS')
 
 lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb-venus')
+# if using VIO deployed ubuntu image ; then you should manually startup webserver
+# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-venus', flavor_id=2, username="root", password="vmware")
 lb_net.start_webservers(lb_core_network)
 
 netaggr.show_toplogy(venus)
