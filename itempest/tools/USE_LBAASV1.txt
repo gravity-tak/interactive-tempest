@@ -11,20 +11,20 @@ venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, "Venus", "itempest8@OS"
 from itempest.tools import build_lbaas_networks as lb_net
 from itempest.tools import build_lbaas_v1 as lbaasv1
 
-venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus', 'itempest8@OS')
+sun = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Sun', 'itempest8@OS')
 
-lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb-venus')
+venus_lb_network = lb_net.setup_lb_network_and_servers(venus, 'lb-venus')
 # if using VIO deployed ubuntu image ; then you should manually startup webserver
-# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-venus', flavor_id=2, username="root", password="vmware")
-lb_net.start_webservers(lb_core_network)
+# venus_lb_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-venus', flavor_id=2, username="root", password="vmware")
+lb_net.start_webservers(venus_lb_network)
 
 netaggr.show_toplogy(venus)
 
-web_servers = [server for server_id, server in lb_core_network['servers'].items()]
-subnet = lb_core_network['subnet']
+web_servers = [server for server_id, server in venus_lb_network['servers'].items()]
+subnet = venus_lb_network['subnet']
 mem_address_list=[wserv['fip']['fixed_ip_address'] for wserv in web_servers]
-port = lb_core_network['port']
-security_group_id = lb_core_network['security_group']['id']
+port = venus_lb_network['port']
+security_group_id = venus_lb_network['security_group']['id']
 
 # create lbaas load-balancer, listener, pool, monitor, member
 

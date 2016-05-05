@@ -1,29 +1,34 @@
+# create admin clients and create Sun solarios's tenants if not exist, then create its clients
 from itempest import load_our_solar_system as osn
 
-
+# create load-balancer network
 from itempest.tools import build_lbaas_networks as lb_net
 venus = osn.utils.get_mimic_manager_cli(osn.os_auth_url, 'Venus','itempest8@OS', lbaasv2=True)
 
 # using cirros image "cirror / cubswin:)
 # or using ttylinux-i386 image "root / password"
-lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
+venus_lb2_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
 # if using ubuntu-12.04-x86_64 image "root / vmware"
-# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="vmware")
+# venus_lb2_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="vmware")
 # if using ubuntu-14.04-x86_64 image "root / !cisco"
-# lb_core_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="!cisco")
+# venus_lb2_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V', flavor_id=2, username="root", password="!cisco")
 
 # if start_webservers() not working, manually start it using scripts at scripts/lb2/
-lb_net.start_webservers(lb_core_network)
+lb_net.start_webservers(venus_lb2_network)
 
 from itempest.tools import build_lbaas_v2
-v_lb2 = build_lbaas_v2.create_lbv2(venus, lb_core_network, 'V-lb2')
-venus.lbaas('loadbalancer-statuses V-lb2')
-venus.lbaas('loadbalancer-show V-lb2')
+venus_lb2_env = build_lbaas_v2.create_lbv2(venus, venus_lb2_network, 'Venus-lb2')
+venus.lbaas('loadbalancer-statuses Venus-lb2')
+venus_lb2 = venus.lbaas('loadbalancer-show Venus-lb2')
+# venus.qsvc('port-list', fixed_ips='ip_address=10.199.88.5')
+# venus.qsvc('port-list', fixed_ips='ip_address=%s' % venus_lb2['vip_address'])
 
-vip_port_id = venus.lbaas('loadbalancer-show V-lb2').get('vip_port_id')
-security_group_id = lb_core_network['security_group']['id']
-vip_fip = build_lbaas_v2.assign_floatingip_to_vip(venus, 'V-lb2', security_group_id=security_group_id)
+vip_port_id = venus.lbaas('loadbalancer-show Venus-lb2').get('vip_port_id')
+security_group_id = venus_lb2_network['security_group']['id']
+vip_fip = build_lbaas_v2.assign_floatingip_to_vip(venus, 'Venus-lb2', security_group_id=security_group_id)
 lb_fip = vip_fip['floating_ip_address']
+# venus.qsvc('floatingip-list', fixed_ip_address=venus_lb2['vip_address'])
+
 
 from itempest.lib import lib_net_aggr as netaggr
 from itempest.lib import lib_networks
