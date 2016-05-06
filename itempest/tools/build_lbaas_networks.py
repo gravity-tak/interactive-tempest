@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import shlex
@@ -51,6 +52,14 @@ def make_ssh_keypair_external(cmgr, my_name):
     return keypair
 
 
+def keypair_to_tempfile_json(keypair):
+    """return tempfile of the keypair being stored."""
+    prefix = "os-keypair-" + keypair['name']
+    temp = tempfile.mkstemp(dir="/tmp", prefix=prefix, suffix=".json")
+    os.write(temp[0], json.dumps(keypair))
+    return temp[1]
+
+
 def make_ssh_keypair(cmgr, my_name):
     hostname = platform.node().replace("-", "_").replace(".", "_")
     ssh_key_name = hostname + "_" + my_name
@@ -78,7 +87,7 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     sg = NET.create_security_group_loginable(cmgr, my_name, http=True)
     # ssh keypair
     keypair = make_ssh_keypair(cmgr, my_name)
-
+    kp_filename = keypair_to_tempfile_json(keypair)
     servers = {}
     for sid in range(1, (num_servers + 1)):
         server_name = "%s-%d" % (my_name, sid)
@@ -102,7 +111,8 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
 
     lb_env = dict(
         name=my_name, username=username, password=password,
-        keypair=keypair, security_group=sg,
+        keypair=keypair, kp_filename=kp_filename,
+        security_group=sg,
         router=router, port=port, network=network, subnet=subnet,
         servers=servers)
     return lb_env
