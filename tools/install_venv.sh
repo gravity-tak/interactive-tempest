@@ -81,7 +81,7 @@ fi
 # check vmware-nsx is installed!
 nsx_tempest=$(tools/with_venv.sh pip show vmware-nsx 2>/dev/null | grep vmware-nsx-tempest-plugin)
 echo ""
-if [ "{nsx_tempest}" == "" ]; then
+if [ -z "${nsx_tempest}" ]; then
     echo "--- Warning ---"
     echo "   vmware-nsx-tempest is not installed at tempest VENV environment."
     echo "   please goto VENV and install editable vmware-nsx master branch."
