@@ -139,7 +139,10 @@ def delete_pool_resources(cmgr, pool_id):
     cmgr.lbv1('lb-pool-delete', pool_id)
     hms = pool.get('health_monitors', [])
     for hm_id in hms:
-        cmgr.lbv1('lb-healthmonitor-disassociate', pool_id, hm_id)
+        try:
+            cmgr.lbv1('lb-healthmonitor-disassociate', pool_id, hm_id)
+        except Exception:
+            pass
         cmgr.lbv1('lb-healthmonitor-delete', hm_id)
 
 # vip_fip = assign_floating_to_vip(cmgr, vip)
