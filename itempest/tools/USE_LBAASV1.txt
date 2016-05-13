@@ -36,10 +36,10 @@ vip_fip = lbaasv1.assign_floatingip_to_vip(venus, lb_vip, security_group_id=secu
 web_ip = vip_fip["floating_ip_address"]
 
 # http "VIP address" for round-robin effects
-ctx = lbaasv1.count_http_servers(web_ip, 50)
+ctx = lbaasv1.count_http_servers(web_ip, 20)
 
 # teardown
-lbaasv1.delete_lbv1(venus, "lb-venus”)
+lbaasv1.delete_vip_resources(venus, lb_vip['id'])
 
 lib_network.destroy_all_resources(venus)
 
