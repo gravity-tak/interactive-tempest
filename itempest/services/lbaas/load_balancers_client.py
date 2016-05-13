@@ -82,7 +82,6 @@ class LoadBalancersClient(base.BaseNetworkClient):
                     break
                 time.sleep(interval_time)
             except exceptions.NotFound as e:
-                import pdb; pdb.set_trace()
                 if is_delete_op:
                     break
                 else:

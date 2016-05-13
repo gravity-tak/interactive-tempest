@@ -32,7 +32,7 @@ def lb_healthmonitor_create(mgr_or_client, **kwargs):
 def lb_healthmonitor_delete(mgr_or_client, healthmonitor_id):
     """Delete a given health monitor."""
     net_client = _g_net_client(mgr_or_client)
-    result = net_client.delete_health_monitors(healthmonitor_id)
+    result = net_client.delete_health_monitor(healthmonitor_id)
     return _return_result(result, 'health_monitor')
 
 
