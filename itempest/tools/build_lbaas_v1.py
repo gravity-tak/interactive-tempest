@@ -112,6 +112,33 @@ def delete_lbv1(cmgr, prefix, **kwargs):
                 cmgr.lbv1('lb-%s-delete' % lb_resource, lbo['id'])
 
 
+def delete_vip_resources(cmgr, vip_name_or_id):
+    try:
+        vip = cmgr.lbv1('lb-vip-show', vip_name_or_id)
+    except Exception:
+        vip = cmgr.lbv1('lb-vip-list', name=vip_name_or_id)[0]
+        vip = cmgr.lbv1('lb-vip-show', vip['id'])
+
+    fip_list = cmgr.qsvc('floatingip-list',
+                         fixed_ip_address=vip['address'])
+    for fip in fip_list:
+        cmgr.qsvc('floatingip-delete', fip['id'])
+
+    vip_id = vip.get('id')
+    pool_id = vip.get('pool')
+    if pool_id:
+        pool = cmgr.lbv1('lb-pool-show', pool_id)
+        member_ids = pool.get('members', [])
+        for member_id in member_ids:
+            cmgr.lbv1('lb-member-delete', member_id)
+        cmgr.lbv1('lb-pool-delete', pool_id)
+        hms = pool.get('health_monitors', [])
+        for hm_id in hms:
+            cmgr.lbv1('lb-healthmonitor-disassociate', pool_id, hm_id)
+            cmgr.lbv1('lb-healthmonitor-delete', hm_id)
+    cmgr.lbv1('lb-vip-delete', vip_id)
+
+
 # vip_fip = assign_floating_to_vip(cmgr, vip)
 def assign_floatingip_to_vip(cmgr, vip, public_network_id=None,
                              security_group_id=None):

@@ -190,14 +190,3 @@ def lb_vip_update(mgr_or_client, vip_id,
     net_client = _g_net_client(mgr_or_client)
     result = net_client.update_vip(vip_id, **kwargs)
     return _return_result(result, 'vip')
-
-
-def destroy_lb(mgr_or_client):
-    for o in lb_member_list(mgr_or_client):
-        lb_member_delete(mgr_or_client, o['id'])
-    for o in lb_healthmonitor_list(mgr_or_client):
-        lb_healthmonitor_delete(mgr_or_client, o['id'])
-    for o in lb_vip_list(mgr_or_client):
-        lb_vip_delete(mgr_or_client, o['id'])
-    for o in lb_pool_list(mgr_or_client):
-        lb_pool_delete(mgr_or_client, o['id'])
