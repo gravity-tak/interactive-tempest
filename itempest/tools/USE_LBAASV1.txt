@@ -28,18 +28,46 @@ security_group_id = venus_lb_network['security_group']['id']
 
 # create lbaas load-balancer, listener, pool, monitor, member
 
-lb_v = lbaasv1.create_lbv1(venus, subnet, mem_address_list, prefix='lb-venus', protocol_port=port, ip_version=4)
-lb_vip = lb_v['vip']
-vip_fip = lbaasv1.assign_floatingip_to_vip(venus, lb_vip, security_group_id=security_group_id)
+venus_lb = lbaasv1.create_lbv1(venus, subnet, mem_address_list, prefix='lb-venus', protocol_port=port, ip_version=4)
+venus_lb_vip = venus_lb['vip']
+venus_vip_fip = lbaasv1.assign_floatingip_to_vip(venus, venus_lb_vip, security_group_id=security_group_id)
 
-# sshc = lib_networks.create_ssh_client(vip_fip["floating_ip_address”])
-web_ip = vip_fip["floating_ip_address"]
+# sshc = lib_networks.create_ssh_client(venus_vip_fip["floating_ip_address”])
+venus_web_ip = venus_vip_fip["floating_ip_address"]
 
 # http "VIP address" for round-robin effects
-ctx = lbaasv1.count_http_servers(web_ip, 20)
+ctx = lbaasv1.count_http_servers(venus_web_ip, 20)
 
 # teardown
-lbaasv1.delete_vip_resources(venus, lb_vip['id'])
+lbaasv1.delete_vip_resources(venus, venus_lb_vip['id'])
 
 lib_network.destroy_all_resources(venus)
 
+
+# Tenant Mars
+mars = osn.utils.get_mimic_manager_cli(osn.os_auth_url, "Mars", "itempest8@OS")
+
+mars_lb_network = lb_net.setup_lb_network_and_servers(mars, 'lb-mars')
+lb_net.start_webservers(mars_lb_network)
+netaggr.show_toplogy(mars)
+
+web_servers = [server for server_id, server in mars_lb_network['servers'].items()]
+subnet = mars_lb_network['subnet']
+mem_address_list=[wserv['fip']['fixed_ip_address'] for wserv in web_servers]
+port = mars_lb_network['port']
+security_group_id = mars_lb_network['security_group']['id']
+
+mars_lb = lbaasv1.create_lbv1(mars, subnet, mem_address_list, prefix='lb-mars', protocol_port=port, ip_version=4)
+mars_lb_vip = mars_lb['vip']
+mars_vip_fip = lbaasv1.assign_floatingip_to_vip(mars, mars_lb_vip, security_group_id=security_group_id)
+
+# sshc = lib_networks.create_ssh_client(vip_fip["floating_ip_address”])
+mars_web_ip = mars_vip_fip["floating_ip_address"]
+
+# http "VIP address" for round-robin effects
+ctx = lbaasv1.count_http_servers(mars_web_ip, 20)
+
+# teardown
+lbaasv1.delete_vip_resources(venus, mars_lb_vip['id'])
+
+lib_network.destroy_all_resources(mars)

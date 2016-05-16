@@ -129,9 +129,12 @@ def delete_vip_resources(cmgr, vip_name_or_id):
     if pool_id:
         delete_pool_resources(cmgr, pool_id)
     cmgr.lbv1('lb-vip-delete', vip_id)
+    # bug? need to delete VIP first, otherwise delete pool get conflict
+    if pool_id:
+        cmgr.lbv1('lb-pool-delete', pool_id)
 
 
-def delete_pool_resources(cmgr, pool_id):
+def delete_pool_resources(cmgr, pool_id, delete_pool=False):
     pool = cmgr.lbv1('lb-pool-show', pool_id)
     member_ids = pool.get('members', [])
     for member_id in member_ids:
@@ -144,8 +147,8 @@ def delete_pool_resources(cmgr, pool_id):
         except Exception:
             pass
         cmgr.lbv1('lb-healthmonitor-delete', hm_id)
-
-    cmgr.lbv1('lb-pool-delete', pool_id)
+    if delete_pool:
+        cmgr.lbv1('lb-pool-delete', pool_id)
 
 # vip_fip = assign_floating_to_vip(cmgr, vip)
 def assign_floatingip_to_vip(cmgr, vip, public_network_id=None,
