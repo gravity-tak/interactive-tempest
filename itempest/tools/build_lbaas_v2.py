@@ -74,6 +74,34 @@ def delete_loadbalancer(cmgr, loadbalancer):
     return cmgr.lbaas('loadbalancer-delete-tree', loadbalancer)
 
 
+def destroy_loadbalancer(cmgr, loadbalancer):
+    loadbalancer_id = cmgr.lbaas('loadbalancer-get-id', loadbalancer)
+    statuses = cmgr.lbaas("loadbalancer-statuses", loadbalancer_id)
+    lb = statuses.get('loadbalancer', None)
+    if lb is None: return None
+    lb_id = lb.get('id')
+    for listener in lb.get('listeners', []):
+        for pool in listener.get('pools', []):
+            hm = pool.get('healthmonitor', None)
+            if hm:
+                cmgr.lbaas("healthmonitor-delete", hm['id'])
+                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            member_list = pool.get('members', [])
+            for member in member_list:
+                cmgr.lbaas("member-delete", pool['id'], member['id'])
+                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            cmgr.lbaas("pool-delete", pool['id'])
+            cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+        cmgr.lbaas("listener-delete", listener['id'])
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    cmgr.lbaas("loadbalancer-delete", lb_id)
+    try:
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    except Exception:
+        pass
+    return None
+
+
 def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
                              security_group_id=None):
     public_network_id = (public_network_id or

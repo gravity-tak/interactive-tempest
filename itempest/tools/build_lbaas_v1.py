@@ -125,16 +125,15 @@ def delete_vip_resources(cmgr, vip_name_or_id):
         cmgr.qsvc('floatingip-delete', fip['id'])
 
     vip_id = vip.get('id')
+    cmgr.lbv1('lb-vip-delete', vip_id)
+    # After delete VIP then we can delete other resources,
+    # otherwise delete pool get conflict
     pool_id = vip.get('pool_id')
     if pool_id:
-        delete_pool_resources(cmgr, pool_id)
-    cmgr.lbv1('lb-vip-delete', vip_id)
-    # bug? need to delete VIP first, otherwise delete pool get conflict
-    if pool_id:
-        cmgr.lbv1('lb-pool-delete', pool_id)
+        delete_pool_resources(cmgr, pool_id, delete_pool=True)
 
 
-def delete_pool_resources(cmgr, pool_id, delete_pool=False):
+def delete_pool_resources(cmgr, pool_id, delete_pool=True):
     pool = cmgr.lbv1('lb-pool-show', pool_id)
     member_ids = pool.get('members', [])
     for member_id in member_ids:

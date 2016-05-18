@@ -46,3 +46,18 @@ venus.qsvc('floatingip-delete', vip_fip['id'])
 venus.lbaas('loadbalancer-delete-tree')
 lib_networks.destroy_all_resources(venus)
 
+###
+### Tenant Mars
+###
+mars = osn.utils.get_mimic_manager_cli(osn.os_auth_url, "Mars", "itempest8@OS")
+mars_lb2_network = lb_net.setup_lb_network_and_servers(mars, 'mars-lb2')
+lb_net.start_webservers(mars_lb2_network)
+
+mars_lb2_env = build_lbaas_v2.create_lbv2(mars, mars_lb2_network, 'mars-lb2')
+mars.lbaas('loadbalancer-statuses mars-lb2')
+mars_lb2 = mars.lbaas('loadbalancer-show mars-lb2')
+
+vip_port_id = mars.lbaas('loadbalancer-show mars-lb2').get('vip_port_id')
+security_group_id = mars_lb2_network['security_group']['id']
+vip_fip = build_lbaas_v2.assign_floatingip_to_vip(mars, 'mars-lb2', security_group_id=security_group_id)
+lb_fip = vip_fip['floating_ip_address']
