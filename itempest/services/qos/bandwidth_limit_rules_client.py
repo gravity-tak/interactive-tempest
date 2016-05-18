@@ -8,7 +8,7 @@ class BandwidthLimitRulesClient(base.BaseNetworkClient):
     resource_base_path = '/%s/%%s/bandwidth_limit_rules' % path
     resource_object_path = '/%s/%%s/bandwidth_limit_rules/%%s' % path
 
-    def create_bandwidth_limit_rule(self, policy_id, **kwargs):
+    def create_bandwidth_limit_rule(self, policy_id, **fields):
         uri = self.resource_base_path % policy_id
         post_data = {self.resource: kwargs}
         return self.create_resource(uri, post_data)
@@ -38,10 +38,10 @@ def get_client(client_mgr):
         from itempest import load_our_solar_system as osn
         from vmware_nsx_tempest.services.qos import
         bandwidth_limit_rules_client
-        rules_client = bandwidth_limit_rules_client.get_client(
+        client = bandwidth_limit_rules_client.get_client(
         osn.adm.manager)
     For tempest user:
-        rules_client = bandwidth_limit_rules_client.get_client(osn.adm)
+        client = bandwidth_limit_rules_client.get_client(osn.adm)
     """
     manager = getattr(client_mgr, 'manager', client_mgr)
     net_client = getattr(manager, 'networks_client')

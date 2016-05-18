@@ -37,9 +37,9 @@ def get_client(client_mgr):
     For itempest user:
         from itempest import load_our_solar_system as osn
         from vmware_nsx_tempest.services.qos import dscp_marking_rules_client
-        rules_client = dscp_marking_rules_client.get_client(osn.adm.manager)
+        client = dscp_marking_rules_client.get_client(osn.adm.manager)
     For tempest user:
-        rules_client = dscp_marking_rules_client.get_client(osn.adm)
+        client = dscp_marking_rules_client.get_client(osn.adm)
     """
     manager = getattr(client_mgr, 'manager', client_mgr)
     net_client = getattr(manager, 'networks_client')

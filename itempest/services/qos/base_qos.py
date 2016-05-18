@@ -1,13 +1,14 @@
 from itempest.services.qos import policies_client
-from itempest.services.qos import bandwidth_limit_rules_client
-from itempest.services.qos import dscp_marking_rules_client
+from itempest.services.qos import \
+    bandwidth_limit_rules_client as bandwidth_client
+from itempest.services.qos import dscp_marking_rules_client as dscp_client
+
 
 class BaseQosClient(object):
     def __init__(self, manager):
         self.policies_client = policies_client.get_client(manager)
-        self.bandwidth_client = bandwidth_limit_rules_client.get_client(
-            manager)
-        self.dscp_client = dscp_marking_rules_client.get_client(manager)
+        self.bandwidth_client = bandwidth_client.get_client(manager)
+        self.dscp_client = dscp_client.get_client(manager)
 
     def create_qos_policies(self, name, description, shared, **kwargs):
         result = self.policies_client.create_policy(
