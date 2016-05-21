@@ -8,7 +8,7 @@ class BandwidthLimitRulesClient(base.BaseNetworkClient):
     resource_base_path = '/%s/%%s/bandwidth_limit_rules' % path
     resource_object_path = '/%s/%%s/bandwidth_limit_rules/%%s' % path
 
-    def create_bandwidth_limit_rule(self, policy_id, **fields):
+    def create_bandwidth_limit_rule(self, policy_id, **kwargs):
         uri = self.resource_base_path % policy_id
         post_data = {self.resource: kwargs}
         return self.create_resource(uri, post_data)
