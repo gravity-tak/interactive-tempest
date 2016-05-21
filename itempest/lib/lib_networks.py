@@ -2,7 +2,7 @@ import netaddr
 
 from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
-from tempest.common.utils.linux import remote_client
+from itempest.lib import remote_client
 
 
 def create_security_group_loginable(cmgr, name, **kwargs):
@@ -49,6 +49,19 @@ def create_security_group_http_rule(cmgr, security_group_id, tenant_id=None):
                      tenant_id=tenant_id, **http_rule)
 
 
+def create_l3_networks(cmgr, name, cidr, scope_id=None, **kwargs):
+    network, subnet = create_mtz_networks(cmgr, cidr, scope_id=scope_id,
+                                          name=name, **kwargs):
+    public_network_id = kwargs.pop('public_network_id', None)
+    router_type = kwargs.pop('router_type', None)
+    tenant_id = kwargs.get('tenant_id', None)
+    router = create_router_and_add_interfaces(
+        cmgr, name, [(network, subnet)],
+        public_network_id=public_network_id,
+        router_type=router_type, tenant_id=tenant_id)
+    return (router, network, subnet)
+
+
 # it is a regular (non-MTZ) network if (scope_id == None, the default)
 def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
     network_name = name or data_utils.rand_name('mtz-n')
@@ -77,7 +90,7 @@ def create_mtz_networks(cmgr, cidr, scope_id=None, name=None, **kwargs):
 
 def create_router_and_add_interfaces(cmgr, name, net_list,
                                      public_network_id=None, **kwargs):
-    router_type = kwargs.pop('router_type', 'shared')
+    router_type = kwargs.pop('router_type', None)
     name = name or data_utils.rand_name('itempz-r')
     tenant_id = kwargs.pop('tenant_id', None)
     public_network_id = public_network_id or get_public_network_id(cmgr)
