@@ -30,6 +30,13 @@ class PoliciesClient(base.BaseNetworkClient):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
 
+    # utility
+    def get_policy_id(self, policy_id_or_name):
+        policy_list = self.list_policies(name=policy_id_or_name)
+        if len(policy_list) > 0:
+            return policy_list[0]['id']
+        return policy_id_or_name
+
 
 def get_client(client_mgr):
     """create a qos policies client from manager or networks_client

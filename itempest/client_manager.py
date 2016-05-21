@@ -23,6 +23,7 @@ def get_client_manager(os_auth_url, username, password,
                        identity_version='v2',
                        **kwargs):
     halt = kwargs.pop('halt', False)
+    verbose = kwargs.pop('verbose', True)
     cm_conf = dict(
         username=username,
         password=password,
@@ -36,7 +37,7 @@ def get_client_manager(os_auth_url, username, password,
         import pdb;
         pdb.set_trace()
     l_creds = l_auth.get_credentials(os_auth_url, **cm_conf)
-    cmgr = clients.Manager(l_creds, os_auth_url)
+    cmgr = clients.Manager(l_creds, os_auth_url, verbose=verbose)
     return cmgr
 
 

@@ -13,16 +13,16 @@ class DscpMarkingRulesClient(base.BaseNetworkClient):
         post_data = {self.resource: kwargs}
         return self.create_resource(uri, post_data)
 
-    def update_dscp_marking_rule(self, policy_id, rule_id, **kwargs):
+    def update_dscp_marking_rule(self, rule_id, policy_id, **kwargs):
         uri = self.resource_object_path % (policy_id, rule_id)
         post_data = {self.resource: kwargs}
         return self.update_resource(uri, post_data)
 
-    def show_dscp_marking_rule(self, policy_id, rule_id, **fields):
+    def show_dscp_marking_rule(self, rule_id, policy_id, **fields):
         uri = self.resource_object_path % (policy_id, rule_id)
         return self.show_resource(uri, **fields)
 
-    def delete_dscp_marking_rule(self, policy_id, rule_id):
+    def delete_dscp_marking_rule(self, rule_id, policy_id):
         uri = self.resource_object_path % (policy_id, rule_id)
         return self.delete_resource(uri)
 
