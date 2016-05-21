@@ -30,8 +30,8 @@ class BaseQosClient(object):
         result = self.policies_client.delete_policy(policy_id)
         return self.resp_body(result, 'policy')
 
-    def list_policies(self, **filter):
-        result = self.policies_client.list_policies(**filter)
+    def list_policies(self, **filters):
+        result = self.policies_client.list_policies(**filters)
         return self.resp_body(result, 'policies')
 
     def update_policy(self, policy_id, **kwargs):
@@ -61,9 +61,9 @@ class BaseQosClient(object):
             policy_id, rule_id, **kwargs)
         return self.resp_body(result, 'bandwidth_limit_rule')
 
-    def list_bandwidth_limit_rules(self, policy_id, **filter):
+    def list_bandwidth_limit_rules(self, policy_id, **filters):
         result = self.bandwidths_client.list_bandwidth_limit_rules(
-            policy_id, **filter)
+            policy_id, **filters)
         return self.resp_body(result, 'bandwidth_limit_rules')
 
     def show_bandwidth_limit_rule(self, policy_id, rule_id, **fields):
@@ -86,9 +86,9 @@ class BaseQosClient(object):
             policy_id, rule_id, **kwargs)
         return self.resp_body(result, 'dscp_marking_rule')
 
-    def list_dscp_marking_rules(self, policy_id, **filter):
+    def list_dscp_marking_rules(self, policy_id, **filters):
         result = self.dscps_client.list_dscp_marking_rules(
-            policy_id, **filter)
+            policy_id, **filters)
         return self.resp_body(result, 'dscp_marking_rules')
 
     def show_dscp_marking_rule(self, policy_id, rule_id, **fields):
