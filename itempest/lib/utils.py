@@ -1,6 +1,3 @@
-# Copyright 2015 OpenStack Foundation
-# Copyright 2015 VMware Inc.
-#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -110,7 +107,8 @@ def norm_it(val):
 
 
 def command_wrapper(client_manager, cmd_module,
-                    nova_flavor=False, lbaasv2_flavor=False,
+                    nova_flavor=False,
+                    lbaasv1_flavor=False, lbaasv2_flavor=False,
                     log_header=None, verbose=True):
     """Usage Examples:
 
@@ -143,6 +141,8 @@ def command_wrapper(client_manager, cmd_module,
         cmd, arg_list, kwargs = parse_cmdline(cmd_line, *args, **kwargs)
         if nova_flavor and cmd in NOVA_SERVER_CMDS:
             cmd = 'server_' + cmd
+        if lbaasv1_flavor and not cmd.startswith('lb_'):
+            cmd = "lb_" + cmd
         if lbaasv2_flavor and cmd.startswith('lbaas_'):
             cmd = cmd[6:]
         for cmd_module in cmd_module_list:
@@ -370,7 +370,7 @@ def get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
     setattr(client_mgr, 'lbs_client',
             load_balancer_v1_client.get_client(client_mgr))
     return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
-                           log_header=log_header)
+                           lbaasv1_flavor=True, log_header=log_header)
 
 
 def _get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
@@ -378,7 +378,7 @@ def _get_lbv1_command(client_mgr, log_header="OS-LBaasV1", **kwargs):
         return command_wrapper(client_mgr, cmd_neutron_lbaas_v1,
                                log_header=log_header)
     else:
-        return Non
+        return None
 
 
 def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):

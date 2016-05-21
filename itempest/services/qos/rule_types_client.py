@@ -4,7 +4,7 @@ from tempest.lib.services.network import base
 class RuleTypesClient(base.BaseNetworkClient):
     resource = 'rule_type'
     resource_plural = 'rule_types'
-    path = 'qos/rule_types'
+    path = 'qos/rule-types'
     resource_base_path = '/%s' % path
     resource_object_path = '/%s/%%s' % path
 
