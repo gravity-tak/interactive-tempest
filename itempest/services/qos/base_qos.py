@@ -71,8 +71,8 @@ class BaseQosClient(object):
             policy_id, rule_id)
         return self.resp_body(result, 'bandwidth_limit_rule')
 
-    def create_dscp_marking_rule(self, policy_id, dscp_mask, **kwargs):
-        kwargs['dscp_mask'] = dscp_mask
+    def create_dscp_marking_rule(self, policy_id, dscp_mark, **kwargs):
+        kwargs['dscp_mark'] = dscp_mark
         result = self.dscps_client.create_dscp_marking_rule(
             policy_id, **kwargs)
         return self.resp_body(result, 'dscp_marking_rule')
