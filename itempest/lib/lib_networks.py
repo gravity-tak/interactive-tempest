@@ -50,11 +50,11 @@ def create_security_group_http_rule(cmgr, security_group_id, tenant_id=None):
 
 
 def create_l3_networks(cmgr, name, cidr, scope_id=None, **kwargs):
-    network, subnet = create_mtz_networks(cmgr, cidr, scope_id=scope_id,
-                                          name=name, **kwargs):
     public_network_id = kwargs.pop('public_network_id', None)
     router_type = kwargs.pop('router_type', None)
     tenant_id = kwargs.get('tenant_id', None)
+    network, subnet = create_mtz_networks(
+        cmgr, cidr, scope_id=scope_id, name=name, **kwargs)
     router = create_router_and_add_interfaces(
         cmgr, name, [(network, subnet)],
         public_network_id=public_network_id,
