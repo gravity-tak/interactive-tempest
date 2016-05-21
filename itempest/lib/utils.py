@@ -309,6 +309,7 @@ class AttrContainer(object):
         return str(self) == str(other)
 
 
+# iadm = utils.get_mimic_manager_cli('http://10.33.75.103:5000/v2.0', 'admin', 'openstack')
 def get_mimic_manager_cli(os_auth_url, os_username, os_password,
                           os_tenant_name=None, identity_version='v2',
                           **kwargs):
