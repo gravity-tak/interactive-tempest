@@ -70,12 +70,17 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
         health_monitor=healthmonitr1)
 
 
-def delete_loadbalancer(cmgr, loadbalancer):
-    return cmgr.lbaas('loadbalancer-delete-tree', loadbalancer)
+def delete_loadbalancer(cmgr, loadbalancer, quit=False):
+    if quit:
+        return cmgr.lbaas('loadbalancer-delete-tree', loadbalancer)
+    else:
+        return destroy_loadbalancer(cmgr, loadbalancerd)
 
 
-def destroy_loadbalancer(cmgr, loadbalancer):
+def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     loadbalancer_id = cmgr.lbaas('loadbalancer-get-id', loadbalancer)
+    get_loadbalancer_floatingip(cmgr, loadbalancer_id,
+                                and_delete_it=delete_fip)
     statuses = cmgr.lbaas("loadbalancer-statuses", loadbalancer_id)
     lb = statuses.get('loadbalancer', None)
     if lb is None: return None
@@ -117,3 +122,18 @@ def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
         cmgr.qsvc('port-update', vip_port_id,
                   security_groups=[security_group_id])
     return floatingip
+
+
+def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
+    lb2 = cmgr.lbaas("loadbalancer-status", loadbalancer_id)
+    fip_list = cmgr.qsvc('floatingip-list', subnet_id=lb2['vip_subnet_id'],
+                         fixed_ip_address=lb2['vip_address'])
+    if len(fip_list) == 1:
+        fip = fip_list[0]
+        if and_delete_it:
+            cmgr.qsvc('floatingip-disassociate', fip['id'])
+            cmgr.qsvc('floatingip-delete', fip['id'])
+        return fip
+    elif len(fip_list) > 1:
+        raise Exception("Expect one floatingip matched.")
+    return None
