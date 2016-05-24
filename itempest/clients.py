@@ -329,20 +329,6 @@ class Manager(manager.Manager):
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
             **self.default_params)
-        if CONF.service_available.ceilometer:
-            self.telemetry_client = TelemetryClient(
-                self.auth_provider,
-                CONF.telemetry.catalog_type,
-                CONF.identity.region,
-                endpoint_type=CONF.telemetry.endpoint_type,
-                **self.default_params_with_timeout_values)
-        if CONF.service_available.aodh:
-            self.alarming_client = AlarmingClient(
-                self.auth_provider,
-                CONF.alarming.catalog_type,
-                CONF.identity.region,
-                endpoint_type=CONF.alarming.endpoint_type,
-                **self.default_params_with_timeout_values)
         if CONF.service_available.glance:
             self.image_client = ImagesClient(
                 self.auth_provider,
