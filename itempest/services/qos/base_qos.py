@@ -124,7 +124,7 @@ class BaseQosClient(object):
 
     def list_rule_types(self):
         result = self.types_client.list_rule_types()
-        return result
+        return self.resp_body(result, 'rule_types')
 
     def available_rule_types(self):
         return self.list_rule_types()

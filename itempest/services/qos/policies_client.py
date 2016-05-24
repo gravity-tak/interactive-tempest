@@ -32,7 +32,8 @@ class PoliciesClient(base.BaseNetworkClient):
 
     # utility
     def get_policy_id(self, policy_id_or_name):
-        policy_list = self.list_policies(name=policy_id_or_name)
+        policies = self.list_policies(name=policy_id_or_name)
+        policy_list = policies[self.resource_plural]
         if len(policy_list) > 0:
             return policy_list[0]['id']
         return policy_id_or_name
