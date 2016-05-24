@@ -15,11 +15,12 @@ class BaseQosClient(object):
     qos.available_rule_types()
     """
     def __init__(self, manager):
-        self.policies_client = policies_client.get_client(manager)
+        self.policies_client = policies_client.get_client(manager, True)
         self.bandwidths_client = (
-            bandwidth_limit_rules_client.get_client(manager))
-        self.dscps_client = dscp_marking_rules_client.get_client(manager)
-        self.types_client = rule_types_client.get_client(manager)
+            bandwidth_limit_rules_client.get_client(manager, True))
+        self.dscps_client = dscp_marking_rules_client.get_client(
+            manager, True)
+        self.types_client = rule_types_client.get_client(manager, True)
 
     def resp_body(self, result, item):
         return result.get(item, result)
