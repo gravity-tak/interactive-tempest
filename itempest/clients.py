@@ -139,9 +139,6 @@ from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
 from tempest.services.orchestration.json.orchestration_client import \
     OrchestrationClient
-from tempest.services.telemetry.json.alarming_client import AlarmingClient
-from tempest.services.telemetry.json.telemetry_client import \
-    TelemetryClient
 from tempest.services.volume.v1.json.admin.hosts_client import \
     HostsClient as VolumeHostsClient
 from tempest.services.volume.v1.json.admin.quotas_client import \
