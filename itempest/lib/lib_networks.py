@@ -196,6 +196,17 @@ def get_server_floatingips(cmgr, server):
     return fips_list
 
 
+def delete_network_with_qos_policy(cmgr, name_startswith=None):
+    for N in cmgr.qsvc('net-list'):
+        print("{name} {id}".format(**N))
+        if N.get('qos_policy_id'):
+            if not name_startswith or N['name'].startswith(name_startswith):
+                port_list = cmgr.qsvc('port-list', network_id=N['id'])
+                for port in port_list:
+                    cmgr.qsvc('port-delete', port['id'])
+                cmgr.qsvc('net-delete', N['id'])
+
+
 def delete_server_floatingips(cmgr, server):
     if type(server) is not dict:
         server = cmgr.nova('server-show', server)

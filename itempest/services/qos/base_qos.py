@@ -5,6 +5,11 @@ from itempest.services.qos import \
     dscp_marking_rules_client as dscp_marking_rules_client
 from itempest.services.qos import rule_types_client as rule_types_client
 
+RULE_TYPE_BANDWIDTH_LIMIT = "bandwith_limit"
+RULE_TYPE_DSCP_MARK = "dscp_marking"
+VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT, RULE_TYPE_DSCP_MARK]
+QOS_POLICY_ID = 'qos_policy_id'
+
 
 class BaseQosClient(object):
     """usage:
