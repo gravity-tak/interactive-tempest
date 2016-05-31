@@ -78,7 +78,7 @@ class BaseQosClient(object):
                                     **kwargs):
         policy_id = self.get_policy_id(policy_id_or_name)
         result = self.bandwidths_client.update_bandwidth_limit_rule(
-            rule_id, policy_id)
+            rule_id, policy_id, **kwargs)
         return self.resp_body(result, 'bandwidth_limit_rule')
 
     def list_bandwidth_limit_rules(self, policy_id_or_name, **filters):
@@ -112,7 +112,7 @@ class BaseQosClient(object):
                                  **kwargs):
         policy_id = self.get_policy_id(policy_id_or_name)
         result = self.dscps_client.update_dscp_marking_rule(
-            rule_id, policy_id)
+            rule_id, policy_id, **kwargs)
         return self.resp_body(result, 'dscp_marking_rule')
 
     def list_dscp_marking_rules(self, policy_id_or_name, **filters):

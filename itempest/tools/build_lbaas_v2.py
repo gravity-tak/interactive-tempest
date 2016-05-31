@@ -125,7 +125,7 @@ def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
 
 
 def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
-    lb2 = cmgr.lbaas("loadbalancer-status", loadbalancer_id)
+    lb2 = cmgr.lbaas("loadbalancer-show", loadbalancer_id)
     fip_list = cmgr.qsvc('floatingip-list', subnet_id=lb2['vip_subnet_id'],
                          fixed_ip_address=lb2['vip_address'])
     if len(fip_list) == 1:
