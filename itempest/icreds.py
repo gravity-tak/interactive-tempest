@@ -16,7 +16,8 @@
 from oslo_log import log as logging
 
 from tempest.common import cred_provider
-from tempest.common.credentials_factory import get_configured_credentials
+from tempest.common.credentials_factory import \
+    get_configured_admin_credentials  # get_configured_credentials
 from tempest.common.dynamic_creds import DynamicCredentialProvider
 from tempest import config
 from tempest.lib.common.utils import data_utils
@@ -40,7 +41,8 @@ class ItempestCredProvider(DynamicCredentialProvider):
         # super create self.cred_client
         self.password = password
         self.cleanup_atexit = cleanup_atexit
-        admin_creds = get_configured_credentials('identity_admin')
+        # admin_creds = get_configured_credentials('identity_admin')
+        admin_creds = get_configured_admin_credentials()
         super(ItempestCredProvider, self).__init__(identity_version,
                                                    name,
                                                    network_resources,
