@@ -1,8 +1,6 @@
 import json
 import os
 import platform
-import shlex
-import subprocess
 import tempfile
 
 from itempest.lib import lib_networks as NET
@@ -10,7 +8,6 @@ from itempest.lib import remote_client
 
 from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
-from tempest import exceptions
 
 
 USERDATA_DIR = os.environ.get('USERDATA_DIR', '/opt/stack/data')
@@ -132,12 +129,16 @@ def teardown_lb_servers(cmgr, env_cfg, **kwargs):
     NET.delete_this_router(cmgr, E['router'])
     cmgr.qsvc('net-delete', E['network']['id'])
 
+
 # refer to scripts/lbs/README.txt to manually start web servers
 def start_webservers(lb_cfg, **kwargs):
     keypair = lb_cfg['keypair']
     private_key = keypair['private_key']
     username = lb_cfg.get('username', 'cirros')
     # password = lb_cfg.get('password', 'cubswin:)')
+    if kwargs.get('debug', kwargs.get('halt', False)):
+        import pdb;
+        pdb.set_trace()
 
     for (server_id, serv_fip) in lb_cfg['servers'].items():
         server = serv_fip['server']
@@ -146,46 +147,55 @@ def start_webservers(lb_cfg, **kwargs):
         server_ip = floatingip['floating_ip_address']
         vm_fixed_ip = floatingip['fixed_ip_address']
 
-        ssh_client = remote_client.RemoteClient(server_ip,
-                                                username,
-                                                pkey=private_key)
-        ssh_client.validate_authentication()
-        web_server_script = '/tmp/script'
-        with tempfile.NamedTemporaryFile() as script:
-            script.write(BACKEND_RESPONSE % (2+len(server_name), server_name))
-            script.flush()
-            with tempfile.NamedTemporaryFile() as key:
-                key.write(private_key)
-                key.flush()
-                copy_file_to_host(script.name,
-                                  web_server_script,
-                                  server_ip,
-                                  username, key.name)
-        # Start netcat
-        start_server = ('while true; do '
-                        'sudo nc -ll -p %(port)s -e sh %(server_script)s; '
-                        'done > /dev/null &')
-        cmd = start_server % {'port': lb_cfg['port'],
-                              'server_script': web_server_script}
-
-        ssh_client.exec_command(cmd, with_prologue='')
+        return start_web_service(server_name, server_ip, username,
+                                 private_key, lb_cfg['port'])
 
 
-def copy_file_to_host(file_from, dest, host, username, pkey):
-    dest = "%s@%s:%s" % (username, host, dest)
-    cmd = "scp -v -o UserKnownHostsFile=/dev/null " \
-          "-o StrictHostKeyChecking=no " \
-          "-i %(pkey)s %(file1)s %(dest)s" % {'pkey': pkey,
-                                              'file1': file_from,
-                                              'dest': dest}
-    args = shlex.split(cmd.encode('utf-8'))
-    subprocess_args = {'stdout': subprocess.PIPE,
-                       'stderr': subprocess.STDOUT}
-    proc = subprocess.Popen(args, **subprocess_args)
-    stdout, stderr = proc.communicate()
-    if proc.returncode != 0:
-        raise exceptions.CommandFailed(cmd,
-                                       proc.returncode,
-                                       stdout,
-                                       stderr)
-    return stdout
+def start_server_web_service(cmgr, server_id_or_name, server_private_key,
+                             username, server_port=80):
+    server = cmgr.nova('server-show', server_id_or_name)
+    sv_ip = {'fixed_ip': None, 'floating_ip': None}
+    for sv_interface in server['addresses']:
+        for addr in server['addresses'][sv_interface]:
+            if 'OS-EXT-IPS:type' in addr:
+                if addr['OS-EXT-IPS:type'] == 'fixed':
+                    sv_ip['fixed'] = addr['addr']
+                elif addr['OS-EXT-IPS:type'] == 'floating':
+                    sv_ip['floating'] = addr['addr']
+        if sv_ip['fixed'] and sv_ip['floating']:
+            break
+    if not sv_ip['floating']:
+        raise Exception(
+            'server[%s] does not have floatingip.' % server_id_or_name)
+
+    server_name = server['name']
+    server_ip = sv_ip['floating']
+    return start_web_service(server_name, server_ip, username,
+                             server_private_key, server_port)
+
+
+def start_web_service(server_name, server_ip, username, server_private_key,
+                      server_port=80):
+    ssh_client = remote_client.RemoteClient(server_ip,
+                                            username,
+                                            pkey=server_private_key)
+    ssh_client.validate_authentication()
+    web_server_script = '/tmp/script'
+    with tempfile.NamedTemporaryFile() as script:
+        script.write(BACKEND_RESPONSE % (2 + len(server_name), server_name))
+        script.flush()
+        with tempfile.NamedTemporaryFile() as key:
+            key.write(server_private_key)
+            key.flush()
+            remote_client.copy_file_to_host(script.name,
+                                            web_server_script,
+                                            server_ip,
+                                            username, key.name)
+    # Start netcat
+    start_server = ('while true; do '
+                    'sudo nc -ll -p %(port)s -e sh %(server_script)s; '
+                    'done > /dev/null &')
+    cmd = start_server % {'port': server_port,
+                          'server_script': web_server_script}
+
+    return ssh_client.exec_command(cmd, with_prologue='')
