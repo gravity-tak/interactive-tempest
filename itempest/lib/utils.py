@@ -26,14 +26,17 @@ import itempest.client_manager
 from itempest.commands import cmd_glance, cmd_nova, cmd_keystone
 from itempest.commands import cmd_neutron
 from itempest.commands import cmd_neutron_u1
+from itempest.commands import cmd_neutron_lbaas_v1r1 as cmd_neutron_lbaas_v1
 from itempest.commands import cmd_neutron_lbaas_v2
+from itempest.commands import cmd_neutron_qos
 from itempest.services import load_balancer_v1_client
 from itempest.services.lbaas import load_balancers_client
 from itempest.services.lbaas import pools_client
 from itempest.services.lbaas import listeners_client
 from itempest.services.lbaas import members_client
 from itempest.services.lbaas import health_monitors_client
-from itempest.commands import cmd_neutron_lbaas_v1r1 as cmd_neutron_lbaas_v1
+from itempest.services.qos import base_qos
+
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
                     'start', 'stop' 'pause', 'lock',
@@ -109,6 +112,7 @@ def norm_it(val):
 def command_wrapper(client_manager, cmd_module,
                     nova_flavor=False,
                     lbaasv1_flavor=False, lbaasv2_flavor=False,
+                    qos_flavor=False,
                     log_header=None, verbose=True):
     """Usage Examples:
 
@@ -145,6 +149,8 @@ def command_wrapper(client_manager, cmd_module,
             cmd = "lb_" + cmd
         if lbaasv2_flavor and cmd.startswith('lbaas_'):
             cmd = cmd[6:]
+        if qos_flavor and cmd.startswith('qos_'):
+            cmd = cmd[4:]
         for cmd_module in cmd_module_list:
             f_method = getattr(cmd_module, cmd, None)
             if f_method:
@@ -330,12 +336,14 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
     keys = get_keys_command(manager)
     lbv1 = get_lbv1_command(manager)
     lbaas = get_lbaas_commands(manager)
+    qos = get_neutron_qos_commands(manager)
     mcli = AttrContainer(manager=manager,
                          qsvc=qsvc,
                          nova=nova,
                          keys=keys,
                          lbv1=lbv1,
-                         lbaas=lbaas)
+                         lbaas=lbaas,
+                         qos=qos)
     try:
         # Are there other ways to validate the user's admin previledge?
         mcli.roles = manager.roles_client.list_roles()['roles']
@@ -395,3 +403,11 @@ def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):
             health_monitors_client.get_client(client_mgr))
     return command_wrapper(client_mgr, cmd_neutron_lbaas_v2,
                            lbaasv2_flavor=True, log_header=log_header)
+
+
+def get_neutron_qos_commands(client_mgr, log_header="OS-Neutron-QoS",
+                             **kwargs):
+    setattr(client_mgr, 'qos_client',
+            base_qos.BaseQosClient(client_mgr))
+    return command_wrapper(client_mgr, cmd_neutron_qos,
+                           qos_flavor=True, log_header=log_header)
