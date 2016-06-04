@@ -30,11 +30,9 @@ class BaseQosClient(object):
     def resp_body(self, result, item):
         return result.get(item, result)
 
-    def create_policy(self, name, description, shared, **kwargs):
+    def create_policy(self, name, **kwargs):
         result = self.policies_client.create_policy(
             name=name,
-            description=description,
-            shared=shared,
             **kwargs
         )
         return self.resp_body(result, 'policy')
@@ -59,13 +57,11 @@ class BaseQosClient(object):
         return self.resp_body(result, 'policy')
 
     def create_bandwidth_limit_rule(self, policy_id_or_name,
-                                    max_kbps, max_burst_kbps,
                                     **kwargs):
+        # required fields: max_kbps, max_burst_kbps
         policy_id = self.get_policy_id(policy_id_or_name)
         result = self.bandwidths_client.create_bandwidth_limit_rule(
-            policy_id,
-            max_kbps=max_kbps, max_burst_kbps=max_burst_kbps,
-            **kwargs)
+            policy_id, **kwargs)
         return self.resp_body(result, 'bandwidth_limit_rule')
 
     def delete_bandwidth_limit_rule(self, rule_id, policy_id_or_name):
