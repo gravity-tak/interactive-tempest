@@ -32,7 +32,8 @@ class DscpMarkingRulesClient(base.BaseNetworkClient):
 
 
 def get_client(client_mgr,
-               set_property=False, with_name="dscp_marking_rules_client"):
+               set_property=False,
+               with_name="qos_dscp_marking_rules_client"):
     """create a qos policy bandwidth limit rules client
 
     For itempest user:

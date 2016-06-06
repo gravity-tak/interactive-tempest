@@ -40,7 +40,7 @@ class PoliciesClient(base.BaseNetworkClient):
 
 
 def get_client(client_mgr,
-               set_property=False, with_name="policies_client"):
+               set_property=False, with_name="qos_policies_client"):
     """create a qos policies client from manager or networks_client
 
     For itempest user:

@@ -33,7 +33,7 @@ class BandwidthLimitRulesClient(base.BaseNetworkClient):
 
 def get_client(client_mgr,
                set_property=False,
-               with_name="bandwidth_limit_rules_client"):
+               with_name="qos_bandwidth_limit_rules_client"):
     """create a qos policy bandwidth limit rules client
 
     For itempest user:

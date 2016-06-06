@@ -1,8 +1,8 @@
 from itempest.services.qos import policies_client
-from itempest.services.qos import \
-    bandwidth_limit_rules_client as bandwidth_limit_rules_client
-from itempest.services.qos import \
-    dscp_marking_rules_client as dscp_marking_rules_client
+from itempest.services.qos import (
+    bandwidth_limit_rules_client as bandwidth_limit_rules_client)
+from itempest.services.qos import (
+    dscp_marking_rules_client as dscp_marking_rules_client)
 from itempest.services.qos import rule_types_client as rule_types_client
 
 RULE_TYPE_BANDWIDTH_LIMIT = "bandwith_limit"

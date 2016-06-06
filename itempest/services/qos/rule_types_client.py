@@ -14,7 +14,7 @@ class RuleTypesClient(base.BaseNetworkClient):
 
 
 def get_client(client_mgr,
-               set_property=False, with_name="rule_types_client"):
+               set_property=False, with_name="qos_rule_types_client"):
     """create a qos rule_types client from manager or networks_client
 
     For itempest user:
