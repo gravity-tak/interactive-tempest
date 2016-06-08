@@ -280,7 +280,8 @@ def dest_is_reachable(ssh_client, dest_ip):
 
 
 # return_topo return list of router-info
-def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
+def show_toplogy(cli_mgr, return_topo=False, prefix=None,
+                 router_id=None, delete_resources=False):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
     FMT_X_GW1 = "%sGW: snat_enabled: {enable_snat}" % (' ' * 5)
@@ -295,16 +296,19 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
     topo = []
     topo_line = ["\nNetwork topology of tenant[%s]" % tenant_name]
     s_list = cli_mgr.nova('server-list-with-detail')
-    router_list = cli_mgr.qsvc('router-list')
+    if router_id:
+        router_list = cli_mgr.qsvc('router-list', id=router_id)
+    else:
+        router_list = cli_mgr.qsvc('router-list')
     if prefix:
-        sername = "^%s" % prefix
-        s_list = utils.fgrep(s_list, name=sername)
-        router_list = utils.fgrep(router_list, name=sername)
+        ser_name = "^%s" % prefix
+        s_list = utils.fgrep(s_list, name=ser_name)
+        router_list = utils.fgrep(router_list, name=ser_name)
     sorted(router_list, key=itemgetter('name'))
     for router in router_list:
         rtr = _g_by_attr(router,
                          ('id', 'name', 'router_type', 'distributed'))
-        rtr['networks'] = []
+        rtr['_networks'] = []
         if 'distributed' in router and router['distributed']:
             rtr['router_type'] = 'distributed'
         topo_line.append(FMT_ROUTER.format(**rtr))
@@ -327,7 +331,7 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
             netwk = _g_by_attr(network, ('name', 'id'))
             subnet_list = network['subnets']
             netwk['port_id'] = rp['id']
-            netwk['servers'] = []
+            netwk['_servers'] = []
             topo_line.append(FMT_INTERFACE.format(**netwk))
             netwk['subnets'] = []
             for subnet_id in subnet_list:
@@ -349,11 +353,46 @@ def show_toplogy(cli_mgr, return_topo=False, detail=True, prefix=None):
                     serv['interface'] = addr_dict[if_name]
                     topo_line.append(
                         FMT_SERV_ADDR % (' ' * 14, addr_dict[if_name]))
-                netwk['servers'].append(serv)
-            rtr['networks'].append(netwk)
+                netwk['_servers'].append(serv)
+            rtr['_networks'].append(netwk)
         topo.append(rtr)
     print("\n".join(topo_line))
+    if delete_resources:
+        _delete_topology(cli_mgr, topo)
     return topo if return_topo else {}
+
+
+def _delete_topology(cmgr, topo_list):
+    for rtr in topo_list:
+        for net in rtr.get('_networks', []):
+            for sv_if in net.get('_servers'):
+                sif = sv_if['interface']
+                if sif.get('IPv4-fixed') and sif.get('IPv4-floating'):
+                    fip_list = cmgr.qsvc(
+                        'floatingip-list',
+                        fixed_ip_address=sif['IPv4-fixed'],
+                        floating_ip_address=sif['IPv4-floating'])
+                    for fip in fip_list:
+                        cmgr.qsvc('floatingip-delete', fip['id'])
+                cmgr.nova('server-delete', sv_if['id'])
+                wait_for_server_deleted(cmgr, sv_if['id'])
+            for subnet in net['subnets']:
+                cmgr.qsvc('router-interface-delete', rtr['id'], subnet['id'])
+            cmgr.qsvc('net-delete', net['id'])
+        # delete router
+        cmgr.qsvc('router-delete-extra-routes', rtr['id'])
+        cmgr.qsvc('router-gateway-clear', rtr['id'])
+        cmgr.qsvc('router-delete', rtr['id'])
+
+
+def wait_for_server_deleted(cmgr, server_id, wait=120, wait_interval=2.5):
+    try:
+        _endtime = time.time() + wait
+        while (time.time() < _endtime):
+            server = cmgr.nova('server-show', server_id)
+            time.sleep(wait_interval)
+    except:
+        return
 
 
 # TODO(akang): need to handle execption, that is 404 Not Found page

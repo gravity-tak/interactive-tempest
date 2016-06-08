@@ -235,24 +235,29 @@ def delete_tenant_servers(cmgr, tenant_id=None, wait_for_termination=True,
     return server_id_list
 
 
-def delete_router_by_id(cmgr, router_id, **kwargs):
+def delete_router_by_id(cmgr, router_id, and_attached_resources=False,
+                        **kwargs):
     routers = cmgr.qsvc('router-list', id=router_id)
     if len(routers) != 1:
         return None
-    return delete_this_router(cmgr, routers[0])
+    return delete_this_router(cmgr, routers[0],
+                              and_attached_resources=and_attached_resources)
 
 
-def delete_this_router(cmgr, router, ignore_routes_if_empty=False):
+def delete_this_router(cmgr, router, ignore_routes_if_empty=False,
+                       and_attached_resources=False):
     router_id = router['id']
+    delete_router_interfaces(cmgr, router,
+                             and_attached_resources=and_attached_resources)
     if not ignore_routes_if_empty or len(router['routes']) > 0:
         # just to make sure we can delete extra-routes even routes == []
         cmgr.qsvc('router-delete-extra-routes', router_id)
     cmgr.qsvc('router-gateway-clear', router_id)
-    delete_router_interfaces(cmgr, router)
+
     return cmgr.qsvc('router-delete', router_id)
 
 
-def delete_router_interfaces(cmgr, router):
+def delete_router_interfaces(cmgr, router, and_attached_resources=False):
     if type(router) is not dict:
         router = cmgr.qsvc('router-show', router)
     ports = cmgr.qsvc('router-port-list', router['id'])
@@ -261,6 +266,20 @@ def delete_router_interfaces(cmgr, router):
             if 'fixed_ips' in port:
                 for fixed_ips in port['fixed_ips']:
                     if 'subnet_id' in fixed_ips:
+                        sv_port_list = cmgr.qsvc(
+                            "port-list",
+                            network_id=port['network_id'],
+                            device_owner="compute:None")
+                        for sv_port in sv_port_list:
+                            try:
+                                sv = cmgr.nova("server-show",
+                                               sv_port['device_id'])
+                                cmgr.nova("server-delete", sv['id'])
+                                waiters.wait_for_server_termination(
+                                    cmgr.manager.servers_client,
+                                    sv['id'])
+                            except:
+                                pass
                         cmgr.qsvc('router-interface-delete',
                                   router['id'],
                                   fixed_ips['subnet_id'])
