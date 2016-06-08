@@ -22,8 +22,7 @@ import traceback
 
 from itempest.lib import utils
 from itempest.lib import man_data as mdata
-
-from tempest.common.utils.linux import remote_client
+from itempest.lib import remote_client
 
 VM_DEFAULT_CREDENTIALS = {
     'cirros-0.3.3-x86_64-disk': {'username': 'cirros',

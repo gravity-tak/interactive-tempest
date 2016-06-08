@@ -12,18 +12,34 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import urllib2
-import re
-
 from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
+import build_lbaas_networks as LB_NET
 
 
-def setup_core_network(cmgr, start_servers=True):
-    lb_rcfg = NET.setup_lb_network_and_servers(venus, 'lb-v')
+def build_lbaas(cmgr, name, **kwargs):
+    lb_prefix = kwargs.pop('prefix', kwargs.pop('lb_prefix', name))
+    net_cfg = dict(
+        num_servers=kwargs.pop('num_servers', 2),
+        username=kwargs.pop('username', 'cirros'),
+        password=kwargs.pop('password', 'cubswin:)'),
+        image_id=kwargs.pop('image_id', None),
+        flavor_id=kwargs.pop('flavor_id', 1),
+        cidr=kwargs.pop('cidr', '10.199.88.0/24'),
+        port=kwargs.pop('port', 80),
+        public_network_id=kwargs.pop('public_network_id', None),
+        router_type=kwargs.pop('router_type', 'exclusive'))
+
+    lb2_network = setup_core_network(cmgr, name, True, **net_cfg)
+    lbaas = create_lbv2(cmgr, lb2_network, prefix=lb_prefix, **kwargs)
+    return {'network': lb2_network, 'lbaas': lbaas}
+
+
+def setup_core_network(cmgr, name, start_servers=True, **kwargs):
+    lb2_network = LB_NET.setup_lb_network_and_servers(cmgr, name, **kwargs)
     if start_servers:
-        NET.start_webservers(lb_rcfg)
-    return lb_rcfg
+        LB_NET.start_webservers(lb2_network)
+    return lb2_network
 
 
 def create_lbv2(cmgr, lb_core_network, prefix=None,
@@ -54,12 +70,12 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
                             address=fixed_ip_address,
                             protocol_port=protocol_port)
         member_list.append(member)
-    healthmonitr1 = cmgr.lbaas('healthmonitor-create',
-                               pool_id=pool1['id'],
-                               delay=delay,
-                               max_retries=max_retries,
-                               type=monitor_type,
-                               timeout=monitor_timeout)
+    healthmonitor1 = cmgr.lbaas('healthmonitor-create',
+                                pool_id=pool1['id'],
+                                delay=delay,
+                                max_retries=max_retries,
+                                type=monitor_type,
+                                timeout=monitor_timeout)
 
     return dict(
         name=prefix,
@@ -67,14 +83,14 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
         listener=listener1,
         pool=pool1,
         member=member_list,
-        health_monitor=healthmonitr1)
+        health_monitor=healthmonitor1)
 
 
 def delete_loadbalancer(cmgr, loadbalancer, quit=False):
     if quit:
         return cmgr.lbaas('loadbalancer-delete-tree', loadbalancer)
     else:
-        return destroy_loadbalancer(cmgr, loadbalancerd)
+        return destroy_loadbalancer(cmgr, loadbalancer)
 
 
 def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
