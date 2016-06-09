@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
+
 from tempest.lib.services.network import base
 
 
@@ -43,6 +45,25 @@ class PoolsClient(base.BaseNetworkClient):
     def list_pools(self, **filters):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
+
+    def wait_for_pool_session_persistence(self, pool_id, sp_type=None):
+        interval_time = 1
+        timeout = 10
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            pool = self.show_pool(pool_id)
+            sp = pool.get('session_persistence', None)
+            if (not (sp_type or sp) or
+                        pool['session_persistence']['type'] == sp_type):
+                return pool
+            time.sleep(interval_time)
+        raise Exception(
+            ("Wait for pool ran for {timeout} seconds and did "
+             "not observe {pool_id} update session persistence type "
+             "to {type}.").format(
+                timeout=timeout,
+                pool_id=pool_id,
+                type=sp_type))
 
 
 def get_client(client_mgr):

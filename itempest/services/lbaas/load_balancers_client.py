@@ -78,7 +78,7 @@ class LoadBalancersClient(base.BaseNetworkClient):
                             LB_NOTFOUND.format(lb_id=load_balancer_id))
                 lb = lb.get(self.resource, lb)
                 if (lb.get('provisioning_status') == provisioning_status and
-                    lb.get('operating_status') == operating_status):
+                            lb.get('operating_status') == operating_status):
                     break
                 time.sleep(interval_time)
             except exceptions.NotFound as e:
@@ -89,21 +89,21 @@ class LoadBalancersClient(base.BaseNetworkClient):
         else:
             if is_delete_op:
                 raise exceptions.TimeoutException(
-                    _("Waited for load balancer {lb_id} to be deleted for "
-                      "{timeout} seconds but can still observe that it "
-                      "exists.").format(
-                          lb_id=load_balancer_id,
-                          timeout=timeout))
+                    ("Waited for load balancer {lb_id} to be deleted for "
+                     "{timeout} seconds but can still observe that it "
+                     "exists.").format(
+                        lb_id=load_balancer_id,
+                        timeout=timeout))
             else:
                 raise exceptions.TimeoutException(
-                    _("Wait for load balancer ran for {timeout} seconds and "
-                      "did not observe {lb_id} reach {provisioning_status} "
-                      "provisioning status and {operating_status} "
-                      "operating status.").format(
-                          timeout=timeout,
-                          lb_id=load_balancer_id,
-                          provisioning_status=provisioning_status,
-                          operating_status=operating_status))
+                    ("Wait for load balancer ran for {timeout} seconds and "
+                     "did not observe {lb_id} reach {provisioning_status} "
+                     "provisioning status and {operating_status} "
+                     "operating status.").format(
+                        timeout=timeout,
+                        lb_id=load_balancer_id,
+                        provisioning_status=provisioning_status,
+                        operating_status=operating_status))
         return lb
 
 

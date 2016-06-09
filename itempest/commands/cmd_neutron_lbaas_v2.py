@@ -220,6 +220,12 @@ def pool_get_id(mgr_or_client, pool_id):
     return nobj['id']
 
 
+def pool_waitfor_session_persistence(mgr_or_client, pool_id, sp_type=None):
+    net_client = _g_pools_client(mgr_or_client)
+    pool = net_client.wait_for_pool_session_persistence(pool_id, sp_type)
+    return pool
+
+
 # healthmonitor, CLI does not use health_monitor like API
 # required attributes: max_retires, pool_id, delay, timeout, type
 def healthmonitor_create(mgr_or_client, **kwargs):

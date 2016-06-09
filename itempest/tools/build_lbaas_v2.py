@@ -45,8 +45,12 @@ def setup_core_network(cmgr, name, start_servers=True, **kwargs):
 def create_lbv2(cmgr, lb_core_network, prefix=None,
                 protocol='HTTP', protocol_port=80, ip_version=4,
                 delay=4, max_retries=3,
-                monitor_type="HTTP", monitor_timeout=1):
+                monitor_type="HTTP", monitor_timeout=1, **kwargs):
     prefix = prefix if prefix else data_utils.rand_name('kilo-lb2')
+    # pool atrributes
+    lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
+    persistence_type = kwargs.pop('persistence_type', None)
+    cookie_name = kwargs.pop('cookie_name', None)
     if cmgr.lbaas is None:
         raise Exception(
             "Client manager does not have LBaasV2 clients installed.")
@@ -57,9 +61,16 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
                            protocol_port=protocol_port,
                            loadbalancer_id=load_balancer['id'],
                            name=prefix + "-listener1")
-    pool1 = cmgr.lbaas('pool-create', lb_algorithm='ROUND_ROBIN',
-                       protocol=protocol, listener_id=listener1['id'],
-                       name=prefix + "-pool1")
+    pool_body = dict(lb_algorithm=lb_algorithm,
+                     protocol=protocol,
+                     listener_id=listener1['id'],
+                     name=prefix + "-pool1")
+    if persistence_type:
+        pool_body.update({'session_persistence': {'type': persistence_type}})
+    if cookie_name:
+        pool_body.update(
+            {'session_persistence': {'cookie_name': cookie_name}})
+    pool1 = cmgr.lbaas('pool-create', **pool_body)
     member_list = []
     for server_id in lb_core_network['servers']:
         server = lb_core_network['servers'][server_id]
