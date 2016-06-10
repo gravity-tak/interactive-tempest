@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import platform
 import tempfile
 
@@ -9,11 +10,12 @@ from itempest.lib import remote_client
 from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
 
-
 USERDATA_DIR = os.environ.get('USERDATA_DIR', '/opt/stack/data')
 BACKEND_RESPONSE = ('echo -ne "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n'
                     'Connection: close\r\nContent-Type: text/html; '
                     'charset=UTF-8\r\n\r\n%s\r\n"; cat >/dev/null')
+NC_PROCNAME_PATTERN = """^\s*(\d+)\s+cirros.* nc .*script"""
+CHECK_NC_EXISTING_CMD = """ps aux | grep "nc.*script" """
 
 
 def create_networks(cmgr, network_name, cidr, **kwargs):
@@ -146,9 +148,9 @@ def start_webservers(lb_cfg, **kwargs):
         server_name = server['name']
         server_ip = floatingip['floating_ip_address']
         vm_fixed_ip = floatingip['fixed_ip_address']
-
-        return start_web_service(server_name, server_ip, username,
-                                 private_key, lb_cfg['port'])
+        result = start_web_service(server_name, server_ip, username,
+                                   private_key, lb_cfg['port'])
+    return result
 
 
 def start_server_web_service(cmgr, server_id_or_name, server_private_key,
@@ -191,6 +193,12 @@ def start_web_service(server_name, server_ip, username, server_private_key,
                                             web_server_script,
                                             server_ip,
                                             username, key.name)
+    return start_netcat_server(ssh_client, web_server_script, server_port)
+
+
+def start_netcat_server(ssh_client,
+                        web_server_script="/tmp/script",
+                        server_port=80):
     # Start netcat
     start_server = ('while true; do '
                     'sudo nc -ll -p %(port)s -e sh %(server_script)s; '
@@ -198,4 +206,52 @@ def start_web_service(server_name, server_ip, username, server_private_key,
     cmd = start_server % {'port': server_port,
                           'server_script': web_server_script}
 
-    return ssh_client.exec_command(cmd, with_prologue='')
+    ssh_client.exec_command(cmd, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    return result
+
+
+def stop_netcat_server(ssh_client):
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    for line in result.split("\n"):
+        m = re.search(NC_PROCNAME_PATTERN, line, re.I)
+        if m:
+            nc_pid = m.group(1)
+            kill_cmd = "sudo kill %s" % nc_pid
+            ssh_client.exec_command(kill_cmd, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    return result
+
+
+def status_netcat_server(ssh_client):
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    return result
+
+
+def status_web_service(server_ip, username, server_private_key):
+    ssh_client = remote_client.RemoteClient(server_ip,
+                                            username,
+                                            pkey=server_private_key)
+    ssh_client.validate_authentication()
+    return status_netcat_server(ssh_client)
+
+
+def stop_web_service(server_ip, username, server_private_key):
+    ssh_client = remote_client.RemoteClient(server_ip,
+                                            username,
+                                            pkey=server_private_key)
+    ssh_client.validate_authentication()
+    return stop_netcat_server(ssh_client)
+
+
+def restart_web_service(server_ip, username, server_private_key,
+                        web_server_script='/tmp/script',
+                        server_port=80, stop_first=True):
+    ssh_client = remote_client.RemoteClient(server_ip,
+                                            username,
+                                            pkey=server_private_key)
+
+    ssh_client.validate_authentication()
+    if stop_first:
+        stop_netcat_server(ssh_client)
+    return start_netcat_server(ssh_client, web_server_script, server_port)

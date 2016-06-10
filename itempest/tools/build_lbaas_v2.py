@@ -16,9 +16,18 @@ from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
 import build_lbaas_networks as LB_NET
 
+LB_ALGORITHMS = ('ROUND_ROBIN', 'LEAST_CONNECTIONS', 'SOURCE_IP')
 
-def build_lbaas(cmgr, name, **kwargs):
-    lb_prefix = kwargs.pop('prefix', kwargs.pop('lb_prefix', name))
+
+def build_os_lbaas(cmgr, name, **kwargs):
+    """Build lbaas environment for UpStream OpenStack"""
+    return build_nsx_lbaas(cmgr, name, router_type='default', **kwargs)
+
+
+def build_nsx_lbaas(cmgr, name, **kwargs):
+    """Build lbaas environment for NSX OpenStack."""
+    lb_name = kwargs.pop('prefix', kwargs.pop('lb_name', name))
+    public_network_id = kwargs.pop('public_network_id', None)
     net_cfg = dict(
         num_servers=kwargs.pop('num_servers', 2),
         username=kwargs.pop('username', 'cirros'),
@@ -27,11 +36,18 @@ def build_lbaas(cmgr, name, **kwargs):
         flavor_id=kwargs.pop('flavor_id', 1),
         cidr=kwargs.pop('cidr', '10.199.88.0/24'),
         port=kwargs.pop('port', 80),
-        public_network_id=kwargs.pop('public_network_id', None),
+        public_network_id=public_network_id,
         router_type=kwargs.pop('router_type', 'exclusive'))
-
-    lb2_network = setup_core_network(cmgr, name, True, **net_cfg)
-    lbaas = create_lbv2(cmgr, lb2_network, prefix=lb_prefix, **kwargs)
+    start_servers = kwargs.pop('start_servers', True)
+    protocol = kwargs.get('protocol', 'HTTP')
+    if protocol == 'TCP':
+        start_servers = False
+    lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
+    lbaas = create_lbaasv2(cmgr, lb2_network, lb_name=lb_name, **kwargs)
+    security_group_id = lb2_network['security_group']['id']
+    assign_floatingip_to_vip(cmgr, lb_name,
+                             public_network_id=public_network_id,
+                             security_group_id=security_group_id)
     return {'network': lb2_network, 'lbaas': lbaas}
 
 
@@ -42,11 +58,11 @@ def setup_core_network(cmgr, name, start_servers=True, **kwargs):
     return lb2_network
 
 
-def create_lbv2(cmgr, lb_core_network, prefix=None,
-                protocol='HTTP', protocol_port=80, ip_version=4,
-                delay=4, max_retries=3,
-                monitor_type="HTTP", monitor_timeout=1, **kwargs):
-    prefix = prefix if prefix else data_utils.rand_name('kilo-lb2')
+def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
+                   protocol='HTTP', protocol_port=80, ip_version=4,
+                   delay=4, max_retries=3,
+                   monitor_type="HTTP", monitor_timeout=1, **kwargs):
+    lb_name = lb_name if lb_name else data_utils.rand_name('lb2')
     # pool atrributes
     lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
     persistence_type = kwargs.pop('persistence_type', None)
@@ -56,15 +72,15 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
             "Client manager does not have LBaasV2 clients installed.")
     subnet_id = lb_core_network['subnet']['id']
     load_balancer = cmgr.lbaas('loadbalancer-create', subnet_id,
-                               name=prefix)
+                               name=lb_name)
     listener1 = cmgr.lbaas('listener-create', protocol=protocol,
                            protocol_port=protocol_port,
                            loadbalancer_id=load_balancer['id'],
-                           name=prefix + "-listener1")
+                           name=lb_name + "-listener1")
     pool_body = dict(lb_algorithm=lb_algorithm,
                      protocol=protocol,
                      listener_id=listener1['id'],
-                     name=prefix + "-pool1")
+                     name=lb_name + "-pool1")
     if persistence_type:
         pool_body.update({'session_persistence': {'type': persistence_type}})
     if cookie_name:
@@ -89,7 +105,7 @@ def create_lbv2(cmgr, lb_core_network, prefix=None,
                                 timeout=monitor_timeout)
 
     return dict(
-        name=prefix,
+        name=lb_name,
         load_balancer=load_balancer,
         listener=listener1,
         pool=pool1,
@@ -162,5 +178,5 @@ def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
             cmgr.qsvc('floatingip-delete', fip['id'])
         return fip
     elif len(fip_list) > 1:
-        raise Exception("Expect one floatingip matched.")
+        raise Exception("More than one floatingips attached to VIP!!!")
     return None
