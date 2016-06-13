@@ -284,6 +284,7 @@ def show_toplogy(cli_mgr, return_topo=False, prefix=None,
                  router_id=None, delete_resources=False):
     tenant_name = cli_mgr.manager.credentials.tenant_name
     FMT_ROUTER = "%s>> {router_type} router: {name} {id}" % (' ' * 2)
+    FMT_ROUTER_O = "%s>> router: {name} {id}" % (' ' * 2)
     FMT_X_GW1 = "%sGW: snat_enabled: {enable_snat}" % (' ' * 5)
     FMT_X_GW2 = "%sfixed_ip: {external_fixed_ips}" % (' ' * (5 + 4))
     FMT_X_ROUT = "%sroutes: {routes}" % (' ' * (5 + 4))
@@ -311,7 +312,10 @@ def show_toplogy(cli_mgr, return_topo=False, prefix=None,
         rtr['_networks'] = []
         if 'distributed' in router and router['distributed']:
             rtr['router_type'] = 'distributed'
-        topo_line.append(FMT_ROUTER.format(**rtr))
+        try:
+            topo_line.append(FMT_ROUTER.format(**rtr))
+        except:
+            topo_line.append(FMT_ROUTER_O.format(**rtr))
         if type(router['external_gateway_info']) is dict:
             xnet_info = router['external_gateway_info']
             rtr['gateway'] = xnet_info
