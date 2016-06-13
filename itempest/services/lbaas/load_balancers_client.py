@@ -62,9 +62,8 @@ class LoadBalancersClient(base.BaseNetworkClient):
     def wait_for_load_balancers_status(self, load_balancer_id,
                                        provisioning_status='ACTIVE',
                                        operating_status='ONLINE',
-                                       is_delete_op=False):
-        interval_time = 1
-        timeout = 600
+                                       timeout=600, interval_time=1,
+                                       is_delete_op=False, **filters):
         end_time = time.time() + timeout
         lb = None
         while time.time() < end_time:

@@ -121,10 +121,14 @@ def loadbalancer_stats(mgr_or_client, load_balancer_id, **fields):
     return _return_result(result, 'stats')
 
 
-def loadbalancer_waitfor_active(mgr_or_client, load_balancer_id, **filters):
+# timeout & interval_time added so you know what to control how long to wait
+def loadbalancer_waitfor_active(mgr_or_client, load_balancer_id,
+                                timeout=600, interval_time=1, **filters):
     filters['provisioning_status'] = 'ACTIVE'
     filters['operating_status'] = 'ONLINE'
     return loadbalancer_waitfor_status(mgr_or_client, load_balancer_id,
+                                       timeout=timeout,
+                                       interval_time=interval_time,
                                        **filters)
 
 
