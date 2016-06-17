@@ -132,6 +132,18 @@ def loadbalancer_waitfor_active(mgr_or_client, load_balancer_id,
                                        **filters)
 
 
+# while deleting the lbaas resource, no need for operating-status be ONLINE
+def loadbalancer_waitfor_provisioning_active(mgr_or_client, load_balancer_id,
+                                             timeout=600, interval_time=1,
+                                             **filters):
+    filters['provisioning_status'] = 'ACTIVE'
+    return loadbalancer_waitfor_status(mgr_or_client, load_balancer_id,
+                                       timeout=timeout,
+                                       interval_time=interval_time,
+                                       ignore_operating_status=True,
+                                       **filters)
+
+
 def loadbalancer_waitfor_status(mgr_or_client, load_balancer_id, **filters):
     net_client = _g_loadbalancers_client(mgr_or_client)
     load_balancer_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)

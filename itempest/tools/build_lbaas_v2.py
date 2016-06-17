@@ -158,12 +158,12 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
-def delete_all_lbaas(cmgr):
+def delete_all_lbaas(cmgr, waitfor_active=60):
     for lb in cmgr.lbaas('loadblaancer-list'):
-        delete_lbaas(cmgr, lb['id'])
+        delete_lbaas(cmgr, lb['id'], waitfor_active=waitfor_active)
 
 
-def delete_lbaas(cmgr, loadbalancer, delete_fip=True):
+def delete_lbaas(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
     lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer, delete_fip)
     lb_id = lb2['id']
     for listener_dd in lb2.get('listeners'):
@@ -174,14 +174,18 @@ def delete_lbaas(cmgr, loadbalancer, delete_fip=True):
             hm_id = pool.get('healthmonitor_id', None)
             if hm_id:
                 cmgr.lbaas('healthmonitor-delete', hm_id)
-                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+                cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                           timeout=waitfor_active)
             for member in pool.get('members'):
                 cmgr.lbaas('member-delete', pool_id, member['id'])
-                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+                cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                           timeout=waitfor_active)
             cmgr.lbaas('pool-delete', pool_id)
-            cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                       timeout=waitfor_active)
         cmgr.lbaas("listener-delete", listener['id'])
-        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+        cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                   timeout=waitfor_active)
     # OK, we can delete the load-balancer
     cmgr.lbaas("loadbalancer-delete", lb_id)
     return cmgr.lbaas("loadbalancer-list", id=lb_id)

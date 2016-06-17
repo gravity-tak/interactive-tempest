@@ -66,6 +66,8 @@ class LoadBalancersClient(base.BaseNetworkClient):
                                        is_delete_op=False, **filters):
         end_time = time.time() + timeout
         lb = None
+        ignore_operating_status = filters.get('ignore_operating_status',
+                                              False)
         while time.time() < end_time:
             try:
                 lb = self.show_load_balancer(load_balancer_id)
@@ -76,9 +78,11 @@ class LoadBalancersClient(base.BaseNetworkClient):
                         raise Exception(
                             LB_NOTFOUND.format(lb_id=load_balancer_id))
                 lb = lb.get(self.resource, lb)
-                if (lb.get('provisioning_status') == provisioning_status and
-                            lb.get('operating_status') == operating_status):
-                    break
+                if lb.get('operating_status') == operating_status:
+                    if (ignore_operating_status or
+                                lb.get(
+                                    'provisioning_status') == provisioning_status):
+                        break
                 time.sleep(interval_time)
             except exceptions.NotFound as e:
                 if is_delete_op:
