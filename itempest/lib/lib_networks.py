@@ -102,7 +102,8 @@ def create_router_and_add_interfaces(cmgr, name, net_list,
     elif router_type:
         router_cfg['router_type'] = router_type
     # router_type attribute is NSX specific, will remove it if
-    if router_type and router_type == 'default':
+    if ('router_type' in router_cfg and
+            router_cfg['router_type'] not in ('shared', 'exclusive')):
         router_cfg.pop('router_type', None)
     router = cmgr.qsvc('router-create', name, **router_cfg)
     cmgr.qsvc('router-gateway-set', router['id'], public_network_id)
