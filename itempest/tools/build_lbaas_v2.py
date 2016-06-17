@@ -27,6 +27,7 @@ def build_os_lbaas(cmgr, name, **kwargs):
 def build_nsx_lbaas(cmgr, name, **kwargs):
     """Build lbaas environment for NSX OpenStack."""
     lb_name = kwargs.pop('prefix', kwargs.pop('lb_name', name))
+    build_network_only = kwargs.pop('build_network_only', False)
     public_network_id = kwargs.pop('public_network_id', None)
     net_cfg = dict(
         num_servers=kwargs.pop('num_servers', 2),
@@ -43,6 +44,8 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     if protocol == 'TCP':
         start_servers = False
     lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
+    if build_network_only:
+        return {'network': lb2_network, 'lbaas': None}
     lbaas = create_lbaasv2(cmgr, lb2_network, lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']
     assign_floatingip_to_vip(cmgr, lb_name,
