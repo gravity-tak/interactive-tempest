@@ -159,7 +159,7 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
 
 
 def delete_all_lbaas(cmgr, waitfor_active=60):
-    for lb in cmgr.lbaas('loadblaancer-list'):
+    for lb in cmgr.lbaas('loadbalancer-list'):
         delete_lbaas(cmgr, lb['id'], waitfor_active=waitfor_active)
 
 
