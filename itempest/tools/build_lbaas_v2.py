@@ -158,6 +158,36 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
+def delete_all_lbaas(cmgr):
+    for lb in cmgr.lbaas('loadblaancer-list'):
+        delete_lbaas(cmgr, lb['id'])
+
+
+def delete_lbaas(cmgr, loadbalancer, delete_fip=True):
+    lb2, fip = cmgr.lbaas('loadbalancer-show', loadbalancer, delete_fip)
+    lb_id = lb2['id']
+    for listener in lb2.get('listeners'):
+        pool_id = listener.get('default_pool_id', None)
+        if pool_id:
+            pool = cmgr.lbaas('pool-show', pool_id)
+            hm_id = pool.get('healthmonitor_id', None)
+            if hm_id:
+                cmgr.lbaas('healthmonitor-delete', hm_id)
+                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            for member in pool.get('members'):
+                cmgr.lbaas('member-delete', pool_id, member['id'])
+                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            cmgr.lbaas('pool-delete', pool_id)
+            cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    # OK, we can delete the load-balancer
+    cmgr.lbaas("loadbalancer-delete", lb_id)
+    try:
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    except Exception:
+        pass
+    return None
+
+
 def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
                              security_group_id=None):
     public_network_id = (public_network_id or
@@ -184,7 +214,7 @@ def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
         if and_delete_it:
             cmgr.qsvc('floatingip-disassociate', fip['id'])
             cmgr.qsvc('floatingip-delete', fip['id'])
-        return fip
+        return (lb2, fip)
     elif len(fip_list) > 1:
         raise Exception("More than one floatingips attached to VIP!!!")
-    return None
+    return (lb2, None)
