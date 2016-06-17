@@ -18,6 +18,7 @@ import copy
 from oslo_log import log as logging
 
 from itempest import manager
+from itempest.services.routers_client import RoutersClient
 
 from tempest.common import negative_rest_client
 from tempest import config
@@ -134,7 +135,7 @@ from tempest.services.identity.v3.json.users_clients import \
 from tempest.services.image.v1.json.images_client import ImagesClient
 from tempest.lib.services.image.v2.images_client import \
     ImagesClient as ImagesV2Client
-from tempest.lib.services.network.routers_client import RoutersClient
+# from tempest.lib.services.network.routers_client import RoutersClient
 from tempest.services.object_storage.account_client import AccountClient
 from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
