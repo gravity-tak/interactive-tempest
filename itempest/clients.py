@@ -106,7 +106,7 @@ from tempest.services.database.json.limits_client import \
     DatabaseLimitsClient
 from tempest.services.database.json.versions_client import \
     DatabaseVersionsClient
-from tempest.services.identity.v2.json.endpoints_client import EndpointsClient
+from tempest.lib.services.identity.v2.endpoints_client import EndpointsClient
 from tempest.services.identity.v2.json.identity_client import IdentityClient
 from tempest.services.identity.v2.json.roles_client import RolesClient
 from tempest.services.identity.v2.json.services_client import \
@@ -132,9 +132,9 @@ from tempest.services.identity.v3.json.trusts_client import TrustsClient
 from tempest.services.identity.v3.json.users_clients import \
     UsersClient as UsersV3Client
 from tempest.services.image.v1.json.images_client import ImagesClient
-from tempest.services.image.v2.json.images_client import \
+from tempest.lib.services.image.v2.images_client import \
     ImagesClient as ImagesV2Client
-from tempest.services.network.json.routers_client import RoutersClient
+from tempest.lib.services.network.routers_client import RoutersClient
 from tempest.services.object_storage.account_client import AccountClient
 from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
