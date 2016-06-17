@@ -164,7 +164,7 @@ def delete_all_lbaas(cmgr):
 
 
 def delete_lbaas(cmgr, loadbalancer, delete_fip=True):
-    lb2, fip = cmgr.lbaas('loadbalancer-show', loadbalancer, delete_fip)
+    lb2, fip = cmgr.lbaas('loadbalancer-show', loadbalancer)
     lb_id = lb2['id']
     for listener in lb2.get('listeners'):
         pool_id = listener.get('default_pool_id', None)
