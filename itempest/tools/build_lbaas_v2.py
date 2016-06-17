@@ -41,7 +41,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
         router_type=kwargs.pop('router_type', 'exclusive'))
     start_servers = kwargs.pop('start_servers', True)
     protocol = kwargs.get('protocol', 'HTTP')
-    if protocol == 'TCP':
+    if 'TCP' in protocol.upper():
         start_servers = False
     lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
     if build_network_only:
