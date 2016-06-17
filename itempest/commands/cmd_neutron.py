@@ -623,25 +623,8 @@ def router_interface_delete(mgr_or_client, router_id, subnet_id,
     net_client = _g_router_client(mgr_or_client)
     router = router_show(mgr_or_client, router_id)
     router_id = router['id']
-    try:
-        return net_client.remove_router_interface(
-            router_id,
-            subnet_id=subnet_id)
-    except Exception:
-        try:
-            return net_client.remove_router_interface_with_subnbet_id(
-                router_id, subnet_id=subnet_id)
-        except Exception:
-            try:
-                return netclient_do(net_client,
-                                    'remove_router_interface',
-                                    router_id,
-                                    subnet_id=subnet_id)
-            except Exception:
-                return netclient_do(net_client,
-                                    'remove_router_interface_with_subnet_id',
-                                    router_id,
-                                    subnet_id=subnet_id)
+    return net_client.remove_router_interface(router_id,
+                                              subnet_id=subnet_id)
 
 
 # CLI : neutron router-port-list <router-name-or-id>
@@ -652,12 +635,7 @@ def router_interface_list(mgr_or_client, router_id, **kwargs):
     try:
         result = net_client.list_router_interfaces(router_id)
     except Exception:
-        try:
-            result = netclient_do(net_client,
-                                  'list_router_interfaces',
-                                  router_id)
-        except Exception:
-            return list_router_interfaces(mgr_or_client, router_id)
+        return list_router_interfaces(mgr_or_client, router_id)
     return result['ports']
 
 
