@@ -180,13 +180,11 @@ def delete_lbaas(cmgr, loadbalancer, delete_fip=True):
                 cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
             cmgr.lbaas('pool-delete', pool_id)
             cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+        cmgr.lbaas("listener-delete", listener['id'])
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
     # OK, we can delete the load-balancer
     cmgr.lbaas("loadbalancer-delete", lb_id)
-    try:
-        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
-    except Exception:
-        pass
-    return None
+    return cmgr.lbaas("loadbalancer-list", id=lb_id)
 
 
 def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
