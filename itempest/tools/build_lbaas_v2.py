@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+import urllib3
+
 from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
 import build_lbaas_networks as LB_NET
@@ -221,3 +224,23 @@ def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
     elif len(fip_list) > 1:
         raise Exception("More than one floatingips attached to VIP!!!")
     return (lb2, None)
+
+
+def count_http_servers(web_ip, count=10, show_progress=True):
+    web_page = "http://{web_ip}/".format(web_ip=web_ip)
+    if show_progress:
+        print("lbaas webpage: %s" % web_page)
+    ctx = {}
+    http = urllib3.PoolManager()
+    for x in range(count):
+        resp = http.request(web_page)
+        data = resp.data
+        m = re.search("([^\s]+)", data)
+        s_ctx = m.group(1)
+        if show_progress:
+            print("%4d - %s" % (x, s_ctx))
+        if s_ctx in ctx.keys():
+            ctx[s_ctx] += 1
+        else:
+            ctx[s_ctx] = 1
+    return ctx
