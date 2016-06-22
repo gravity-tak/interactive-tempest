@@ -161,6 +161,32 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
+def show_lbaas_tree(cmgr, loadbalancer):
+    lb2 = cmgr.lbaas('loadbalancer-show', loadbalancer)
+    lb_id = lb2['id']
+    lb_tree = pack_fields(lb2, ('id', 'name', 'operating_status',
+                                'provisioning_status', 'provider'
+                                                       'vip_address',
+                                'vip_port',
+                                'vip_subnet_id'))
+
+    for listener_dd in lb2.get('listeners'):
+        listener = cmgr.lbaas('listener-show', listener_dd.get('id'))
+        lb_tree += "\n" + pack_fields(listener, ('id', 'name'))
+        pool_id = listener.get('default_pool_id', None)
+        if pool_id:
+            pool = cmgr.lbaas('pool-show', pool_id)
+            lb_tree += "\n" + pack_fields(pool, ('id', 'name'), sp=4)
+            hm_id = pool.get('healthmonitor_id', None)
+            if hm_id:
+                hm = cmgr.lbaas('healthmonitory-show', hm_id)
+                lb_tree += "\n" + pack_fields(hm, ('id', 'tcp'), sp=4)
+            for member in pool.get('members'):
+                mbr = cmgr.lbaas('member-show', pool_id, member['id'])
+                lb_tree += "\n" + pack_fields(mbr, ('id', 'tcp'), sp=8)
+    return lb_tree
+
+
 def delete_all_lbaas(cmgr, waitfor_active=60):
     for lb in cmgr.lbaas('loadbalancer-list'):
         delete_lbaas(cmgr, lb['id'], waitfor_active=waitfor_active)
@@ -233,7 +259,7 @@ def count_http_servers(web_ip, count=10, show_progress=True):
     ctx = {}
     http = urllib3.PoolManager()
     for x in range(count):
-        resp = http.request(web_page)
+        resp = http.request('GET', web_page)
         data = resp.data
         m = re.search("([^\s]+)", data)
         s_ctx = m.group(1)
@@ -244,3 +270,26 @@ def count_http_servers(web_ip, count=10, show_progress=True):
         else:
             ctx[s_ctx] = 1
     return ctx
+
+
+def get_fields(sdict, *fields):
+    odict = dict([(x, y) for (x, y) in sdict.items() if x in fields])
+    return odict
+
+
+def pack_fields(sdict, *args, **kwargs):
+    width = kwargs.pop('width', 78)
+    lead_sp = kwargs.pop('sp', 0)
+    sss = ""
+    ss = " " * lead_sp
+    for field in args:
+        if field in sdict:
+            s = "--%s=%s" % (field, sdict[field])
+            ss = " " * lead_sp
+        if len(ss + s) > width:
+            sss += ss + "\n"
+        elif len(ss) <= lead_sp:
+            ss += s
+        else:
+            ss += " " + s
+    return sss
