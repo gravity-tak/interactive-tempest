@@ -90,7 +90,8 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
                      listener_id=listener1['id'],
                      name=lb_name + "-pool1")
     if persistence_type:
-        pool_body.update({'session_persistence': {'type': persistence_type}})
+        pool_body.update(
+            {'session_persistence': {'type': persistence_type}})
     if cookie_name:
         pool_body.update(
             {'session_persistence': {'cookie_name': cookie_name}})
@@ -164,26 +165,37 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
 def show_lbaas_tree(cmgr, loadbalancer):
     lb2 = cmgr.lbaas('loadbalancer-show', loadbalancer)
     lb_id = lb2['id']
-    lb_tree = pack_fields(lb2, ('id', 'name', 'operating_status',
-                                'provisioning_status', 'provider'
-                                                       'vip_address',
-                                'vip_port',
-                                'vip_subnet_id'))
+    lb_tree = pack_fields('loadbalancer', lb2, 'id', 'name',
+                          'operating_status',
+                          'provisioning_status', 'provider'
+                                                 'vip_address',
+                          'vip_port',
+                          'vip_subnet_id')
 
     for listener_dd in lb2.get('listeners'):
         listener = cmgr.lbaas('listener-show', listener_dd.get('id'))
-        lb_tree += "\n" + pack_fields(listener, ('id', 'name'))
+        lb_tree += pack_fields('listener', listener, 'id', 'name',
+                               'protocol', 'protocol_port', sp=4)
         pool_id = listener.get('default_pool_id', None)
         if pool_id:
             pool = cmgr.lbaas('pool-show', pool_id)
-            lb_tree += "\n" + pack_fields(pool, ('id', 'name'), sp=4)
+            lb_tree += pack_fields('pool', pool, 'id', 'name',
+                                   'lb_algorithm', 'protocol',
+                                   'session_persistence', sp=8)
             hm_id = pool.get('healthmonitor_id', None)
             if hm_id:
-                hm = cmgr.lbaas('healthmonitory-show', hm_id)
-                lb_tree += "\n" + pack_fields(hm, ('id', 'tcp'), sp=4)
+                hm = cmgr.lbaas('healthmonitor-show', hm_id)
+                lb_tree += pack_fields('healthmonitor', hm, 'id',
+                                       'http_method', 'type',
+                                       'max_retries',
+                                       'timeout', 'url_path',
+                                       sp=8)
             for member in pool.get('members'):
                 mbr = cmgr.lbaas('member-show', pool_id, member['id'])
-                lb_tree += "\n" + pack_fields(mbr, ('id', 'tcp'), sp=8)
+                lb_tree += pack_fields('member', mbr, 'id',
+                                       'address',
+                                       'protocol_port', 'subnet_id',
+                                       'weight', sp=12)
     return lb_tree
 
 
@@ -203,11 +215,13 @@ def delete_lbaas(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
             hm_id = pool.get('healthmonitor_id', None)
             if hm_id:
                 cmgr.lbaas('healthmonitor-delete', hm_id)
-                cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
+                           lb_id,
                            timeout=waitfor_active)
             for member in pool.get('members'):
                 cmgr.lbaas('member-delete', pool_id, member['id'])
-                cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
+                cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
+                           lb_id,
                            timeout=waitfor_active)
             cmgr.lbaas('pool-delete', pool_id)
             cmgr.lbaas("loadbalancer-waitfor-provisioning-active", lb_id,
@@ -277,17 +291,23 @@ def get_fields(sdict, *fields):
     return odict
 
 
-def pack_fields(sdict, *args, **kwargs):
+def pack_fields(title, sdict, *args, **kwargs):
     width = kwargs.pop('width', 78)
     lead_sp = kwargs.pop('sp', 0)
-    sss = ""
+    indent_sp = kwargs.pop('sp_indent', 4)
+    sss = " " * lead_sp + title + ": >>\n"
+    lead_sp += indent_sp
     ss = " " * lead_sp
     s = ""
     for field in args:
         if field not in sdict: continue
         s = "--%s=%s" % (field, sdict[field])
         if len(ss + s) > width:
-            sss += ss + "\n"
+            if len(ss) == lead_sp:
+                # only one item in this line
+                sss += ss + s + "\n"
+            else:
+                sss += ss + "\n"
             ss = " " * lead_sp
         elif len(ss) <= lead_sp:
             ss += s
