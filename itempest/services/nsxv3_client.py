@@ -19,9 +19,6 @@ import requests
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
-from vmware_nsx_tempest._i18n import _LE
-from vmware_nsx_tempest._i18n import _LI
-from vmware_nsx_tempest._i18n import _LW
 
 requests.packages.urllib3.disable_warnings()
 
@@ -71,7 +68,7 @@ class NSXV3Client(object):
         self.api_version = api_version
 
     def get_api_version(self):
-        return self.api
+        return self.api_version
 
     def __set_url(self, api=None, secure=None, host=None, endpoint=None):
         api = self.api_version if api is None else api
@@ -206,7 +203,7 @@ class NSXV3Client(object):
         nsx_resource = [n for n in nsx_resources if
                         n['display_name'] == nsx_name]
         if len(nsx_resource) == 0:
-            LOG.warn(_LW("Backend nsx resource %s NOT found!"), nsx_name)
+            LOG.warning(_LW("Backend nsx resource %s NOT found!"), nsx_name)
             return None
         if len(nsx_resource) > 1:
             LOG.error(_LE("More than 1 nsx resources found: %s!"),
@@ -222,6 +219,15 @@ class NSXV3Client(object):
         """
         response = self.get(endpoint="/logical-switches")
         return response.json()['results']
+
+    def get_bridge_cluster_info(self):
+        """
+        Get bridge cluster information.
+
+        :return: returns bridge cluster id and bridge cluster name.
+        """
+        response = self.get(endpoint="/bridge-clusters")
+        return response.json()["results"]
 
     def get_logical_switch(self, os_name, os_uuid):
         """
@@ -350,3 +356,15 @@ class NSXV3Client(object):
         endpoint = "/logical-routers/%s/nat/rules" % lrouter['id']
         response = self.get(endpoint=endpoint)
         return response.json()['results']
+
+
+def _LE(msg):
+    return msg
+
+
+def _LI(msg):
+    return msg
+
+
+def _LW(msg):
+    return msg
