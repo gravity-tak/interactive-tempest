@@ -282,14 +282,17 @@ def pack_fields(sdict, *args, **kwargs):
     lead_sp = kwargs.pop('sp', 0)
     sss = ""
     ss = " " * lead_sp
+    s = ""
     for field in args:
-        if field in sdict:
-            s = "--%s=%s" % (field, sdict[field])
-            ss = " " * lead_sp
+        if field not in sdict: continue
+        s = "--%s=%s" % (field, sdict[field])
         if len(ss + s) > width:
             sss += ss + "\n"
+            ss = " " * lead_sp
         elif len(ss) <= lead_sp:
             ss += s
         else:
             ss += " " + s
+    if len(ss) > lead_sp:
+        sss += ss + "\n"
     return sss
