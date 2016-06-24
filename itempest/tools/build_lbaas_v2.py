@@ -163,7 +163,7 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
-def show_lbaas_tree(cmgr, loadbalancer, show_it=False):
+def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
     lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer)
     lb_id = lb2['id']
     lb_tree = pack_fields('loadbalancer', lb2, 'id', 'name',
@@ -199,15 +199,16 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=False):
                                        'weight', sp=12)
     if show_it:
         print(lb_tree)
-    return lb_tree
+    else:
+        return lb_tree
 
 
 def delete_all_lbaas(cmgr, waitfor_active=60):
     for lb in cmgr.lbaas('loadbalancer-list'):
-        delete_lbaas(cmgr, lb['id'], waitfor_active=waitfor_active)
+        delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active)
 
 
-def delete_lbaas(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
+def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
     lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer, delete_fip)
     lb_id = lb2['id']
     for listener_dd in lb2.get('listeners'):
@@ -308,9 +309,10 @@ def pack_fields(title, sdict, *args, **kwargs):
             if len(ss) == lead_sp:
                 # only one item in this line
                 sss += ss + s + "\n"
+                ss = " " * lead_sp
             else:
                 sss += ss + "\n"
-            ss = " " * lead_sp
+                ss = " " * lead_sp + s
         elif len(ss) <= lead_sp:
             ss += s
         else:
