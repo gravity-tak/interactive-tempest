@@ -164,15 +164,15 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
 
 
 def show_lbaas_tree(cmgr, loadbalancer, show_it=False):
-    lb2 = cmgr.lbaas('loadbalancer-show', loadbalancer)
+    lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer)
     lb_id = lb2['id']
     lb_tree = pack_fields('loadbalancer', lb2, 'id', 'name',
-                          'operating_status',
-                          'provisioning_status', 'provider'
-                                                 'vip_address',
-                          'vip_port',
+                          'operating_status', 'provisioning_status',
+                          'provider', 'vip_address', 'vip_port',
                           'vip_subnet_id')
-
+    lb_tree += pack_fields('IP-ADDR', fip, 'fixed_ip_address',
+                           'floating_ip_address', 'status',
+                           'id', sp=8)
     for listener_dd in lb2.get('listeners'):
         listener = cmgr.lbaas('listener-show', listener_dd.get('id'))
         lb_tree += pack_fields('listener', listener, 'id', 'name',
@@ -190,7 +190,7 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=False):
                                        'http_method', 'type',
                                        'max_retries',
                                        'timeout', 'url_path',
-                                       sp=8)
+                                       sp=16)
             for member in pool.get('members'):
                 mbr = cmgr.lbaas('member-show', pool_id, member['id'])
                 lb_tree += pack_fields('member', mbr, 'id',
