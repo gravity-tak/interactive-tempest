@@ -72,6 +72,7 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     username = kwargs.pop('username', 'cirros')
     password = kwargs.pop('password', 'cubswin:)')
     image_id = kwargs.pop('image_id', None)
+    image_name = kwargs.pop('image_name', None)
     flavor_id = kwargs.pop('flavor_id', 1)
     my_name = data_utils.rand_name(x_name)
     cidr = kwargs.pop('cidr', '10.199.88.0/24')
@@ -93,8 +94,8 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
         server = NET.create_server_on_network(
             cmgr, network['id'], security_group_name_or_id=sg['id'],
             key_name=keypair['name'], server_name=server_name,
-            image_id=image_id, flavor_id=flavor_id,
-            wait_on_boot=False)
+            image_id=image_id, imange_name=image_name,
+            flavor_id=flavor_id, wait_on_boot=False)
         servers[server['id']] = dict(server=server, fip=None)
 
     # servers need in status=ACTIVE before assign floatingip to them

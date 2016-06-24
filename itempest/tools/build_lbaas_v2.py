@@ -37,6 +37,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
         username=kwargs.pop('username', 'cirros'),
         password=kwargs.pop('password', 'cubswin:)'),
         image_id=kwargs.pop('image_id', None),
+        image_name=kwargs.pop('image_name', None),
         flavor_id=kwargs.pop('flavor_id', 1),
         cidr=kwargs.pop('cidr', '10.199.88.0/24'),
         port=kwargs.pop('port', 80),

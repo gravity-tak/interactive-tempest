@@ -1,4 +1,5 @@
 import netaddr
+import re
 
 from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
@@ -116,7 +117,7 @@ def create_router_and_add_interfaces(cmgr, name, net_list,
 # server_craete does not honor tenant_id, so you need to use the cmgr that
 # will be the owner of the server
 def create_server_on_network(cmgr, network_id, server_name=None,
-                             image_id=None, flavor_id=1,
+                             image_id=None, image_name=None, flavor_id=1,
                              security_group_name_or_id=None,
                              wait_on_boot=False, **kwargs):
     server_name = server_name or data_utils.rand_name('itempz-sv')
@@ -126,7 +127,7 @@ def create_server_on_network(cmgr, network_id, server_name=None,
         'networks': [{'uuid': network['id']}],
         'security_groups': [{'name': security_group_name_or_id}],
     }
-    image_id = get_image_id(cmgr, image_id)
+    image_id = get_image_id(cmgr, image_id, image_name)
     flavor_id = get_flavor_id(cmgr, flavor_id)
     create_kwargs.update(**kwargs)
     return cmgr.nova('server_create', server_name, image_id=image_id,
@@ -339,9 +340,9 @@ def get_flavor_id(cmgr, flavor=None, image_name=None):
 
 def get_image_id(cmgr, image_name=None):
     image_list = cmgr.nova('image-list')
-    image_name = image_name or 'cirros'
+    image_name = image_name or 'cirros-0.3.3'
     for image in image_list:
-        if image['name'] == image_name:
+        if re.search(image_name, image['name']):
             return image['id']
     for image in image_list:
         if image['name'].find(image_name) >= 0:
