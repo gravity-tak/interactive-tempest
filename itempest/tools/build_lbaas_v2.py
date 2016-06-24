@@ -163,7 +163,7 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
-def show_lbaas_tree(cmgr, loadbalancer):
+def show_lbaas_tree(cmgr, loadbalancer, show_it=False):
     lb2 = cmgr.lbaas('loadbalancer-show', loadbalancer)
     lb_id = lb2['id']
     lb_tree = pack_fields('loadbalancer', lb2, 'id', 'name',
@@ -197,6 +197,8 @@ def show_lbaas_tree(cmgr, loadbalancer):
                                        'address',
                                        'protocol_port', 'subnet_id',
                                        'weight', sp=12)
+    if show_it:
+        print(lb_tree)
     return lb_tree
 
 
@@ -254,8 +256,7 @@ def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
 
 def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
     lb2 = cmgr.lbaas("loadbalancer-show", loadbalancer_id)
-    fip_list = cmgr.qsvc('floatingip-list', subnet_id=lb2['vip_subnet_id'],
-                         fixed_ip_address=lb2['vip_address'])
+    fip_list = cmgr.qsvc('floatingip-list', port_id=lb2['vip_port_id'])
     if len(fip_list) == 1:
         fip = fip_list[0]
         if and_delete_it:
@@ -272,7 +273,7 @@ def count_http_servers(web_ip, count=10, show_progress=True):
     if show_progress:
         print("lbaas webpage: %s" % web_page)
     ctx = {}
-    http = urllib3.PoolManager()
+    http = urllib3.PoolManager(retries=urllib3.Retry(total=20))
     for x in range(count):
         resp = http.request('GET', web_page)
         data = resp.data
@@ -295,7 +296,7 @@ def get_fields(sdict, *fields):
 def pack_fields(title, sdict, *args, **kwargs):
     width = kwargs.pop('width', 78)
     lead_sp = kwargs.pop('sp', 0)
-    indent_sp = kwargs.pop('sp_indent', 4)
+    indent_sp = kwargs.pop('sp_indent', 2)
     sss = " " * lead_sp + title + ": >>\n"
     lead_sp += indent_sp
     ss = " " * lead_sp
