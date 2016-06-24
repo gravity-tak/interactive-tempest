@@ -94,7 +94,7 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
         server = NET.create_server_on_network(
             cmgr, network['id'], security_group_name_or_id=sg['id'],
             key_name=keypair['name'], server_name=server_name,
-            image_id=image_id, imange_name=image_name,
+            image_id=image_id, image_name=image_name,
             flavor_id=flavor_id, wait_on_boot=False)
         servers[server['id']] = dict(server=server, fip=None)
 
