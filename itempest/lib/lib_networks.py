@@ -255,7 +255,6 @@ def delete_this_router(cmgr, router, ignore_routes_if_empty=False,
         delete_router_interfaces(
             cmgr, router, and_attached_resources=and_attached_resources)
     except:
-        # one more time
         delete_router_interfaces(
             cmgr, router, and_attached_resources=and_attached_resources)
     if not ignore_routes_if_empty or len(router['routes']) > 0:
