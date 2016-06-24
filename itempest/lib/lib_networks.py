@@ -251,8 +251,13 @@ def delete_router_by_id(cmgr, router_id, and_attached_resources=False,
 def delete_this_router(cmgr, router, ignore_routes_if_empty=False,
                        and_attached_resources=False):
     router_id = router['id']
-    delete_router_interfaces(cmgr, router,
-                             and_attached_resources=and_attached_resources)
+    try:
+        delete_router_interfaces(
+            cmgr, router, and_attached_resources=and_attached_resources)
+    except:
+        # one more time
+        delete_router_interfaces(
+            cmgr, router, and_attached_resources=and_attached_resources)
     if not ignore_routes_if_empty or len(router['routes']) > 0:
         # just to make sure we can delete extra-routes even routes == []
         cmgr.qsvc('router-delete-extra-routes', router_id)
@@ -285,8 +290,7 @@ def delete_router_interfaces(cmgr, router, and_attached_resources=False):
                             except:
                                 pass
                         cmgr.qsvc('router-interface-delete',
-                                  router['id'],
-                                  fixed_ips['subnet_id'])
+                                  router['id'], fixed_ips['subnet_id'])
 
 
 # cmgr with admin privilege may cause resources deleted you may not want!
