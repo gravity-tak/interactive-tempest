@@ -37,12 +37,12 @@ class NSXV3Client(object):
         self.endpoint = None
         self.content_type = "application/json"
         self.accept_type = "application/json"
-        self.verify = False
-        self.secure = True
+        self.verify = kwargs.pop('verify', False)
+        self.secure = kwargs.pop('secure', True)
         self.interface = "json"
         self.url = None
         self.headers = None
-        self.api_version = NSXV3Client.API_VERSION
+        self.api_version = kwargs.pop('api_version', NSXV3Client.API_VERSION)
 
         self.__set_headers()
 
@@ -71,10 +71,10 @@ class NSXV3Client(object):
         return self.api_version
 
     def __set_url(self, api=None, secure=None, host=None, endpoint=None):
-        api = self.api_version if api is None else api
-        secure = self.secure if secure is None else secure
-        host = self.host if host is None else host
-        endpoint = self.endpoint if endpoint is None else endpoint
+        api = api or self.api_version
+        secure = secure or self.secure
+        host = host or self.host
+        endpoint = endpoint or self.endpoint
         http_type = 'https' if secure else 'http'
         self.url = '%s://%s/api/%s%s' % (http_type, host, api, endpoint)
 
@@ -82,8 +82,8 @@ class NSXV3Client(object):
         return self.url
 
     def __set_headers(self, content=None, accept=None):
-        content_type = self.content_type if content is None else content
-        accept_type = self.accept_type if accept is None else accept
+        content_type = content or self.content_type
+        accept_type = accept or self.accept_type
         auth_cred = self.username + ":" + self.password
         auth = base64.b64encode(auth_cred)
         headers = {}

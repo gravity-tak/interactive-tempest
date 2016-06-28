@@ -163,16 +163,16 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     return None
 
 
-def show_lbaas_tree(cmgr, loadbalancer):
-    lb2 = cmgr.lbaas('loadbalancer-show', loadbalancer)
+def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
+    lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer)
     lb_id = lb2['id']
     lb_tree = pack_fields('loadbalancer', lb2, 'id', 'name',
-                          'operating_status',
-                          'provisioning_status', 'provider'
-                                                 'vip_address',
-                          'vip_port',
+                          'operating_status', 'provisioning_status',
+                          'provider', 'vip_address', 'vip_port',
                           'vip_subnet_id')
-
+    lb_tree += pack_fields('IP-ADDR', fip, 'fixed_ip_address',
+                           'floating_ip_address', 'status',
+                           'id', sp=8)
     for listener_dd in lb2.get('listeners'):
         listener = cmgr.lbaas('listener-show', listener_dd.get('id'))
         lb_tree += pack_fields('listener', listener, 'id', 'name',
@@ -190,22 +190,25 @@ def show_lbaas_tree(cmgr, loadbalancer):
                                        'http_method', 'type',
                                        'max_retries',
                                        'timeout', 'url_path',
-                                       sp=8)
+                                       sp=16)
             for member in pool.get('members'):
                 mbr = cmgr.lbaas('member-show', pool_id, member['id'])
                 lb_tree += pack_fields('member', mbr, 'id',
                                        'address',
                                        'protocol_port', 'subnet_id',
                                        'weight', sp=12)
-    return lb_tree
+    if show_it:
+        print(lb_tree)
+    else:
+        return lb_tree
 
 
 def delete_all_lbaas(cmgr, waitfor_active=60):
     for lb in cmgr.lbaas('loadbalancer-list'):
-        delete_lbaas(cmgr, lb['id'], waitfor_active=waitfor_active)
+        delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active)
 
 
-def delete_lbaas(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
+def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True, waitfor_active=60):
     lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer, delete_fip)
     lb_id = lb2['id']
     for listener_dd in lb2.get('listeners'):
@@ -254,8 +257,7 @@ def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
 
 def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
     lb2 = cmgr.lbaas("loadbalancer-show", loadbalancer_id)
-    fip_list = cmgr.qsvc('floatingip-list', subnet_id=lb2['vip_subnet_id'],
-                         fixed_ip_address=lb2['vip_address'])
+    fip_list = cmgr.qsvc('floatingip-list', port_id=lb2['vip_port_id'])
     if len(fip_list) == 1:
         fip = fip_list[0]
         if and_delete_it:
@@ -295,7 +297,7 @@ def get_fields(sdict, *fields):
 def pack_fields(title, sdict, *args, **kwargs):
     width = kwargs.pop('width', 78)
     lead_sp = kwargs.pop('sp', 0)
-    indent_sp = kwargs.pop('sp_indent', 4)
+    indent_sp = kwargs.pop('sp_indent', 2)
     sss = " " * lead_sp + title + ": >>\n"
     lead_sp += indent_sp
     ss = " " * lead_sp
@@ -307,9 +309,10 @@ def pack_fields(title, sdict, *args, **kwargs):
             if len(ss) == lead_sp:
                 # only one item in this line
                 sss += ss + s + "\n"
+                ss = " " * lead_sp
             else:
                 sss += ss + "\n"
-            ss = " " * lead_sp
+                ss = " " * lead_sp + s
         elif len(ss) <= lead_sp:
             ss += s
         else:
