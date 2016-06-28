@@ -272,7 +272,7 @@ def count_http_servers(web_ip, count=10, show_progress=True):
     if show_progress:
         print("lbaas webpage: %s" % web_page)
     ctx = {}
-    http = urllib3.PoolManager()
+    http = urllib3.PoolManager(retries=urllib3.Retry(total=20))
     for x in range(count):
         resp = http.request('GET', web_page)
         data = resp.data
