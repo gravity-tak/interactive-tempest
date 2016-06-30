@@ -101,18 +101,21 @@ from tempest.services.baremetal.v1.json.baremetal_client import \
     BaremetalClient
 from tempest.services.data_processing.v1_1.data_processing_client import \
     DataProcessingClient
+
+"""
 from tempest.services.database.json.flavors_client import \
     DatabaseFlavorsClient
 from tempest.services.database.json.limits_client import \
     DatabaseLimitsClient
 from tempest.services.database.json.versions_client import \
     DatabaseVersionsClient
+"""
 from tempest.lib.services.identity.v2.endpoints_client import EndpointsClient
 from tempest.services.identity.v2.json.identity_client import IdentityClient
 from tempest.services.identity.v2.json.roles_client import RolesClient
-from tempest.services.identity.v2.json.services_client import \
+from tempest.lib.services.identity.v2.services_client import \
     ServicesClient as IdentityServicesClient
-from tempest.services.identity.v2.json.tenants_client import TenantsClient
+from tempest.lib.services.identity.v2.tenants_client import TenantsClient
 from tempest.services.identity.v2.json.users_client import UsersClient
 from tempest.services.identity.v3.json.credentials_client import \
     CredentialsClient
@@ -132,7 +135,7 @@ from tempest.services.identity.v3.json.services_client import \
 from tempest.services.identity.v3.json.trusts_client import TrustsClient
 from tempest.services.identity.v3.json.users_clients import \
     UsersClient as UsersV3Client
-from tempest.services.image.v1.json.images_client import ImagesClient
+from tempest.lib.services.image.v1.images_client import ImagesClient
 from tempest.lib.services.image.v2.images_client import \
     ImagesClient as ImagesV2Client
 # from tempest.lib.services.network.routers_client import RoutersClient
@@ -447,6 +450,8 @@ class Manager(manager.Manager):
             self.auth_provider, **params_volume)
 
     def _set_database_clients(self):
+        pass
+        """
         self.database_flavors_client = DatabaseFlavorsClient(
             self.auth_provider,
             CONF.database.catalog_type,
@@ -462,6 +467,7 @@ class Manager(manager.Manager):
             CONF.database.catalog_type,
             CONF.identity.region,
             **self.default_params_with_timeout_values)
+        """
 
     def _set_identity_clients(self):
         params = {
