@@ -112,11 +112,11 @@ from tempest.services.database.json.versions_client import \
 """
 from tempest.lib.services.identity.v2.endpoints_client import EndpointsClient
 from tempest.services.identity.v2.json.identity_client import IdentityClient
-from tempest.services.identity.v2.json.roles_client import RolesClient
+from tempest.lib.services.identity.v2.roles_client import RolesClient
 from tempest.lib.services.identity.v2.services_client import \
     ServicesClient as IdentityServicesClient
 from tempest.lib.services.identity.v2.tenants_client import TenantsClient
-from tempest.services.identity.v2.json.users_client import UsersClient
+from tempest.lib.services.identity.v2.users_client import UsersClient
 from tempest.services.identity.v3.json.credentials_client import \
     CredentialsClient
 from tempest.services.identity.v3.json.domains_client import DomainsClient
