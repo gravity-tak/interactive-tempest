@@ -59,11 +59,11 @@ class LoadBalancersClient(base.BaseNetworkClient):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
 
-    def wait_for_load_balancers_status(self, load_balancer_id,
-                                       provisioning_status='ACTIVE',
-                                       operating_status='ONLINE',
-                                       timeout=600, interval_time=1,
-                                       is_delete_op=False, **filters):
+    def wait_for_load_balancer_status(self, load_balancer_id,
+                                      provisioning_status='ACTIVE',
+                                      operating_status='ONLINE',
+                                      timeout=600, interval_time=1,
+                                      is_delete_op=False, **filters):
         end_time = time.time() + timeout
         lb = None
         ignore_operating_status = filters.get('ignore_operating_status',

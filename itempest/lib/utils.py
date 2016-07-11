@@ -344,6 +344,7 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
                          lbv1=lbv1,
                          lbaas=lbaas,
                          qos=qos)
+    mcli.tenant_id = manager.networks_client.tenant_id
     try:
         # Are there other ways to validate the user's admin previledge?
         mcli.roles = manager.roles_client.list_roles()['roles']

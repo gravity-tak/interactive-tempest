@@ -147,8 +147,8 @@ def loadbalancer_waitfor_provisioning_active(mgr_or_client, load_balancer_id,
 def loadbalancer_waitfor_status(mgr_or_client, load_balancer_id, **filters):
     net_client = _g_loadbalancers_client(mgr_or_client)
     load_balancer_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
-    lb = net_client.wait_for_load_balancers_status(load_balancer_id,
-                                                   **filters)
+    lb = net_client.wait_for_load_balancer_status(load_balancer_id,
+                                                  **filters)
     return lb
 
 
