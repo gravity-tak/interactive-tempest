@@ -20,6 +20,7 @@ from itempest.lib import lib_networks as NET
 import build_lbaas_networks as LB_NET
 
 LB_ALGORITHMS = ('ROUND_ROBIN', 'LEAST_CONNECTIONS', 'SOURCE_IP')
+MONITOR_TYPES = ('HTTP', 'TCP', 'PING', 'HTTPS')
 
 
 def build_os_lbaas(cmgr, name, **kwargs):
