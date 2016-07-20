@@ -337,7 +337,6 @@ def floatingip_update(mgr_or_client, floatingip_id, *args, **kwargs):
 def port_create(mgr_or_client, network_id,
                 name=None, tenant_id=None, **kwargs):
     net_client = _g_port_client(mgr_or_client)
-    name =
     create_kwargs = dict(
         name=name or data_utils.rand_name('itempest-port'),
         network_id=network_id
