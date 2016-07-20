@@ -100,6 +100,9 @@ def network_create(mgr_or_client, name=None, tenant_id=None, **kwargs):
 def net_create(mgr_or_client, name=None, **kwargs):
     net_client = _g_network_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-network')
+    for k in kwargs.keys():
+        if kwargs[k] is None:
+            kwargs.pop(k)
     result = net_client.create_network(name=name, **kwargs)
     return result['network']
 
@@ -196,7 +199,6 @@ def subnet_create(mgr_or_client, network_id, cidr,
 def subnet_create_safe(mgr_or_client, network_id,
                        **kwargs):
     net_client = _g_subnet_client(mgr_or_client)
-    # tenant_id = kwargs.pop('tenant_id', None) or _g_tenant_id(net_client)
     tenant_id = kwargs.pop('tenant_id', None)
     name = kwargs.pop('name', None) or data_utils.rand_name(
         'itempest-subnet')
@@ -335,10 +337,14 @@ def floatingip_update(mgr_or_client, floatingip_id, *args, **kwargs):
 def port_create(mgr_or_client, network_id,
                 name=None, tenant_id=None, **kwargs):
     net_client = _g_port_client(mgr_or_client)
-    name = name or data_utils.rand_name('itempest-port')
-    tenant_id = tenant_id or _g_tenant_id(net_client)
-    result = net_client.create_port(
-        name=name, network_id=network_id, tenant_id=tenant_id)
+    name =
+    create_kwargs = dict(
+        name=name or data_utils.rand_name('itempest-port'),
+        network_id=network_id
+    )
+    if tenant_id:
+        create_kwargs['tenant_id'] = tenant_id
+    result = net_client.create_port(**create_kwargs)
     return result['port']
 
 
@@ -371,11 +377,12 @@ def security_group_create(mgr_or_client,
                           name=None, tenant_id=None, **kwargs):
     net_client = _g_security_group_client(mgr_or_client)
     name = name or data_utils.rand_name('itempest-sg')
-    tenant_id = tenant_id or _g_tenant_id(net_client)
     desc = (kwargs.pop('desc', None) or
             kwargs.pop('description', None) or
             (name + " description"))
-    sg_dict = dict(name=name, description=desc, tenant_id=tenant_id)
+    sg_dict = dict(name=name, description=desc)
+    if tenant_id:
+        sg_dict['tenant_id'] = tenant_id
     result = net_client.create_security_group(**sg_dict)
     return result['security_group']
 
@@ -429,15 +436,13 @@ def security_group_update(mgr_or_client, security_group_id,
 
 # security-group-rule
 def security_group_rule_create(mgr_or_client, security_group_id,
-                               tenant_id=None, skip_None=True, **kwargs):
+                               tenant_id=None, **kwargs):
     net_client = _g_security_group_rule_client(mgr_or_client)
-    tenant_id = tenant_id or _g_tenant_id(net_client)
-    rule_dict = dict(security_group_id=security_group_id,
-                     tenant_id=tenant_id)
-    for k, v in kwargs.items():
-        if skip_None and v is None:
-            continue
-        rule_dict[k] = v
+    rule_dict = dict(security_group_id=security_group_id)
+    rule_dict.update(kwargs)
+    if tenant_id:
+        rule_dict['tenant_id'] = tenant_id
+
     return net_client.create_security_group_rule(**rule_dict)
 
 
@@ -701,10 +706,3 @@ def netclient_do(net_client, method_name, *args, **kwargs):
     results = nc_method(*args, **kwargs)
     return results
 
-
-def _g_tenant_id(os_client):
-    try:
-        return os_client.tenant_id
-    except Exception:
-        # should not come over here.
-        return os_client.rest_client.tenant_id
