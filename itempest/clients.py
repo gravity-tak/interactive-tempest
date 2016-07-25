@@ -120,12 +120,12 @@ from tempest.lib.services.identity.v2.users_client import UsersClient
 from tempest.services.identity.v3.json.credentials_client import \
     CredentialsClient
 from tempest.services.identity.v3.json.domains_client import DomainsClient
-from tempest.services.identity.v3.json.endpoints_client import \
+from tempest.lib.services.identity.v3.endpoints_client import \
     EndPointsClient as EndPointsV3Client
 from tempest.services.identity.v3.json.groups_client import GroupsClient
 from tempest.services.identity.v3.json.identity_client import \
     IdentityClient as IdentityV3Client
-from tempest.services.identity.v3.json.policies_client import PoliciesClient
+from tempest.lib.services.identity.v3.policies_client import PoliciesClient
 from tempest.services.identity.v3.json.projects_client import ProjectsClient
 from tempest.services.identity.v3.json.regions_client import RegionsClient
 from tempest.services.identity.v3.json.roles_client import \
