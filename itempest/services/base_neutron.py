@@ -2,7 +2,10 @@ from tempest.lib.services.network import base
 
 
 class BaseNetworkClient(base.BaseNetworkClient):
+
     # https://bugs.launchpad.net/neutron/+bug/1606659
+    # tag-add is a CREATE operation; then expected resp_code is 201
+    # however it is using http PUT operation to accomplish it.
     def update_resource(self, uri, post_data, resp_code=None):
         if resp_code:
             req_uri = self.uri_prefix + uri
