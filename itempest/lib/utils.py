@@ -29,6 +29,7 @@ from itempest.commands import cmd_neutron_u1
 from itempest.commands import cmd_neutron_lbaas_v1r1 as cmd_neutron_lbaas_v1
 from itempest.commands import cmd_neutron_lbaas_v2
 from itempest.commands import cmd_neutron_qos
+from itempest.commands import cmd_neutron_tags
 from itempest.services import load_balancer_v1_client
 from itempest.services.lbaas import load_balancers_client
 from itempest.services.lbaas import pools_client
@@ -36,6 +37,7 @@ from itempest.services.lbaas import listeners_client
 from itempest.services.lbaas import members_client
 from itempest.services.lbaas import health_monitors_client
 from itempest.services.qos import base_qos
+from itempest.services import tags_client
 
 
 NOVA_SERVER_CMDS = ['action', 'list', 'show', 'update', 'rename', 'delete',
@@ -337,13 +339,15 @@ def get_mimic_manager_cli_with_client_manager(manager, lbaasv1=True,
     lbv1 = get_lbv1_command(manager)
     lbaas = get_lbaas_commands(manager)
     qos = get_neutron_qos_commands(manager)
+    tags = get_neutron_tags_commands(manager)
     mcli = AttrContainer(manager=manager,
                          qsvc=qsvc,
                          nova=nova,
                          keys=keys,
                          lbv1=lbv1,
                          lbaas=lbaas,
-                         qos=qos)
+                         qos=qos,
+                         tags=tags)
     mcli.tenant_id = manager.networks_client.tenant_id
     try:
         # Are there other ways to validate the user's admin previledge?
@@ -412,3 +416,11 @@ def get_neutron_qos_commands(client_mgr, log_header="OS-Neutron-QoS",
             base_qos.BaseQosClient(client_mgr))
     return command_wrapper(client_mgr, cmd_neutron_qos,
                            qos_flavor=True, log_header=log_header)
+
+
+def get_neutron_tags_commands(client_mgr, log_header="OS-Neutron-TAG",
+                              **kwargs):
+    setattr(client_mgr, 'tags_client',
+            tags_client.get_client(client_mgr))
+    return command_wrapper(client_mgr, cmd_neutron_tags,
+                           log_header=log_header)
