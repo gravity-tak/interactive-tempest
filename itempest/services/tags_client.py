@@ -21,6 +21,8 @@ class TagsClient(base.BaseNetworkClient):
     resource_object_path = '/{resource_type}/{resource_id}/tags/{tag}'
 
     def add_tag(self, **kwargs):
+        """Add tag is an update-operation, not create resource.
+        """
         # neutron tag-add --resource resource
         #                 --resource-type network --tag TAG
         uri = self.resource_object_path.format(
@@ -47,13 +49,13 @@ class TagsClient(base.BaseNetworkClient):
     def replace_tag(self, **kwargs):
         # neutron tag-replace --resource resource
         #                     --resource-type network --tag TAG
-        tag_list = kwargs.pop('tags', [])
+        tag_list = kwargs.pop('tags', None)
         kwargs = self._fix_args(**kwargs)
         if 'tag' in kwargs:
             uri = self.resource_object_path.format(**kwargs)
         else:
             uri = self.resource_base_path.format(**kwargs)
-        update_body = {"tags": tag_list} if tag_list else None
+        update_body = None if tag_list is None else {"tags": tag_list}
         return self.update_resource(uri, update_body)
 
     # RESOURCE can be a name.
@@ -71,14 +73,14 @@ class TagsClient(base.BaseNetworkClient):
 
 def get_client(client_mgr,
                set_property=False, with_name="tags_client"):
-    """create a qos policies client from manager or networks_client
+    """create a tags client from manager or networks_client
 
     For itempest user:
         from itempest import load_our_solar_system as osn
-        from vmware_nsx_tempest.services.qos import policies_client
-        client = policies_client.get_client(osn.adm.manager)
+        from vmware_nsx_tempest.services import tags_client
+        client = tags_client.get_client(osn.adm.manager)
     For tempest user:
-        client = policies_client.get_client(osn.adm)
+        client = tags_client.get_client(osn.adm)
     """
     manager = getattr(client_mgr, 'manager', client_mgr)
     net_client = getattr(manager, 'networks_client')
