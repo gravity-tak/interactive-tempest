@@ -144,7 +144,9 @@ from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
 from tempest.services.orchestration.json.orchestration_client import \
     OrchestrationClient
-from tempest.services.volume.v1.json.admin.hosts_client import \
+
+"""
+from tempest.lib.services.volume.v1. admin.hosts_client import \
     HostsClient as VolumeHostsClient
 from tempest.services.volume.v1.json.admin.quotas_client import \
     QuotasClient as VolumeQuotasClient
@@ -180,6 +182,7 @@ from tempest.services.volume.v2.json.snapshots_client import \
     SnapshotsClient as SnapshotsV2Client
 from tempest.services.volume.v2.json.volumes_client import \
     VolumesClient as VolumesV2Client
+"""
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -437,6 +440,7 @@ class Manager(manager.Manager):
 
         # NOTE: The following client needs special timeout values because
         # the API is a proxy for the other component.
+        """
         params_volume = copy.deepcopy(params)
         params_volume.update({
             'build_interval': CONF.volume.build_interval,
@@ -448,6 +452,7 @@ class Manager(manager.Manager):
                                                       **params_volume)
         self.snapshots_extensions_client = ComputeSnapshotsClient(
             self.auth_provider, **params_volume)
+        """
 
     def _set_database_clients(self):
         pass
@@ -549,7 +554,7 @@ class Manager(manager.Manager):
             'build_timeout': CONF.volume.build_timeout
         }
         params.update(self.default_params)
-
+        """
         self.volume_qos_client = QosSpecsClient(self.auth_provider,
                                                 **params)
         self.volume_qos_v2_client = QosSpecsV2Client(
@@ -591,6 +596,7 @@ class Manager(manager.Manager):
             VolumeAvailabilityZoneClient(self.auth_provider, **params)
         self.volume_v2_availability_zone_client = \
             VolumeAvailabilityZoneV2Client(self.auth_provider, **params)
+        """
 
     def _set_object_storage_clients(self):
         params = {
