@@ -100,6 +100,12 @@ def loadbalancer_get_id(mgr_or_client, load_balancer_id):
     return nobj['id']
 
 
+# Mitaka neutron-lbaas has lbaas-loadbalancer-status command
+def loadbalancer_status(mgr_or_client, load_balancer_id, **fields):
+    return loadbalancer_status_tree(mgr_or_client, load_balancer_id,
+                                    **fields)
+
+
 def loadbalancer_statuses(mgr_or_client, load_balancer_id, **fields):
     return loadbalancer_status_tree(mgr_or_client, load_balancer_id,
                                     **fields)
