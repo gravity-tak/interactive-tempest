@@ -153,6 +153,16 @@ def create_floatingip_for_server(cmgr, server,
     return floatingip
 
 
+def associate_floatingip_to_server(cmgr, floatingip, server):
+    if type(server) is not dict:
+        server = cmgr.nova('server-show', server)
+    server_id = server['id']
+    port_id, ip4 = get_port_id_ipv4_of_server(cmgr, server_id)
+    kwargs = dict(port_id=port_id)
+    fip = cmgr.qsvc('floatingip-update', floatingip['id'], **kwargs)
+    return fip
+
+
 def create_ssh_client(public_ip,
                       username='cirros', password='cubswin:)',
                       **kwargs):
