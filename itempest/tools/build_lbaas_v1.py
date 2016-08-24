@@ -54,8 +54,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     port = lb_network['port']
     security_group_id = lb_network['security_group']['id']
     lb = create_lbv1(cmgr, subnet, mem_address_list,
-                     prefix=lb_name, protocol_port=port,
-                     ip_version=4)
+                     prefix=lb_name, protocol_port=port, ip_version=4)
     lb_vip = lb['vip']
     vip_fip = assign_floatingip_to_vip(cmgr, lb_vip,
                                        security_group_id=security_group_id)
