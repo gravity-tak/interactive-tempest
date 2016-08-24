@@ -18,7 +18,56 @@ import re
 
 from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
+import build_lbaas_networks as LB_NET
 
+
+def build_nsx_lbaas(cmgr, name, **kwargs):
+    """Build lbaas environment for NSX OpenStack."""
+    lb_name = kwargs.pop('prefix', kwargs.pop('lb_name', name))
+    build_network_only = kwargs.pop('build_network_only', False)
+    public_network_id = kwargs.pop('public_network_id', None)
+    net_cfg = dict(
+        num_servers=kwargs.pop('num_servers', 2),
+        username=kwargs.pop('username', 'cirros'),
+        password=kwargs.pop('password', 'cubswin:)'),
+        image_id=kwargs.pop('image_id', None),
+        image_name=kwargs.pop('image_name', None),
+        flavor_id=kwargs.pop('flavor_id', 1),
+        cidr=kwargs.pop('cidr', '10.199.88.0/24'),
+        port=kwargs.pop('port', 80),
+        public_network_id=public_network_id,
+        router_type=kwargs.pop('router_type', 'exclusive'))
+    start_servers = kwargs.pop('start_servers', True)
+    protocol = kwargs.get('protocol', 'HTTP')
+    if 'TCP' in protocol.upper():
+        start_servers = False
+    lb_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
+
+    if build_network_only:
+        return {'network': lb_network, 'lb': None}
+
+    web_servers = [server for server_id, server in
+                   lb_network['servers'].items()]
+    subnet = lb_network['subnet']
+    mem_address_list = [wserv['fip']['fixed_ip_address'] for wserv in
+                        web_servers]
+    port = lb_network['port']
+    security_group_id = lb_network['security_group']['id']
+    lb = create_lbv1(cmgr, subnet, mem_address_list,
+                     prefix=lb_name, protocol_port=port,
+                     ip_version=4)
+    lb_vip = lb['vip']
+    vip_fip = assign_floatingip_to_vip(cmgr, lb_vip,
+                                       security_group_id=security_group_id)
+
+    return {'network': lb_network, 'lb': lb, 'vip': vip_fip}
+
+
+def setup_core_network(cmgr, name, start_servers=True, **kwargs):
+    lb_network = LB_NET.setup_lb_network_and_servers(cmgr, name, **kwargs)
+    if start_servers:
+        LB_NET.start_webservers(lb_network)
+    return lb_network
 
 # one network/subnet with one VM which will host 2+ servers
 # for clearity, please use
