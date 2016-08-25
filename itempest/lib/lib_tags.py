@@ -88,3 +88,13 @@ def find_any_a_n_b(a_n_b, dict_set_pool):
     elif len(sets) == 1:
         return sets[0]
     return None
+
+
+AA = dict(
+    net1 = set(['gold', 'east', 'production']),
+    net2 = set(['silver', 'west', 'testing']),
+    net3 = set(['brown', 'north', 'development', 'abc']),
+    net4 = set(['brown', 'south', 'testing', 'a']),
+    net5 = set(['gold', 'west', 'production', 'ab']),
+    net6 = set(['silver', 'north', 'testing'])
+)
