@@ -127,10 +127,10 @@ def create_server_on_network(cmgr, network_id, server_name=None,
         'networks': [{'uuid': network['id']}],
         'security_groups': [{'name': security_group_name_or_id}],
     }
-    image_id = get_image_id(cmgr, image_id, image_name)
-    flavor_id = get_flavor_id(cmgr, flavor_id)
+    image = get_image(cmgr, image_id, image_name)
+    flavor_id = get_flavor_id(cmgr, flavor_id, image['name'])
     create_kwargs.update(**kwargs)
-    return cmgr.nova('server_create', server_name, image_id=image_id,
+    return cmgr.nova('server_create', server_name, image_id=image['id'],
                      flavor_id=flavor_id, wait_on_boot=wait_on_boot,
                      **create_kwargs)
 
@@ -348,14 +348,14 @@ def get_flavor_id(cmgr, flavor=None, image_name=None):
     return 2
 
 
-def get_image_id(cmgr, image_id=None, image_name=None):
+def get_image(cmgr, image_id=None, image_name=None):
     image_list = cmgr.nova('image-list')
     if image_id:
         for image in image_list:
             if re.search(image['id'], image['id']):
-                return image['id']
+                return image
     image_name = image_name or 'cirros-0.3.3'
     for image in image_list:
         if re.search(image_name, image['name'], re.I):
-            return image['id']
-    return image_list[0]['id']
+            return image
+    return image_list[0]
