@@ -229,6 +229,23 @@ def status_netcat_server(ssh_client):
     return result
 
 
+def start_pyhttp_server(ssh_client, hostname, port):
+    start_pyhttp_cmd = """NL=`echo -ne '\015'`
+HNAME="{hostname}"
+screen -m -d -S nsx-tempest -t tempest
+screen -S nsx-tempest -p tempest -X logfile /tmp/lbaas-log.txt
+screen -S nsx-tempest -p tempest -X log on
+screen -S nsx-tempest -p tempest -X stuff "cd /tmp && echo \"$HNAME\" > /tmp/index.html && python -m SimpleHTTPServer {port} $NL"
+""".format(hostname=hostname, port=port)
+    ssh_client.exec_command(start_pyhttp_cmd, with_prologue='')
+    return start_pyhttp_cmd
+
+
+def stop_pyhttp_server(ssh_client):
+    cmd = "screen -S nsx-tempest -X kill"
+    ssh_client.exec_command(cmd)
+
+
 def status_web_service(server_ip, username, server_private_key):
     ssh_client = remote_client.RemoteClient(server_ip,
                                             username,
