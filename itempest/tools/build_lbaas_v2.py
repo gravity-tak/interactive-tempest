@@ -66,7 +66,7 @@ def setup_core_network(cmgr, name, start_servers=True, **kwargs):
     return lb2_network
 
 
-def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
+def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
                    protocol='HTTP', protocol_port=80, ip_version=4,
                    delay=4, max_retries=3,
                    monitor_type="HTTP", monitor_timeout=1, **kwargs):
@@ -81,12 +81,12 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
     subnet_id = lb_core_network['subnet']['id']
     load_balancer = cmgr.lbaas('loadbalancer-create', subnet_id,
                                name=lb_name)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     listener1 = cmgr.lbaas('listener-create', protocol=protocol,
                            protocol_port=protocol_port,
                            loadbalancer_id=load_balancer['id'],
                            name=lb_name + "-listener1")
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     pool_body = dict(lb_algorithm=lb_algorithm,
                      protocol=protocol,
                      listener_id=listener1['id'],
@@ -98,7 +98,7 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
         pool_body.update(
             {'session_persistence': {'cookie_name': cookie_name}})
     pool1 = cmgr.lbaas('pool-create', **pool_body)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     member_list = []
     for server_id in lb_core_network['servers']:
         server = lb_core_network['servers'][server_id]
@@ -109,14 +109,14 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None,
                             address=fixed_ip_address,
                             protocol_port=protocol_port)
         member_list.append(member)
-        cmgr.lbaas('loadbalancer_waitfor_active', lb_name)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     healthmonitor1 = cmgr.lbaas('healthmonitor-create',
                                 pool_id=pool1['id'],
                                 delay=delay,
                                 max_retries=max_retries,
                                 type=monitor_type,
                                 timeout=monitor_timeout)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
 
     return dict(
         name=lb_name,
