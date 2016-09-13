@@ -74,6 +74,7 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     image_id = kwargs.pop('image_id', None)
     image_name = kwargs.pop('image_name', None)
     flavor_id = kwargs.pop('flavor_id', 1)
+    extra_timeout = kwargs.pop('server_extra_wait_time', 1)
     my_name = data_utils.rand_name(x_name)
     cidr = kwargs.pop('cidr', '10.199.88.0/24')
     port = kwargs.pop('port', 80)
@@ -102,12 +103,16 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     # vm1 should be active by now
     for server_id in servers.keys():
         waiters.wait_for_server_status(
-            cmgr.manager.servers_client, server_id, 'ACTIVE')
+            cmgr.manager.servers_client, server_id, 'ACTIVE',
+            extra_timeout=extra_timeout)
 
     for server_id, server in servers.items():
         server['fip'] = NET.create_floatingip_for_server(cmgr, server_id,
                                                          public_network_id)
         server['server'] = cmgr.nova('server-show', server_id)
+        img_id = server['server']['image']['id']
+        img_name = cmgr.nova('image-show', img_id).get('name', '')
+        server['image_name'] = img_name
 
     lb_env = dict(
         name=my_name, username=username, password=password,
