@@ -83,7 +83,7 @@ class NSXT(object):
         return resp.json()
 
     def get_logical_switches(self, lswitch_id=None):
-        endpoint = self.g_resource_uri("/logical-switch", lswitch_id)
+        endpoint = self.g_resource_uri("/logical-switches", lswitch_id)
         resp = self.nsxt.get(endpoint)
         return resp.json().get('results')
 
