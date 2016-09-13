@@ -40,6 +40,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
         image_id=kwargs.pop('image_id', None),
         image_name=kwargs.pop('image_name', None),
         flavor_id=kwargs.pop('flavor_id', 1),
+        server_extra_wait_time=kwargs.pop('server_extra_wait_time', 0),
         cidr=kwargs.pop('cidr', '10.199.88.0/24'),
         port=kwargs.pop('port', 80),
         public_network_id=public_network_id,
