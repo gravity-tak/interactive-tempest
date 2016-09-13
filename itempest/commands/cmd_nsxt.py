@@ -76,7 +76,7 @@ class NSXT(object):
     def get_nodes(self, node_id=None):
         endpoint = self.g_resource_uri("/cluster/nodes", node_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json().get('results')
+        return resp.json().get('results', resp)
 
     def get_node_status(self, node_id):
         resp = self.nsxt.get("/cluster/nodes/%s/status" % node_id)
@@ -85,12 +85,12 @@ class NSXT(object):
     def get_logical_switches(self, lswitch_id=None):
         endpoint = self.g_resource_uri("/logical-switches", lswitch_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json().get('results')
+        return resp.json().get('results', resp)
 
     def get_logical_ports(self, lport_id=None):
         endpoint = self.g_resource_uri("/logical-ports", lport_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json().get('results')
+        return resp.json().get('results', resp)
 
     def get_lswitch_ports(self, lswitch_id):
         lsws = self.get_logical_ports()
