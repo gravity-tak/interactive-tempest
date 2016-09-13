@@ -117,7 +117,7 @@ from tempest.lib.services.identity.v2.services_client import \
     ServicesClient as IdentityServicesClient
 from tempest.lib.services.identity.v2.tenants_client import TenantsClient
 from tempest.lib.services.identity.v2.users_client import UsersClient
-from tempest.services.identity.v3.json.credentials_client import \
+from tempest.lib.services.identity.v3.credentials_client import \
     CredentialsClient
 from tempest.services.identity.v3.json.domains_client import DomainsClient
 from tempest.lib.services.identity.v3.endpoints_client import \
@@ -132,7 +132,7 @@ from tempest.lib.services.identity.v3.roles_client import \
     RolesClient as RolesV3Client
 from tempest.lib.services.identity.v3.services_client import \
     ServicesClient as IdentityServicesV3Client
-from tempest.services.identity.v3.json.trusts_client import TrustsClient
+from tempest.lib.services.identity.v3.trusts_client import TrustsClient
 from tempest.lib.services.identity.v3.users_client import \
     UsersClient as UsersV3Client
 from tempest.lib.services.image.v1.images_client import ImagesClient

@@ -96,3 +96,26 @@ class NSXT(object):
         lsws = self.get_logical_ports()
         lsw2 = [sw for sw in lsws if sw['logical_switch_id'] == lswitch_id]
         return lsw2
+
+    def list_nets(self):
+        lsws = self.get_logical_switches()
+        lsw2 = []
+        for sw in lsws:
+            if self.is_os_resource(sw):
+                lsw2.append(sw)
+        return lsw2
+
+    def list_ports(self):
+        lports = self.get_logical_ports()
+        lport2 = []
+        for p in lports:
+            if self.is_os_resource(p):
+                lport2.append(p)
+        return lport2
+
+    def is_os_resource(self, obj):
+        if 'tags' in obj:
+            for tag in obj['tags']:
+                if 'scope' in tag and tag['scope'].startswith('os-'):
+                    return True
+        return False
