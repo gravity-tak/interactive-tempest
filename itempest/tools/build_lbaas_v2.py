@@ -75,6 +75,7 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
     lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
     persistence_type = kwargs.pop('persistence_type', None)
     cookie_name = kwargs.pop('cookie_name', None)
+    no_healthmonitor = kwargs.pop('no_healthmonitory', False)
     if cmgr.lbaas is None:
         raise Exception(
             "Client manager does not have LBaasV2 clients installed.")
@@ -110,13 +111,16 @@ def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
                             protocol_port=protocol_port)
         member_list.append(member)
         cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
-    healthmonitor1 = cmgr.lbaas('healthmonitor-create',
-                                pool_id=pool1['id'],
-                                delay=delay,
-                                max_retries=max_retries,
-                                type=monitor_type,
-                                timeout=monitor_timeout)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    if no_healthmonitor:
+        healthmonitor1 = None
+    else:
+        healthmonitor1 = cmgr.lbaas('healthmonitor-create',
+                                    pool_id=pool1['id'],
+                                    delay=delay,
+                                    max_retries=max_retries,
+                                    type=monitor_type,
+                                    timeout=monitor_timeout)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
 
     return dict(
         name=lb_name,
