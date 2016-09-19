@@ -67,6 +67,99 @@ def setup_core_network(cmgr, name, start_servers=True, **kwargs):
     return lb2_network
 
 
+# if loadbalancer provided, listner/pool/healthmonitor/members will be
+# attached to it
+def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
+                lb_name=None, lb_timeout=900, loadbalancer=None,
+                protocol='HTTP', protocol_port=80, ip_version=4,
+                delay=4, max_retries=3,
+                monitor_type="HTTP", monitor_timeout=10, **kwargs):
+    if cmgr.lbaas is None:
+        raise Exception(
+            "Client manager does not have LBaasV2 clients installed.")
+    suffix_listener = "listener_%d" % groupid
+    suffix_pool = "pool_%d" % groupid
+    no_healthmonitor = kwargs.pop('no_healthmonitory', False)
+
+    # loadbalancer
+    if loadbalancer:
+        load_balancer = cmgr.lbaas('loadbalancer-show', loadbalancer)
+        lb_name = load_balancer.get('name')
+    else:
+        lb_name = lb_name if lb_name else data_utils.rand_name('lb2')
+        load_balancer = cmgr.lbaas('loadbalancer-create', subnet_id,
+                                   name=lb_name)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name,
+                   timeout=lb_timeout)
+    loadbalancer_id = load_balancer['id']
+    # listener
+    listener_name = "%s-%s" % (lb_name, suffix_listener)
+    listener = cmgr.lbaas('listener-create', protocol=protocol,
+                          protocol_port=protocol_port,
+                          loadbalancer_id=loadbalancer_id,
+                          name=listener_name)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    listener_id = listener.get('id')
+    # pool
+    pool_name = "%s-%s" % (lb_name, suffix_pool)
+    lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
+    persistence_type = kwargs.pop('persistence_type', None)
+    cookie_name = kwargs.pop('cookie_name', None)
+    pool_body = dict(lb_algorithm=lb_algorithm,
+                     protocol=protocol,
+                     listener_id=listener_id,
+                     name=pool_name)
+    if persistence_type:
+        pool_body.update(
+            {'session_persistence': {'type': persistence_type}})
+    if cookie_name:
+        pool_body.update(
+            {'session_persistence': {'cookie_name': cookie_name}})
+    pool = cmgr.lbaas('pool-create', **pool_body)
+    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    pool_id = pool.get('id')
+    # pool's members
+    member_list = []
+    for server_id in server_list:
+        server = cmgr.nova('server-show', server_id)
+        fixed_ip_address = get_server_ip_address(server, 'fixed')
+        member = cmgr.lbaas('member-create', pool_id,
+                            subnet_id=subnet_id,
+                            address=fixed_ip_address,
+                            protocol_port=protocol_port)
+        member_list.append(member)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    # healthmonitor
+    if no_healthmonitor:
+        healthmonitor = None
+    else:
+        healthmonitor = cmgr.lbaas('healthmonitor-create',
+                                   pool_id=pool_id,
+                                   delay=delay,
+                                   max_retries=max_retries,
+                                   type=monitor_type,
+                                   timeout=monitor_timeout)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    # summarize load-balancer
+    return dict(
+        name=lb_name,
+        load_balancer=load_balancer,
+        listener=listener,
+        pool=pool,
+        member=member_list,
+        health_monitor=healthmonitor)
+
+
+# ip_type = ('fixed', 'floating')
+def get_server_ip_address(server, ip_type='fixed'):
+    s_if = server['addresses'].keys()[0]
+    for s_address in server['addresses'][s_if]:
+        if s_address['OS-EXT-IPS:type'] == ip_type:
+            return s_address.get('addr')
+    return None
+
+
+# old method
 def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
                    protocol='HTTP', protocol_port=80, ip_version=4,
                    delay=4, max_retries=3,
