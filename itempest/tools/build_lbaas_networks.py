@@ -144,7 +144,7 @@ def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
 
     servers = {}
     for sid in sid_range:
-        server_name = "%s-%d" % (lb_net_name, sid)
+        server_name = "%s-%s" % (lb_net_name, sid)
         server = NET.create_server_on_network(
             cmgr, on_network_id, security_group_name_or_id=sg['id'],
             key_name=keypair_name, server_name=server_name,
@@ -199,6 +199,7 @@ def start_webservers(lb_cfg, **kwargs):
         import pdb;
         pdb.set_trace()
 
+    result = None
     for (server_id, serv_fip) in lb_cfg['servers'].items():
         server = serv_fip['server']
         floatingip = serv_fip['fip']
