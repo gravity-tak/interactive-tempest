@@ -19,15 +19,20 @@ CHECK_NC_EXISTING_CMD = """ps aux | grep "nc.*script" """
 
 
 def create_networks(cmgr, network_name, cidr, **kwargs):
-    router_type = kwargs.pop('router_type', 'shared')
-    public_network_id = kwargs.pop('public_network_id', None)
-    network, subnet = NET.create_mtz_networks(cmgr, cidr,
-                                              name=network_name,
-                                              **kwargs)
-    net_list = [(network, subnet)]
-    router = NET.create_router_and_add_interfaces(
-        cmgr, network_name, net_list,
-        public_network_id=public_network_id, router_type=router_type)
+    try:
+        router = cmgr.qsvc('router-show', network_name)
+        network = cmgr.qsvc('net-show', network_name)
+        subnet = cmgr.qsvc('subnet-show', network_name)
+    except:
+        router_type = kwargs.pop('router_type', 'shared')
+        public_network_id = kwargs.pop('public_network_id', None)
+        network, subnet = NET.create_mtz_networks(cmgr, cidr,
+                                                  name=network_name,
+                                                  **kwargs)
+        net_list = [(network, subnet)]
+        router = NET.create_router_and_add_interfaces(
+            cmgr, network_name, net_list,
+            public_network_id=public_network_id, router_type=router_type)
     return (router, network, subnet)
 
 
@@ -119,6 +124,52 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
         keypair=keypair, kp_filename=kp_filename,
         security_group=sg,
         router=router, port=port, network=network, subnet=subnet,
+        servers=servers)
+    return lb_env
+
+
+# add_server_to_lb_network(mars, 'mars-lb2-net-1345', (4,5),
+#                          'network-uuid', 'mars-lb2-net-12345')
+def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
+                             on_network_id, security_group_name_or_id,
+                             sg=None, keypair_name=None,
+                             username='cirros', password='cubswin;)',
+                             flavor_id=1, image_id=None, image_name=None,
+                             public_network_id=None, extra_timeout=10):
+    sg = cmgr.qsvc('security-group-show', security_group_name_or_id)
+    if keypair_name is None:
+        # ssh keypair
+        keypair = make_ssh_keypair(cmgr, lb_net_name)
+        keypair_name = keypair['name']
+
+    servers = {}
+    for sid in sid_range:
+        server_name = "%s-%d" % (lb_net_name, sid)
+        server = NET.create_server_on_network(
+            cmgr, on_network_id, security_group_name_or_id=sg['id'],
+            key_name=keypair_name, server_name=server_name,
+            image_id=image_id, image_name=image_name,
+            flavor_id=flavor_id, wait_on_boot=False)
+        servers[server['id']] = dict(server=server, fip=None)
+
+    # servers need in status=ACTIVE before assign floatingip to them
+    # vm1 should be active by now
+    for server_id in servers.keys():
+        waiters.wait_for_server_status(
+            cmgr.manager.servers_client, server_id, 'ACTIVE',
+            extra_timeout=extra_timeout)
+
+    for server_id, server in servers.items():
+        server['fip'] = NET.create_floatingip_for_server(cmgr, server_id,
+                                                         public_network_id)
+        server['server'] = cmgr.nova('server-show', server_id)
+        img_id = server['server']['image']['id']
+        img_name = cmgr.nova('image-show', img_id).get('name', '')
+        server['image_name'] = img_name
+
+    lb_env = dict(
+        username=username, password=password,
+        keypair_name=keypair_name, security_group=sg,
         servers=servers)
     return lb_env
 
