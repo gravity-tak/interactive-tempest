@@ -384,10 +384,11 @@ def restart_web_service(server_ip, username, server_private_key,
 
 # ip_type = ('fixed', 'floating')
 def get_server_ip_address(server, ip_type='fixed', network_name=None):
-    if network_name:
-        s_if = server['addresses'][network_name]
+    if network_name and server['addresses'].get(network_name):
+        s_if = network_name
     else:
         s_if = server['addresses'].keys()[0]
+
     for s_address in server['addresses'][s_if]:
         if s_address['OS-EXT-IPS:type'] == ip_type:
             return s_address.get('addr')
