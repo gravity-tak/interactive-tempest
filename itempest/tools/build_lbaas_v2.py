@@ -13,11 +13,12 @@
 #    under the License.
 
 import re
+
 import urllib3
 
-from tempest.lib.common.utils import data_utils
 from itempest.lib import lib_networks as NET
-import build_lbaas_networks as LB_NET
+from itempest.tools import build_lbaas_networks as LB_NET
+from tempest.lib.common.utils import data_utils
 
 LB_ALGORITHMS = ('ROUND_ROBIN', 'LEAST_CONNECTIONS', 'SOURCE_IP')
 MONITOR_TYPES = ('HTTP', 'TCP', 'PING', 'HTTPS')
@@ -122,7 +123,7 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
     member_list = []
     for server_id in server_list:
         server = cmgr.nova('server-show', server_id)
-        fixed_ip_address = get_server_ip_address(server, 'fixed')
+        fixed_ip_address = LB_NET.get_server_ip_address(server, 'fixed')
         member = cmgr.lbaas('member-create', pool_id,
                             subnet_id=subnet_id,
                             address=fixed_ip_address,
@@ -148,15 +149,6 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
         pool=pool,
         member=member_list,
         health_monitor=healthmonitor)
-
-
-# ip_type = ('fixed', 'floating')
-def get_server_ip_address(server, ip_type='fixed'):
-    s_if = server['addresses'].keys()[0]
-    for s_address in server['addresses'][s_if]:
-        if s_address['OS-EXT-IPS:type'] == ip_type:
-            return s_address.get('addr')
-    return None
 
 
 # old method

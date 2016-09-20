@@ -3,9 +3,11 @@ import os
 import re
 import platform
 import tempfile
+import time
 
 from itempest.lib import lib_networks as NET
 from itempest.lib import remote_client
+from itempest.lib import utils as U
 
 from tempest.lib.common.utils import data_utils
 from tempest.common import waiters
@@ -132,10 +134,12 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
 #                          'network-uuid', 'mars-lb2-net-12345')
 def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
                              on_network_id, security_group_name_or_id,
-                             sg=None, keypair_name=None,
+                             keypair_name=None,
                              username='cirros', password='cubswin;)',
                              flavor_id=1, image_id=None, image_name=None,
                              public_network_id=None, extra_timeout=10):
+    lb_network = cmgr.qsvc('net-show', on_network_id)
+    lb_network_name = lb_network.get('name', None)
     sg = cmgr.qsvc('security-group-show', security_group_name_or_id)
     if keypair_name is None:
         # ssh keypair
@@ -166,6 +170,22 @@ def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
         img_id = server['server']['image']['id']
         img_name = cmgr.nova('image-show', img_id).get('name', '')
         server['image_name'] = img_name
+
+    # wait for servers having their floating-ip (CH+newton takes long time)
+    timeout = extra_timeout + 500
+    t0 = time.time()
+    for server_id, server in servers.items():
+        while True:
+            elapse_time = time.time() - t0
+            sv = cmgr.nova('server-show', server_id)
+            if get_server_ip_address(sv, 'floating', lb_network_name):
+                msg = ("Server[%s] take %d seconds to get its ip address." %
+                       (sv.get('name'), int(elapse_time)))
+                U.log_msg(msg, 'OS-LBaaS')
+                break
+            if elapse_time > timeout:
+                raise Exception("Server did not get its floating-ip.")
+            time.sleep(2.5)
 
     lb_env = dict(
         username=username, password=password,
@@ -332,3 +352,15 @@ def restart_web_service(server_ip, username, server_private_key,
     if stop_first:
         stop_netcat_server(ssh_client)
     return start_netcat_server(ssh_client, web_server_script, server_port)
+
+
+# ip_type = ('fixed', 'floating')
+def get_server_ip_address(server, ip_type='fixed', network_name=None):
+    if network_name:
+        s_if = server['addresses'][network_name]
+    else:
+        s_if = server['addresses'].keys()[0]
+    for s_address in server['addresses'][s_if]:
+        if s_address['OS-EXT-IPS:type'] == ip_type:
+            return s_address.get('addr')
+    return None
