@@ -73,8 +73,7 @@ def make_ssh_keypair(cmgr, my_name):
     return keypair
 
 
-# lb_env = setup_lb_servers(venus, "lbv2", num_servers=2)
-def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
+def _setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     num_servers = kwargs.pop('num_servers', 2)
     username = kwargs.pop('username', 'cirros')
     password = kwargs.pop('password', 'cubswin:)')
@@ -130,11 +129,40 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     return lb_env
 
 
+# lb_env = setup_lb_servers(venus, "lbv2", num_servers=2)
+def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
+    num_servers = kwargs.pop('num_servers', 2)
+    username = kwargs.pop('username', 'cirros')
+    password = kwargs.pop('password', 'cubswin:)')
+    image_id = kwargs.pop('image_id', None)
+    image_name = kwargs.pop('image_name', None)
+    flavor_id = kwargs.pop('flavor_id', 1)
+    extra_timeout = kwargs.pop('server_extra_wait_time', 1)
+    my_name = data_utils.rand_name(x_name)
+    cidr = kwargs.pop('cidr', '10.199.88.0/24')
+    port = kwargs.pop('port', 80)
+    public_network_id = kwargs.pop('public_network_id', None)
+    # NSX-v plugin need to use exclusive router for its lbaas env
+    # Overwrite it if your env requiring a different type
+    router_type = kwargs.pop('router_type', 'exclusive')
+    router, network, subnet = create_networks(cmgr, my_name, cidr,
+                                              router_type=router_type,
+                                              **kwargs)
+    sg = NET.create_security_group_loginable(cmgr, my_name, http=True)
+    lb_env = add_server_to_lb_network(
+        cmgr, network.get('id'), sg.get('id'), range(1, 1 + num_servers),
+        username=username, password=password,
+        flavor_id=flavor_id, image_id=image_id, image_name=image_name,
+        public_network_id=public_network_id, extra_timeout=extra_timeout)
+    lb_env.update(dict(router=router, network=network, subnet=subnet,
+                       name=my_name, cidr=cidr, port=port))
+    return lb_env
+
+
 # add_server_to_lb_network(mars, 'mars-lb2-net-1345', (4,5),
 #                          'network-uuid', 'mars-lb2-net-12345')
-def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
-                             on_network_id, security_group_name_or_id,
-                             keypair_name=None,
+def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
+                             sid_range, keypair_name=None,
                              username='cirros', password='cubswin;)',
                              flavor_id=1, image_id=None, image_name=None,
                              public_network_id=None, extra_timeout=10):
@@ -143,12 +171,12 @@ def add_server_to_lb_network(cmgr, lb_net_name, sid_range,
     sg = cmgr.qsvc('security-group-show', security_group_name_or_id)
     if keypair_name is None:
         # ssh keypair
-        keypair = make_ssh_keypair(cmgr, lb_net_name)
+        keypair = make_ssh_keypair(cmgr, lb_network_name)
         keypair_name = keypair['name']
 
     servers = {}
     for sid in sid_range:
-        server_name = "%s-%s" % (lb_net_name, sid)
+        server_name = "%s-%s" % (lb_network_name, sid)
         server = NET.create_server_on_network(
             cmgr, on_network_id, security_group_name_or_id=sg['id'],
             key_name=keypair_name, server_name=server_name,
