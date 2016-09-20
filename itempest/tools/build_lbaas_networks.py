@@ -182,6 +182,8 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
         # ssh keypair
         keypair = make_ssh_keypair(cmgr, lb_network_name)
         keypair_name = keypair['name']
+    else:
+        keypair = None
 
     servers = {}
     for sid in sid_range:
@@ -226,8 +228,8 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
 
     lb_env = dict(
         username=username, password=password,
-        keypair_name=keypair_name, security_group=sg,
-        servers=servers)
+        keypair_name=keypair_name, keypair=keypair,
+        security_group=sg, servers=servers)
     return lb_env
 
 
