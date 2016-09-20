@@ -138,6 +138,7 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
     image_name = kwargs.pop('image_name', None)
     flavor_id = kwargs.pop('flavor_id', 1)
     extra_timeout = kwargs.pop('server_extra_wait_time', 1)
+    halt = kwargs.pop('halt', False)
     my_name = data_utils.rand_name(x_name)
     cidr = kwargs.pop('cidr', '10.199.88.0/24')
     port = kwargs.pop('port', 80)
@@ -153,19 +154,27 @@ def setup_lb_network_and_servers(cmgr, x_name, **kwargs):
         cmgr, network.get('id'), sg.get('id'), range(1, 1 + num_servers),
         username=username, password=password,
         flavor_id=flavor_id, image_id=image_id, image_name=image_name,
-        public_network_id=public_network_id, extra_timeout=extra_timeout)
+        public_network_id=public_network_id, extra_timeout=extra_timeout,
+        halt=halt)
     lb_env.update(dict(router=router, network=network, subnet=subnet,
                        name=my_name, cidr=cidr, port=port))
     return lb_env
 
 
-# add_server_to_lb_network(mars, 'mars-lb2-net-1345', (4,5),
-#                          'network-uuid', 'mars-lb2-net-12345')
+# add_server_to_lb_network(mars, "404812e8-36b8-4a90-84a5-48667205cae4",
+#   "d89a6465-1491-4ecc-beeb-6f79df784dbe", (4,5),
+#   keypair_name='prome_mdt_dhcp412_venus-lb2-http-2020520731',
+#   image_name="cirros-0.3.3-x86_64-ESX" )
 def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
                              sid_range, keypair_name=None,
                              username='cirros', password='cubswin;)',
                              flavor_id=1, image_id=None, image_name=None,
-                             public_network_id=None, extra_timeout=10):
+                             public_network_id=None, extra_timeout=10,
+                             build_timeout=500, build_interval=5.0,
+                             halt=False):
+    if halt:
+        import pdb;
+        pdb.set_trace()
     lb_network = cmgr.qsvc('net-show', on_network_id)
     lb_network_name = lb_network.get('name', None)
     sg = cmgr.qsvc('security-group-show', security_group_name_or_id)
@@ -200,7 +209,7 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
         server['image_name'] = img_name
 
     # wait for servers having their floating-ip (CH+newton takes long time)
-    timeout = extra_timeout + 500
+    timeout = extra_timeout + build_timeout
     t0 = time.time()
     for server_id, server in servers.items():
         while True:
@@ -213,7 +222,7 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
                 break
             if elapse_time > timeout:
                 raise Exception("Server did not get its floating-ip.")
-            time.sleep(2.5)
+            time.sleep(build_interval)
 
     lb_env = dict(
         username=username, password=password,
