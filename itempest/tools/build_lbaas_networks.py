@@ -170,7 +170,7 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
                              username='cirros', password='cubswin;)',
                              flavor_id=1, image_id=None, image_name=None,
                              public_network_id=None, extra_timeout=10,
-                             build_timeout=500, build_interval=5.0,
+                             build_timeout=900, build_interval=5.0,
                              halt=False):
     if halt:
         import pdb;
@@ -218,8 +218,8 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
             elapse_time = time.time() - t0
             sv = cmgr.nova('server-show', server_id)
             if get_server_ip_address(sv, 'floating', lb_network_name):
-                msg = ("Server[%s] take %d seconds to get its ip address." %
-                       (sv.get('name'), int(elapse_time)))
+                msg = ("Take %d seconds to assign floating-ip to erver[%s]" %
+                       (int(elapse_time), sv.get('name')))
                 U.log_msg(msg, 'OS-LBaaS')
                 break
             if elapse_time > timeout:

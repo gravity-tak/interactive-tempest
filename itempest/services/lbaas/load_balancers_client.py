@@ -59,10 +59,11 @@ class LoadBalancersClient(base.BaseNetworkClient):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
 
+    # octavia build_timeout default to 900
     def wait_for_load_balancer_status(self, load_balancer_id,
                                       provisioning_status='ACTIVE',
                                       operating_status='ONLINE',
-                                      timeout=600, interval_time=1,
+                                      timeout=900, interval_time=2,
                                       is_delete_op=False, **filters):
         end_time = time.time() + timeout
         lb = None
