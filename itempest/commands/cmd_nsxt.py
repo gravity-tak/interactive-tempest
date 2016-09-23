@@ -91,7 +91,7 @@ class NSXT(object):
     def get_logical_switches(self, lswitch_id=None):
         endpoint = self.g_resource_uri("/logical-switches", lswitch_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json().get('results', resp.json())
+        return self.r_response(resp)
 
     def get_logical_ports(self, lport_id=None):
         endpoint = self.g_resource_uri("/logical-ports", lport_id)
@@ -110,13 +110,13 @@ class NSXT(object):
     def get_firewall_sections(self, section_id=None):
         endpoint = self.g_resource_uri("/firewall/sections", section_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json()
+        return self.r_response(resp)
 
     def get_firewall_rules(self, section_id, rule_id=None):
         fw_rule_path = "/firewall/sections/%s/rules" % section_id
         endpoint = self.g_resource_uri(fw_rule_path, rule_id)
         resp = self.nsxt.get(endpoint)
-        return resp.json()
+        return self.r_response(resp)
 
     def get_firewall_section_stats(self, section_id, rule_id=None):
         if rule_id:
@@ -125,7 +125,7 @@ class NSXT(object):
         else:
             stats_path = "/firewall/sections/%s/stats" % (section_id)
         resp = self.nsxt.get(stats_path)
-        return resp.json()
+        return self.r_response(resp)
 
     def list_nets(self):
         lsws = self.get_logical_switches()
