@@ -103,6 +103,30 @@ class NSXT(object):
         lsw2 = [sw for sw in lsws if sw['logical_switch_id'] == lswitch_id]
         return lsw2
 
+    def get_firewall_excludelist(self):
+        resp = self.nsxt.get("/firewall/excludelist")
+        return resp.json()
+
+    def get_firewall_sections(self, section_id=None):
+        endpoint = self.g_resource_uri("/firewall/sections", section_id)
+        resp = self.nsxt.get(endpoint)
+        return resp.json()
+
+    def get_firewall_rules(self, section_id, rule_id=None):
+        fw_rule_path = "/firewall/sections/%s/rules" % section_id
+        endpoint = self.g_resource_uri(fw_rule_path, rule_id)
+        resp = self.nsxt.get(endpoint)
+        return resp.json()
+
+    def get_firewall_section_stats(self, section_id, rule_id=None):
+        if rule_id:
+            stats_path = ("/firewall/sections/%s/rules/%s/stats"
+                          % (section_id, rule_id))
+        else:
+            stats_path = "/firewall/sections/%s/stats" % (section_id)
+        resp = self.nsxt.get(stats_path)
+        return resp.json()
+
     def list_nets(self):
         lsws = self.get_logical_switches()
         lsw2 = []

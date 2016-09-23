@@ -84,6 +84,14 @@ class LoadBalancersClient(base.BaseNetworkClient):
                                 lb.get(
                                     'provisioning_status') == provisioning_status):
                         break
+                # tak@20160921 if expect ACTIVE, but status is ERROR,
+                # stop-waiting
+                if (provisioning_status in ('ACTIVE',) and
+                            lb.get('provisioning_status') in ('ERROR',)):
+                    raise Exception(
+                        _("Load balancer {lb_id} in ERROR, "
+                          "expect provisioning status is ACTIVE..").format(
+                            lb_id=load_balancer_id))
                 time.sleep(interval_time)
             except exceptions.NotFound as e:
                 if is_delete_op:
