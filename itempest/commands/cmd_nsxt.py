@@ -107,24 +107,31 @@ class NSXT(object):
         resp = self.nsxt.get("/firewall/excludelist")
         return resp.json()
 
+    def get_firewall_rule_state(self, rule_id):
+        rule_state_path = "/firewall/rules/%s/state" % rule_id
+        resp = self.nsxt.get(rule_state_path)
+        return self.r_response(resp)
+
     def get_firewall_sections(self, section_id=None):
         endpoint = self.g_resource_uri("/firewall/sections", section_id)
         resp = self.nsxt.get(endpoint)
         return self.r_response(resp)
 
-    def get_firewall_rules(self, section_id, rule_id=None):
+    def get_firewall_section_rules(self, section_id, rule_id=None):
         fw_rule_path = "/firewall/sections/%s/rules" % section_id
         endpoint = self.g_resource_uri(fw_rule_path, rule_id)
         resp = self.nsxt.get(endpoint)
         return self.r_response(resp)
 
-    def get_firewall_section_stats(self, section_id, rule_id=None):
-        if rule_id:
-            stats_path = ("/firewall/sections/%s/rules/%s/stats"
-                          % (section_id, rule_id))
-        else:
-            stats_path = "/firewall/sections/%s/stats" % (section_id)
+    def get_firewall_section_rule_stats(self, section_id, rule_id):
+        stats_path = ("/firewall/sections/%s/rules/%s/stats"
+                      % (section_id, rule_id))
         resp = self.nsxt.get(stats_path)
+        return self.r_response(resp)
+
+    def get_firewall_section_state(self, section_id):
+        state_path = "/firewall/sections/%s/state" % (section_id)
+        resp = self.nsxt.get(state_path)
         return self.r_response(resp)
 
     def list_nets(self):
