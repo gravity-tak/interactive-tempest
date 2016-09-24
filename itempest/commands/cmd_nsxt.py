@@ -158,20 +158,20 @@ class NSXT(object):
         s_rules = self.get_firewall_section_rules(section_id)
         return s_rules
 
-    def list_project_nets(self, project_name, **filters):
-        filters['os-project-name'] = project_name
+    def list_project_nets(self, os_project_name, **filters):
+        filters['os-project-name'] = os_project_name
         return self.list_nets(**filters)
 
-    def list_project_ports(self, project_name, **filters):
-        filters['os-project-name'] = project_name
+    def list_project_ports(self, os_project_name, **filters):
+        filters['os-project-name'] = os_project_name
         return self.list_ports(**filters)
 
-    def list_project_firewall_sections(self, project_name, **filters):
-        filters['os-project-name'] = project_name
+    def list_project_firewall_sections(self, os_project_name, **filters):
+        filters['os-project-name'] = os_project_name
         return self.list_firewall_sections(**filters)
 
-    def list_project_security_groups(self, project_name, **filters):
-        fw_lists = self.list_project_firewall_sections(project_name)
+    def list_project_security_groups(self, os_project_name, **filters):
+        fw_lists = self.list_project_firewall_sections(os_project_name)
         sgs = {}
         for fw in fw_lists:
             sg_id = get_os_security_group_id(fw)
@@ -179,11 +179,12 @@ class NSXT(object):
                 sgs[sg_id] = fw
         return sgs
 
-    def show_project_security_group(self, project_name, security_group_id):
-        fw_list = self.list_project_firewall_sections(project_name)
+    def show_project_security_group(self, os_project_name,
+                                    os_security_group_id):
+        fw_list = self.list_project_firewall_sections(os_project_name)
         for fw in fw_list:
             sg_id = get_os_security_group_id(fw)
-            if sg_id == security_group_id:
+            if sg_id == os_security_group_id:
                 return fw
         return None
 
