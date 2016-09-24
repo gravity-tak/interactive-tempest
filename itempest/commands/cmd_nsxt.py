@@ -180,7 +180,8 @@ class NSXT(object):
         return sgs
 
     def show_project_security_group(self, project_name, security_group_id):
-        for fw in self.list_project_firewall_sections(project_name):
+        fw_list = self.list_project_firewall_sections(project_name)
+        for fw in fw_list:
             sg_id = get_os_security_group_id(fw)
             if sg_id == security_group_id:
                 return fw
