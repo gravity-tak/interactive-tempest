@@ -1,3 +1,5 @@
+import re
+
 from itempest.services import nsxv3_client
 
 
@@ -134,25 +136,61 @@ class NSXT(object):
         resp = self.nsxt.get(state_path)
         return self.r_response(resp)
 
-    def list_nets(self):
+    def list_nets(self, **filters):
         lsws = self.get_logical_switches()
-        lsw2 = []
-        for sw in lsws:
-            if self.is_os_resource(sw):
-                lsw2.append(sw)
+        lsw2 = [x for x in lsws if
+                os_scope_filter(x.get('tags'), **filters)]
         return lsw2
 
-    def list_ports(self):
+    def list_ports(self, **filters):
         lports = self.get_logical_ports()
-        lport2 = []
-        for p in lports:
-            if self.is_os_resource(p):
-                lport2.append(p)
+        lport2 = [x for x in lports if
+                  os_scope_filter(x.get('tags'), **filters)]
         return lport2
 
-    def is_os_resource(self, obj):
-        if 'tags' in obj:
-            for tag in obj['tags']:
-                if 'scope' in tag and tag['scope'].startswith('os-'):
-                    return True
+    def list_security_groups(self, **filters):
+        sections = self.get_firewall_sections()
+        sg_list = [x for x in sections if
+                   os_scope_filter(x.get('tags'), **filters)]
+        return sg_list
+
+    def list_security_group_rules(self, section_id, **filters):
+        s_rules = self.get_firewall_section_rules(section_id)
+        return s_rules
+
+    def list_project_nets(self, project_name, **filters):
+        filters['os-project-name'] = project_name
+        return self.list_nets(**filters)
+
+    def list_project_ports(self, project_name, **filters):
+        filters['os-project-name'] = project_name
+        return self.list_ports(**filters)
+
+    def list_project_security_groups(self, project_name, **filters):
+        filters['os-project-name'] = project_name
+        return self.list_security_groups(**filters)
+
+
+# generic filtering method to an object is created by OS
+def os_scope_filter(tags, **filters):
+    if type(tags) not in (list, tuple):
         return False
+    if 'os-api-version' not in filters:
+        filters['os-api-version'] = ".*"
+    c_true = 0
+    for elm in tags:
+        scope = elm.get('scope')
+        if scope in filters and re.search(filters[scope], elm.get('tag')):
+            c_true += 1
+    if c_true == len(filters):
+        return True
+    return False
+
+
+# use this method if faster to determine an object is created by OS
+def is_os_resource(obj):
+    if 'tags' in obj:
+        for tag in obj['tags']:
+            if 'scope' in tag and tag['scope'].startswith('os-'):
+                return True
+    return False
