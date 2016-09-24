@@ -168,10 +168,7 @@ class NSXT(object):
 
     def list_project_firewall_sections(self, project_name, **filters):
         filters['os-project-name'] = project_name
-        fw_sections = self.list_firewall_sections(**filters)
-        sgs = dict()
-        for fws in fw_sections:
-
+        return self.list_firewall_sections(**filters)
 
     def list_project_security_groups(self, project_name, **filters):
         return self.list_project_firewall_sections(project_name)
