@@ -176,7 +176,13 @@ class NSXT(object):
     def list_project_security_groups(self, project_name, **filters):
         return self.list_project_firewall_sections(project_name)
 
-    def find_security_group_id(self, obj):
+    def find_project_security_group_id(self, project_name, obj):
+        sgs = {}
+        for fw in self.list_project_firewall_sections(project_name):
+            sg_id = get_os_security_group_id(fw)
+            if sg_id:
+                sgs[sg_id] = fw
+        return sgs
 
 
 # generic filtering method to an object is created by OS
@@ -228,5 +234,5 @@ def get_os_project_name(obj):
     return find_os_id(obj, 'os-project-name')
 
 
-def get_os_security_group(obj):
+def get_os_security_group_id(obj):
     return find_os_id(obj, 'os-neutron-secgr-id')
