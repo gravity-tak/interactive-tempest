@@ -171,9 +171,10 @@ class NSXT(object):
         filters['os-neutron-rport-id'] = '.*'
         return self.list_ports(**filters)
 
-    def list_project_server_ports(self, os_project_name, **filters):
-        filters['os-project-name'] = os_project_name
-        filters['os-instance-uuid'] = '.*'
+    def list_server_ports(self, **filters):
+        # os-instance-uuid is OS's server uuid
+        if 'os-instance-uuid' not in filters:
+            filters['os-instance-uuid'] = '.*'
         return self.list_ports(**filters)
 
     def list_project_firewall_sections(self, os_project_name, **filters):
