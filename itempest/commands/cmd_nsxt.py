@@ -148,13 +148,13 @@ class NSXT(object):
                   os_scope_filter(x.get('tags'), **filters)]
         return lport2
 
-    def list_security_groups(self, **filters):
+    def list_firewall_sections(self, **filters):
         sections = self.get_firewall_sections()
         sg_list = [x for x in sections if
                    os_scope_filter(x.get('tags'), **filters)]
         return sg_list
 
-    def list_security_group_rules(self, section_id, **filters):
+    def list_firewall_section_rules(self, section_id, **filters):
         s_rules = self.get_firewall_section_rules(section_id)
         return s_rules
 
@@ -166,9 +166,17 @@ class NSXT(object):
         filters['os-project-name'] = project_name
         return self.list_ports(**filters)
 
-    def list_project_security_groups(self, project_name, **filters):
+    def list_project_firewall_sections(self, project_name, **filters):
         filters['os-project-name'] = project_name
-        return self.list_security_groups(**filters)
+        fw_sections = self.list_firewall_sections(**filters)
+        sgs = dict()
+        for fws in fw_sections:
+
+
+    def list_project_security_groups(self, project_name, **filters):
+        return self.list_project_firewall_sections(project_name)
+
+    def find_security_group_id(self, obj):
 
 
 # generic filtering method to an object is created by OS
@@ -194,3 +202,31 @@ def is_os_resource(obj):
             if 'scope' in tag and tag['scope'].startswith('os-'):
                 return True
     return False
+
+
+# handy methods to get/find specific object is OS source type
+def find_os_id(obj, scope_id):
+    if 'tags' in obj:
+        for elm in obj.get('tags'):
+            if scope_id == elm.get('scope'):
+                return elm.get('tag')
+    return None
+
+def get_os_net_id(obj):
+    return find_os_id(obj, 'os-neutron-net-id')
+
+
+def get_os_port_id(obj):
+    return find_os_id(obj, 'os-neutron-dport-id')
+
+
+def get_os_project_id(obj):
+    return find_os_id(obj, 'os-project-id')
+
+
+def get_os_project_name(obj):
+    return find_os_id(obj, 'os-project-name')
+
+
+def get_os_security_group(obj):
+    return find_os_id(obj, 'os-neutron-secgr-id')
