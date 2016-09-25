@@ -19,7 +19,7 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
             dd = {}
             for k in ss.keys():
                 dd[k] = int(ss[k]) - int(nsx_stats[k])
-                utils.log_msg("%s" % str(dd), "NSX-STATS-DIFF")
+            utils.log_msg("%s" % str(dd), "NSX-STATS-DIFF")
             return e_time
         time.sleep(interval)
     tt = (time.time() - t0)
@@ -69,4 +69,4 @@ def poke_http_stats_change(nsxt_client, cmgr, lb2_name, web_ip,
     dd = {}
     for k in os_stats2.keys():
         dd[k] = int(os_stats2[k]) - int(os_stats1[k])
-        utils.log_msg("%s" % str(dd), "OS-STATS-DIFF")
+    utils.log_msg("%s" % str(dd), "OS-STATS-DIFF")
