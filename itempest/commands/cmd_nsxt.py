@@ -199,6 +199,18 @@ class NSXT(object):
                 return fw
         return None
 
+    def get_section_rules_by_security_group_id(self, os_security_group_id):
+        filters = {'os-neutron-secgr-id', os_security_group_id}
+        fw_list = self.list_firewall_sections(**filters)
+        if len(fw_list) == 1:
+            section_id = fw_list[0].get('id')
+            fw_rules = self.get_firewall_section_rules(section_id)
+            return (section_id, fw_rules)
+        elif len(fw_list) == 0:
+            return None
+        return Exception(
+            "More than one firewall found for security_group[%d]"
+            % (str(fw_list), os_security_group_id))
 
 # generic filtering method to an object is created by OS
 def os_scope_filter(tags, **filters):
