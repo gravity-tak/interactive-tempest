@@ -16,6 +16,10 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
             e_time = (time.time() - t0)
             msg = "Take %d seconds for STATS to be updated" % int(e_time)
             utils.log_msg(msg, 'CHK-Stats')
+            dd = {}
+            for k in ss.keys():
+                dd[k] = int(ss[k]) - int(nsx_stats[k])
+                utils.log_msg("%s" % str(dd), "NSX-STATS-DIFF")
             return e_time
         time.sleep(interval)
     tt = (time.time() - t0)
@@ -51,14 +55,18 @@ def poke_http_stats_change(nsxt_client, cmgr, lb2_name, web_ip,
     msg = "NSX STATS is at section[%s] rule_id[%s]" % (sect_id, rule_id)
     utils.log_msg(msg, 'CHK-Stats')
     nsx_stats = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
-    venus_stats = cmgr.lbaas('loadbalancer-stats', lb2_name)
-    msg = "OS-LB2-Stats %s" % (str(venus_stats))
+    os_stats1 = cmgr.lbaas('loadbalancer-stats', lb2_name)
+    msg = "OS-LB2-Stats %s" % (str(os_stats1))
     utils.log_msg(msg, 'CHK-Stats')
 
     lbaas2.count_http_servers(web_ip)
     m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
                    interval=interval, poke_count=poke_count)
 
-    venus_stats = cmgr.lbaas('loadbalancer-stats', lb2_name)
-    msg = "OS-LB2-Stats %s" % (str(venus_stats))
+    os_stats2 = cmgr.lbaas('loadbalancer-stats', lb2_name)
+    msg = "OS-LB2-Stats %s" % (str(os_stats2))
     utils.log_msg(msg, 'CHK-Stats')
+    dd = {}
+    for k in os_stats2.keys():
+        dd[k] = int(os_stats2[k]) - int(os_stats1[k])
+        utils.log_msg("%s" % str(dd), "OS-STATS-DIFF")
