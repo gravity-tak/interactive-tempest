@@ -6,11 +6,12 @@ from itempest.lib import utils
 def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
                    venus_stats=None, interval=2.5, poke_count=300):
     t0 = time.time()
-    for x in range(poke_count):
+    for cnt in range(poke_count):
         ss = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
         ss.pop('_schema', None)
         ss.pop('rule_id', None)
-        utils.log_msg(str(ss), 'OS-Interval')
+        msg = "#d %s" % (cnt, str(ss))
+        utils.log_msg(msg, 'OS-Interval')
         if ss.get('session_count') != nsx_stats.get('session_count'):
             e_time = (time.time() - t0)
             msg = "Take %d seconds for STATS to be updated" % int(e_time)
