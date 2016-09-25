@@ -10,7 +10,7 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
         ss = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
         ss.pop('_schema', None)
         ss.pop('rule_id', None)
-        msg = "#d %s" % (cnt, str(ss))
+        msg = "#%d %s" % (cnt, str(ss))
         utils.log_msg(msg, 'OS-Interval')
         if ss.get('session_count') != nsx_stats.get('session_count'):
             e_time = (time.time() - t0)
