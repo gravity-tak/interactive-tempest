@@ -26,14 +26,17 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
     raise Exception("After %d seconds, stats do not change!" % int(tt))
 
 
-# support function of lbaas_v2
+# test how long NSX collects firewall/security-gropu stats
 # nsxt_client = cmd_nsxt.NSXT('10.144.137.159', 'admin', 'Admin!23Admin')
 # venus = osn.get_mcli('Venus')
-# poke_http_stats_change(nsx, venus, 'venus-lb2-http', '172.24.4.6',
-#   interval=5.0 poke_count=100)
-def poke_http_stats_change(nsxt_client, cmgr, lb2_name, web_ip,
+# venus_lb2_http = lbaas2.build_os_lbaas(venus, 'venus-lb2-http',
+#   image_name="cirros-0.3.3-x86_64-ESX")
+# poke_http_stats_change(nsx, venus, 'venus-lb2-http',
+#                        interval=5.0, poke_count=100)
+def poke_http_stats_change(nsxt_client, cmgr, lb2_name,
                            interval=5.0, poke_count=100):
-    # lb2_name = 'venus-lb2-http'
+    lb2_fip = lbaas2.get_loadbalancer_floatingip(cmgr, lb2_name)
+    lb2_web_ip = lb2_fip[1]['floating_ip_address']
     lb = cmgr.lbaas('loadbalancer-show', lb2_name)
     lb_port = cmgr.qsvc('port-show', lb['vip_port_id'])
     os_security_group_id = lb_port['security_groups'][0]
@@ -59,7 +62,7 @@ def poke_http_stats_change(nsxt_client, cmgr, lb2_name, web_ip,
     msg = "OS-LB2-Stats %s" % (str(os_stats1))
     utils.log_msg(msg, 'CHK-Stats')
 
-    lbaas2.count_http_servers(web_ip)
+    lbaas2.count_http_servers(lb2_web_ip)
     m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
                    interval=interval, poke_count=poke_count)
 
