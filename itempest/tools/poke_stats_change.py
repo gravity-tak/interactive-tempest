@@ -25,13 +25,18 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
 # support function of lbaas_v2
 # nsxt_client = cmd_nsxt.NSXT('10.144.137.159', 'admin', 'Admin!23Admin')
 # venus = osn.get_mcli('Venus')
-# poke_http_stats_change(venus, nsx, venus_segroup_id, 'venus-lb2-http',
-#   '172.24.4.6', interval=5.0 poke_count=100)
-def poke_http_stats_change(cmgr, nsxt_client, os_security_group_id,
-                           lb2_name, web_ip, interval=5.0, poke_count=100):
-    # os_security_group_id = "35d23271-f317-464a-8456-60ff3387e15a"
+# poke_http_stats_change(nsx, venus, 'venus-lb2-http', '172.24.4.6',
+#   interval=5.0 poke_count=100)
+def poke_http_stats_change(nsxt_client, cmgr, lb2_name, web_ip,
+                           interval=5.0, poke_count=100):
     # lb2_name = 'venus-lb2-http'
+    lb = cmgr.lbaas('loadbalancer-show', lb2_name)
+    lb_port = cmgr.qsvc('port-show', lb['vip_port_id'])
+    os_security_group_id = lb_port['security_groups'][0]
     _sgroup = cmgr.qsvc('security-group-show', os_security_group_id)
+    msg = "os-security-group-id = %s" % (os_security_group_id)
+    utils.log_msg(msg, 'CHK-Stats')
+
     sg_rules = _sgroup['security_group_rules']
     http_rule = [x for x in sg_rules if x['port_range_min'] >= 80][0]
 
