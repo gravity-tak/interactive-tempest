@@ -4,7 +4,7 @@ from itempest.lib import utils
 
 
 def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
-                   venus_stats=None, interval=2.5, poke_count=150):
+                   interval=2.5, poke_count=150):
     t0 = time.time()
     for cnt in range(poke_count):
         ss = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
