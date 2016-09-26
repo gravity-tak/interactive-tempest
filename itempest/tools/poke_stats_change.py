@@ -34,7 +34,8 @@ def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
 # poke_http_stats_change(nsx, venus, 'venus-lb2-http',
 #                        interval=5.0, poke_count=100)
 def poke_http_stats_change(nsxt_client, cmgr, lb2_name,
-                           interval=5.0, poke_count=100):
+                           interval=5.0, poke_count=100,
+                           no_http_traffic=False):
     lb2_fip = lbaas2.get_loadbalancer_floatingip(cmgr, lb2_name)
     lb2_web_ip = lb2_fip[1]['floating_ip_address']
     lb = cmgr.lbaas('loadbalancer-show', lb2_name)
@@ -62,7 +63,10 @@ def poke_http_stats_change(nsxt_client, cmgr, lb2_name,
     msg = "OS-LB2-Stats %s" % (str(os_stats1))
     utils.log_msg(msg, 'CHK-Stats')
 
-    lbaas2.count_http_servers(lb2_web_ip)
+    if  no_http_traffic:
+        utils.log_msg("No http traffic initiated", 'CHK-Stats')
+    else:
+        lbaas2.count_http_servers(lb2_web_ip)
     m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
                    interval=interval, poke_count=poke_count)
 
