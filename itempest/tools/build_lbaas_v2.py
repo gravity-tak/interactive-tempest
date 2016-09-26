@@ -53,7 +53,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
     if build_network_only:
         return {'network': lb2_network, 'lbaas': None}
-    lbaas = create_lbaasv2(cmgr, lb2_network, lb_name=lb_name, **kwargs)
+    lbaas = build_lbaas(cmgr, lb2_network, lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']
     assign_floatingip_to_vip(cmgr, lb_name,
                              public_network_id=public_network_id,
@@ -70,11 +70,14 @@ def setup_core_network(cmgr, name, start_servers=True, **kwargs):
 
 # if loadbalancer provided, listner/pool/healthmonitor/members will be
 # attached to it
+# default monitor_type changed to PING as by-default we are using cirros
+# image with netcat as web-server which doesnot send FIN at end of http
+# causing octavia healthmonitor to think its member is down
 def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
                 lb_name=None, lb_timeout=900, loadbalancer=None,
                 protocol='HTTP', protocol_port=80, ip_version=4,
                 delay=4, max_retries=3,
-                monitor_type="HTTP", monitor_timeout=10, **kwargs):
+                monitor_type="PING", monitor_timeout=10, **kwargs):
     if cmgr.lbaas is None:
         raise Exception(
             "Client manager does not have LBaasV2 clients installed.")
@@ -155,7 +158,7 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
 def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
                    protocol='HTTP', protocol_port=80, ip_version=4,
                    delay=4, max_retries=3,
-                   monitor_type="HTTP", monitor_timeout=1, **kwargs):
+                   monitor_type="PING", monitor_timeout=1, **kwargs):
     lb_name = lb_name if lb_name else data_utils.rand_name('lb2')
     # pool atrributes
     lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
