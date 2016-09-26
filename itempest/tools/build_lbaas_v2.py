@@ -34,6 +34,8 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     lb_name = kwargs.pop('prefix', kwargs.pop('lb_name', name))
     build_network_only = kwargs.pop('build_network_only', False)
     public_network_id = kwargs.pop('public_network_id', None)
+    use_allinone = kwargs.pop('use_allinone', False)
+    groupid = kwargs.pop('groupid', 1)
     net_cfg = dict(
         num_servers=kwargs.pop('num_servers', 2),
         username=kwargs.pop('username', 'cirros'),
@@ -53,7 +55,14 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
     if build_network_only:
         return {'network': lb2_network, 'lbaas': None}
-    lbaas = build_lbaas(cmgr, lb2_network, lb_name=lb_name, **kwargs)
+
+    if use_allinone:
+        lbaas = create_lbaasv2(cmgr, lb2_network, lb_name=lb_name, **kwargs)
+    else:
+        subnet_id = lb2_network['subnet']['id']
+        server_id_list = lb2_network['servers'].keys()
+        lbaas = build_lbaas(cmgr, subnet_id, server_id_list, groupid,
+                            lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']
     assign_floatingip_to_vip(cmgr, lb_name,
                              public_network_id=public_network_id,
