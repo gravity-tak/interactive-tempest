@@ -89,8 +89,8 @@ class LoadBalancersClient(base.BaseNetworkClient):
                 if (provisioning_status in ('ACTIVE',) and
                             lb.get('provisioning_status') in ('ERROR',)):
                     raise Exception(
-                        _("Load balancer {lb_id} in ERROR, "
-                          "expect provisioning status is ACTIVE..").format(
+                        ("Load balancer {lb_id} provisioning_status=ERROR, "
+                         "expect ACTIVE").format(
                             lb_id=load_balancer_id))
                 time.sleep(interval_time)
             except exceptions.NotFound as e:

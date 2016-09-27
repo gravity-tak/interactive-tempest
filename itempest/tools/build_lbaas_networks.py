@@ -218,8 +218,8 @@ def add_server_to_lb_network(cmgr, on_network_id, security_group_name_or_id,
             elapse_time = time.time() - t0
             sv = cmgr.nova('server-show', server_id)
             if get_server_ip_address(sv, 'floating', lb_network_name):
-                msg = ("Take %d seconds to assign floating-ip to erver[%s]" %
-                       (int(elapse_time), sv.get('name')))
+                msg = ("Take %d seconds to assign floating-ip to server[%s]"
+                       % (int(elapse_time), sv.get('name')))
                 U.log_msg(msg, 'OS-LBaaS')
                 break
             if elapse_time > timeout:
@@ -324,24 +324,28 @@ def start_netcat_server(ssh_client,
                           'server_script': web_server_script}
 
     ssh_client.exec_command(cmd, with_prologue='')
-    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD,
+                                     with_prologue='')
     return result
 
 
 def stop_netcat_server(ssh_client):
-    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD,
+                                     with_prologue='')
     for line in result.split("\n"):
         m = re.search(NC_PROCNAME_PATTERN, line, re.I)
         if m:
             nc_pid = m.group(1)
             kill_cmd = "sudo kill %s" % nc_pid
             ssh_client.exec_command(kill_cmd, with_prologue='')
-    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD,
+                                     with_prologue='')
     return result
 
 
 def status_netcat_server(ssh_client):
-    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD, with_prologue='')
+    result = ssh_client.exec_command(CHECK_NC_EXISTING_CMD,
+                                     with_prologue='')
     return result
 
 
