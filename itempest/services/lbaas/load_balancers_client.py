@@ -64,7 +64,12 @@ class LoadBalancersClient(base.BaseNetworkClient):
                                       provisioning_status='ACTIVE',
                                       operating_status='ONLINE',
                                       timeout=900, interval_time=2,
+                                      pause_before_wait=0,
                                       is_delete_op=False, **filters):
+        if pause_before_wait > 0:
+            # octavia: when a resource is deleted, load-balancer does not get
+            # into PENDING immediately. Pause 2 seconds is recommended
+            time.sleep(pause_before_wait)
         end_time = time.time() + timeout
         lb = None
         ignore_operating_status = filters.get('ignore_operating_status',
