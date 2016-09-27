@@ -4,9 +4,11 @@ from itempest.lib import utils
 
 
 def m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
+                   cmgr, lb2_name,
                    interval=2.5, poke_count=150):
     t0 = time.time()
     for cnt in range(poke_count):
+        log_lb2_stats(cmgr, lb2_name)
         ss = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
         ss.pop('_schema', None)
         ss.pop('rule_id', None)
@@ -59,21 +61,26 @@ def poke_http_stats_change(nsxt_client, cmgr, lb2_name,
     msg = "NSX STATS is at section[%s] rule_id[%s]" % (sect_id, rule_id)
     utils.log_msg(msg, 'CHK-Stats')
     nsx_stats = nsxt_client.get_firewall_section_rule_stats(sect_id, rule_id)
-    os_stats1 = cmgr.lbaas('loadbalancer-stats', lb2_name)
-    msg = "OS-LB2-Stats %s" % (str(os_stats1))
-    utils.log_msg(msg, 'CHK-Stats')
+    os_stats1 = log_lb2_stats(cmgr, lb2_name)
 
     if  no_http_traffic:
         utils.log_msg("No http traffic initiated", 'CHK-Stats')
     else:
         lbaas2.count_http_servers(lb2_web_ip)
+
     m_stats_change(nsxt_client, sect_id, rule_id, nsx_stats,
+                   cmgr, lb2_name,
                    interval=interval, poke_count=poke_count)
 
-    os_stats2 = cmgr.lbaas('loadbalancer-stats', lb2_name)
-    msg = "OS-LB2-Stats %s" % (str(os_stats2))
-    utils.log_msg(msg, 'CHK-Stats')
+    os_stats2 = log_lb2_stats(cmgr, lb2_name)
+
     dd = {}
     for k in os_stats2.keys():
         dd[k] = int(os_stats2[k]) - int(os_stats1[k])
     utils.log_msg("%s" % str(dd), "OS-STATS-DIFF")
+
+def log_lb2_stats(cmgr, lb2_name):
+    os_stats1 = cmgr.lbaas('loadbalancer-stats', lb2_name)
+    msg = "OS-LB2-Stats %s" % (str(os_stats1))
+    utils.log_msg(msg, 'CHK-Stats')
+    return os_stats1
