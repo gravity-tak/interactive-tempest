@@ -39,6 +39,14 @@ def _g_members_client(mgr_or_client):
     return getattr(mgr_or_client, 'members_client', mgr_or_client)
 
 
+def _g_l7policies_client(mgr_or_client):
+    return getattr(mgr_or_client, 'l7policies_client', mgr_or_client)
+
+
+def _g_l7rules_client(mgr_or_client):
+    return getattr(mgr_or_client, 'l7rules_client', mgr_or_client)
+
+
 def _return_result(result, of_attr):
     if of_attr in result:
         return result[of_attr]
@@ -315,6 +323,80 @@ def member_list(mgr_or_client, pool_id, **filters):
     net_client = _g_members_client(mgr_or_client)
     result = net_client.list_members(pool_id, **filters)
     return _return_result(result, 'members')
+
+
+# l7policy
+def l7policy_create(mgr_or_client, **kwargs):
+    net_client = _g_l7policies_client(mgr_or_client)
+    result = net_client.create_l7policy(**kwargs)
+    return _return_result(result, 'l7policy')
+
+
+def l7policy_update(mgr_or_client, l7policy_id, **kwargs):
+    net_client = _g_l7policies_client(mgr_or_client)
+    l7policy_id = l7policy_get_id(mgr_or_client, l7policy_id)
+    result = net_client.update_l7policy(l7policy_id, **kwargs)
+    return _return_result(result, 'l7policy')
+
+
+def l7policy_delete(mgr_or_client, l7policy_id):
+    net_client = _g_l7policies_client(mgr_or_client)
+    l7policy_id = l7policy_get_id(mgr_or_client, l7policy_id)
+    result = net_client.delete_l7policy(l7policy_id)
+    return _return_result(result, 'l7policy')
+
+
+def l7policy_show(mgr_or_client, l7policy_id, **fields):
+    net_client = _g_l7policies_client(mgr_or_client)
+    try:
+        result = net_client.show_l7policy(l7policy_id, **fields)
+    except Exception:
+        nobj = l7policy_list(mgr_or_client, name=l7policy_id)[0]
+        result = net_client.show_l7policy(nobj['id'], **fields)
+    return _return_result(result, 'l7policy')
+
+
+def l7policy_list(mgr_or_client, **filters):
+    net_client = _g_l7policies_client(mgr_or_client)
+    result = net_client.list_l7policies(**filters)
+    return _return_result(result, 'l7policies')
+
+
+def l7policy_get_id(mgr_or_client, l7policy_id):
+    nobj = l7policy_show(mgr_or_client, l7policy_id)
+    return nobj['id']
+
+
+# l7rule
+def l7rule_create(mgr_or_client, policy_id, **kwargs):
+    net_client = _g_l7rules_client(mgr_or_client)
+    result = net_client.create_rule(policy_id, **kwargs)
+    return _return_result(result, 'rule')
+
+
+def l7rule_update(mgr_or_client, policy_id, rule_id, **kwargs):
+    net_client = _g_l7rules_client(mgr_or_client)
+    result = net_client.update_rule(policy_id, rule_id, **kwargs)
+    return _return_result(result, 'rule')
+
+
+def l7rule_delete(mgr_or_client, policy_id, rule_id):
+    net_client = _g_l7rules_client(mgr_or_client)
+    result = net_client.delete_rule(policy_id, rule_id)
+    return _return_result(result, 'rule')
+
+
+def l7rule_show(mgr_or_client, policy_id, rule_id, **fields):
+    net_client = _g_l7rules_client(mgr_or_client)
+    policy_id = pool_get_id(mgr_or_client, policy_id)
+    result = net_client.show_rule(policy_id, rule_id, **fields)
+    return _return_result(result, 'rule')
+
+
+def l7rule_list(mgr_or_client, policy_id, **filters):
+    net_client = _g_l7rules_client(mgr_or_client)
+    result = net_client.list_rules(policy_id, **filters)
+    return _return_result(result, 'rules')
 
 
 def destroy_loadbalancer(mgr_or_client, loadbalancer_id):

@@ -35,6 +35,8 @@ from itempest.services.lbaas import load_balancers_client
 from itempest.services.lbaas import pools_client
 from itempest.services.lbaas import listeners_client
 from itempest.services.lbaas import members_client
+from itempest.services.lbaas import l7policies_client
+from itempest.services.lbaas import l7rules_client
 from itempest.services.lbaas import health_monitors_client
 from itempest.services.qos import base_qos
 from itempest.services import tags_client
@@ -407,6 +409,10 @@ def get_lbaas_commands(client_mgr, log_header='OS-LBaasV2', **kwargs):
             members_client.get_client(client_mgr))
     setattr(client_mgr, 'health_monitors_client',
             health_monitors_client.get_client(client_mgr))
+    setattr(client_mgr, 'l7policies_client',
+            l7policies_client.get_client(client_mgr))
+    setattr(client_mgr, 'l7rules_client',
+            l7rules_client.get_client(client_mgr))
     return command_wrapper(client_mgr, cmd_neutron_lbaas_v2,
                            lbaasv2_flavor=True, log_header=log_header)
 
