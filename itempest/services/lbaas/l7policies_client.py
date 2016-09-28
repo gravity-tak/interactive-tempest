@@ -39,8 +39,8 @@ def get_client(client_mgr):
     except Exception:
         _params = {}
     client = L7PoliciesClient(net_client.auth_provider,
-                           net_client.service,
-                           net_client.region,
-                           net_client.endpoint_type,
-                           **_params)
+                              net_client.service,
+                              net_client.region,
+                              net_client.endpoint_type,
+                              **_params)
     return client
