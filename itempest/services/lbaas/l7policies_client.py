@@ -7,25 +7,25 @@ class L7PoliciesClient(base.BaseNetworkClient):
     resource_base_path = '/lbaas/l7policies'
     resource_object_path = '/lbaas/l7policies/%s'
 
-    def create_policy(self, **kwargs):
+    def create_l7policy(self, **kwargs):
         uri = self.resource_base_path
         post_data = {self.resource: kwargs}
         return self.create_resource(uri, post_data)
 
-    def update_policy(self, policy_id, **kwargs):
+    def update_l7policy(self, policy_id, **kwargs):
         uri = self.resource_object_path % (policy_id)
         post_data = {self.resource: kwargs}
         return self.update_resource(uri, post_data)
 
-    def show_policy(self, policy_id, **fields):
+    def show_l7policy(self, policy_id, **fields):
         uri = self.resource_object_path % (policy_id)
         return self.show_resource(uri, **fields)
 
-    def delete_policy(self, policy_id):
+    def delete_l7policy(self, policy_id):
         uri = self.resource_object_path % (policy_id)
         return self.delete_resource(uri)
 
-    def list_policies(self, **filters):
+    def list_l7policies(self, **filters):
         uri = self.resource_base_path
         return self.list_resources(uri, **filters)
 
