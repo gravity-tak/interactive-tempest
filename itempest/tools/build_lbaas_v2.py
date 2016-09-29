@@ -283,41 +283,59 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
         pool_id = listener.get('default_pool_id', None)
         if pool_id:
             pool = cmgr.lbaas('pool-show', pool_id)
-            lb_tree += pack_fields('pool', pool, 'id', 'name',
-                                   'lb_algorithm', 'protocol',
-                                   'session_persistence', sp=8)
-            hm_id = pool.get('healthmonitor_id', None)
-            if hm_id:
-                hm = cmgr.lbaas('healthmonitor-show', hm_id)
-                lb_tree += pack_fields('healthmonitor', hm, 'id',
-                                       'http_method', 'type',
-                                       'max_retries',
-                                       'timeout', 'url_path',
-                                       sp=16)
-            for member in pool.get('members'):
-                mbr = cmgr.lbaas('member-show', pool_id, member['id'])
-                lb_tree += pack_fields('member', mbr, 'id',
-                                       'address',
-                                       'protocol_port', 'subnet_id',
-                                       'weight', sp=12)
+            lb_tree = show_pool_tree(cmgr, pool, lb_tree, 4)
+    # show pools without listener
+    for pool_dd in lb2.get('pools'):
+        pool_id = pool_dd.get('id')
+        pool = cmgr.lbaas('pool-show', pool_id)
+        if not pool.get('listeners'):
+            lb_tree = show_pool_tree(cmgr, pool, lb_tree, 0)
     if show_it:
         print(lb_tree)
     else:
         return lb_tree
 
 
-def delete_all_lbaas(cmgr, waitfor_active=60):
+def show_pool_tree(cmgr, pool, lb_tree, ispace=4):
+    pool_id = pool.get('id')
+    lb_tree += pack_fields('pool', pool, 'id', 'name',
+                           'lb_algorithm', 'protocol',
+                           'session_persistence', sp=ispace + 4)
+    hm_id = pool.get('healthmonitor_id', None)
+    if hm_id:
+        hm = cmgr.lbaas('healthmonitor-show', hm_id)
+        lb_tree += pack_fields('healthmonitor', hm, 'id',
+                               'http_method', 'type',
+                               'max_retries',
+                               'timeout', 'url_path',
+                               sp=ispace + 12)
+    for member in pool.get('members'):
+        mbr = cmgr.lbaas('member-show', pool_id, member['id'])
+        lb_tree += pack_fields('member', mbr, 'id',
+                               'address',
+                               'protocol_port', 'subnet_id',
+                               'weight', sp=ispace + 8)
+    return lb_tree
+
+
+def delete_all_lbaas(cmgr, waitfor_active=60, pause_before_wait=2.0):
     for lb in cmgr.lbaas('loadbalancer-list'):
         delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active)
 
 
 def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True,
-                      waitfor_active=180):
+                      waitfor_active=180, pause_before_wait=2.0):
     lb2, fip = get_loadbalancer_floatingip(cmgr, loadbalancer, delete_fip)
     lb_id = lb2['id']
     for listener_dd in lb2.get('listeners'):
         delete_listener_tree(cmgr, lb_id, listener_dd.get('id'),
-                             waitfor_active=waitfor_active)
+                             waitfor_active=waitfor_active,
+                             pause_before_wait=pause_before_wait)
+    # delete pools without listener
+    lb2 = cmgr.lbaas('loadbalancer-show', lb_id)
+    for pool in lb2.get('pools'):
+        delete_pool_tree(cmgr, lb_id, pool.get('id'),
+                         waitfor_active=waitfor_active)
     # OK, we can delete the load-balancer
     cmgr.lbaas("loadbalancer-delete", lb_id)
     return cmgr.lbaas("loadbalancer-list", id=lb_id)
