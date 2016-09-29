@@ -306,7 +306,8 @@ def show_policy_tree(cmgr, policy, ispace=4):
     lb_tree = pack_fields('l7policy', policy, 'id', 'name',
                           'admin_state_up', 'action', 'redirect_pool_id',
                           'listener_id', sp=ispace + 4)
-    for rule_id in policy.get('rules', []):
+    for rule_dd in policy.get('rules', []):
+        rule_id = rule_dd.get('id')
         rule = cmgr.lbaas('l7rule-show', policy_id, rule_id)
         lb_tree += pack_fields('rule', rule, 'id', 'invert', 'key',
                                'type', 'compare_type', 'value',
