@@ -376,18 +376,21 @@ def l7rule_create(mgr_or_client, policy_id, **kwargs):
 
 
 def l7rule_update(mgr_or_client, policy_id, rule_id, **kwargs):
+    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     result = net_client.update_l7rule(policy_id, rule_id, **kwargs)
     return _return_result(result, 'rule')
 
 
 def l7rule_delete(mgr_or_client, policy_id, rule_id):
+    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     result = net_client.delete_l7rule(policy_id, rule_id)
     return _return_result(result, 'rule')
 
 
 def l7rule_show(mgr_or_client, policy_id, rule_id, **fields):
+    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     policy_id = pool_get_id(mgr_or_client, policy_id)
     result = net_client.show_l7rule(policy_id, rule_id, **fields)
@@ -395,6 +398,7 @@ def l7rule_show(mgr_or_client, policy_id, rule_id, **fields):
 
 
 def l7rule_list(mgr_or_client, policy_id, **filters):
+    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     result = net_client.list_l7rules(policy_id, **filters)
     return _return_result(result, 'rules')
