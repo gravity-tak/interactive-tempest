@@ -49,8 +49,23 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
     if (not tot_cnt == run_cnt):
         raise Exception("Expect %d responses, got %d" % (run_cnt, tot_cnt))
 
+    build_l7_switching(cmgr, subnet_id, loadbalancer_id, listener1.get('id'),
+                       l7_server_list, protocol=protocol,
+                       protocol_port=protocol_port, lb_timeout=lb_timeout)
+
+    # test l7 forwarding depending on URL prefix
+    run_l7_switching(http_server_list, lb_vip_address, '')
+    run_l7_switching(http_server_list, lb_vip_address, 'xapi')
+    run_l7_switching(l7_server_list, lb_vip_address, 'api')
+
+
+def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
+                       redirector_to_listener_id, l7_server_list,
+                       protocol='HTTP', protocol_port=80,
+                       pool_l7='pool-7',
+                       lb_timeout=900):
     # build_l7_pool(loadbalancer_id):
-    pool2 = cmgr.lbaas('pool-create', name='pool2',
+    pool2 = cmgr.lbaas('pool-create', name=pool_l7,
                        lb_algorithm='ROUND_ROBIN',
                        loadbalancer_id=loadbalancer_id, protocol=protocol)
     cmgr.lbaas('loadbalancer_waitfor_active', loadbalancer_id,
@@ -67,17 +82,14 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
         member2_list.append(member)
         cmgr.lbaas('loadbalancer_waitfor_active', loadbalancer_id,
                    timeout=lb_timeout)
-    policy1 = cmgr.lbaas('l7policy-create', action="REDIRECT_TO_TOOL",
+    policy1 = cmgr.lbaas('l7policy-create', action="REDIRECT_TO_POOL",
                          redirect_pool_id=pool2.get('id'),
-                         listener_id=listener1.get('id'),
+                         listener_id=redirector_to_listener_id,
                          name='policy1')
     cmgr.lbaas('l7rule-create', policy1.get('id'), type="PATH",
                compare_type="STARTS_WITH", value="/api")
 
-    # test l7 forwarding depending on URL prefix
-    run_l7_switching(http_server_list, lb_vip_address, '')
-    run_l7_switching(http_server_list, lb_vip_address, 'xapi')
-    run_l7_switching(l7_server_list, lb_vip_address, 'api')
+    return dict(pool=pool2, members=member2_list, policy=policy1)
 
 
 def run_l7_switching(on_server_list, lb_vip_address, url_path=''):
