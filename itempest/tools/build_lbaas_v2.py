@@ -328,26 +328,33 @@ def delete_listener_tree(cmgr, lb_id, listener_id, waitfor_active=180,
     listener = cmgr.lbaas('listener-show', listener_id)
     pool_id = listener.get('default_pool_id', None)
     if pool_id:
-        pool = cmgr.lbaas('pool-show', pool_id)
-        hm_id = pool.get('healthmonitor_id', None)
-        if hm_id:
-            cmgr.lbaas('healthmonitor-delete', hm_id)
-            cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
-                       lb_id, pause_before_wait=pause_before_wait,
-                       timeout=waitfor_active)
-        for member in pool.get('members'):
-            cmgr.lbaas('member-delete', pool_id, member['id'])
-            cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
-                       lb_id, pause_before_wait=pause_before_wait,
-                       timeout=waitfor_active)
-        cmgr.lbaas('pool-delete', pool_id)
-        cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
-                   lb_id, pause_before_wait=pause_before_wait,
-                   timeout=waitfor_active)
+        delete_pool_tree(cmgr, lb_id, pool_id,
+                         waitfor_active, pause_before_wait)
     cmgr.lbaas("listener-delete", listener['id'])
     cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
                lb_id, pause_before_wait=pause_before_wait,
                timeout=waitfor_active)
+
+
+def delete_pool_tree(cmgr, lb_id, pool_id, waitfor_active=800,
+                     pause_before_wait=2.0):
+    pool = cmgr.lbaas('pool-show', pool_id)
+    hm_id = pool.get('healthmonitor_id', None)
+    if hm_id:
+        cmgr.lbaas('healthmonitor-delete', hm_id)
+        cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
+                   lb_id, pause_before_wait=pause_before_wait,
+                   timeout=waitfor_active)
+    for member in pool.get('members'):
+        cmgr.lbaas('member-delete', pool_id, member['id'])
+        cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
+                   lb_id, pause_before_wait=pause_before_wait,
+                   timeout=waitfor_active)
+    cmgr.lbaas('pool-delete', pool_id)
+    cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
+               lb_id, pause_before_wait=pause_before_wait,
+               timeout=waitfor_active)
+
 
 def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,
                              security_group_id=None):
