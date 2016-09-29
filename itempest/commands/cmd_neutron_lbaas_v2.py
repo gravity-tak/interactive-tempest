@@ -392,7 +392,6 @@ def l7rule_delete(mgr_or_client, policy_id, rule_id):
 def l7rule_show(mgr_or_client, policy_id, rule_id, **fields):
     policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
-    policy_id = pool_get_id(mgr_or_client, policy_id)
     result = net_client.show_l7rule(policy_id, rule_id, **fields)
     return _return_result(result, 'rule')
 

@@ -284,22 +284,38 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
         pool_id = listener.get('default_pool_id', None)
         if pool_id:
             pool = cmgr.lbaas('pool-show', pool_id)
-            lb_tree = show_pool_tree(cmgr, pool, lb_tree, 4)
+            lb_tree += show_pool_tree(cmgr, pool, 4)
+        for policy in listener.get('l7policies'):
+            lb_tree += show_policy_tree(cmgr, policy, 4)
+
     # show pools without listener
     for pool_dd in lb2.get('pools'):
         pool_id = pool_dd.get('id')
         pool = cmgr.lbaas('pool-show', pool_id)
         if not pool.get('listeners'):
-            lb_tree = show_pool_tree(cmgr, pool, lb_tree, 0)
+            lb_tree += show_pool_tree(cmgr, pool, 0)
     if show_it:
         print(lb_tree)
     else:
         return lb_tree
 
 
-def show_pool_tree(cmgr, pool, lb_tree, ispace=4):
+def show_policy_tree(cmgr, policy, ispace=4):
+    policy_id = policy.get('id')
+    lb_tree = pack_fields('l7policy', policy, 'id', 'name',
+                          'action', 'redirect_pool_id',
+                          'listener_id', sp=ispace + 4)
+    for rule_id in policy.get('rules'):
+        rule = cmgr.lbaas('l7rule-show', policy_id, rule_id)
+        lb_tree += pack_fields('rule', rule, 'id', 'invert', 'key',
+                               'type', 'compare_type', 'value',
+                               sp=ispace + 8)
+    return lb_tree
+
+
+def show_pool_tree(cmgr, pool, ispace=4):
     pool_id = pool.get('id')
-    lb_tree += pack_fields('pool', pool, 'id', 'name',
+    lb_tree = pack_fields('pool', pool, 'id', 'name',
                            'lb_algorithm', 'protocol',
                            'session_persistence', sp=ispace + 4)
     hm_id = pool.get('healthmonitor_id', None)
