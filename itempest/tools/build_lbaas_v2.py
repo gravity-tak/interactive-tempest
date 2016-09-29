@@ -380,8 +380,9 @@ def get_loadbalancer_floatingip(cmgr, loadbalancer_id, and_delete_it=False):
     return (lb2, None)
 
 
-def count_http_servers(web_ip, count=10, show_progress=True):
-    web_page = "http://{web_ip}/".format(web_ip=web_ip)
+def count_http_servers(web_ip, count=10, url_path='', show_progress=True):
+    web_page = "http://{web_ip}/{url_path}".format(web_ip=web_ip,
+                                                   url_path=url_path)
     if show_progress:
         print("lbaas webpage: %s" % web_page)
     ctx = {}

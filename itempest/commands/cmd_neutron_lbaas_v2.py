@@ -369,6 +369,7 @@ def l7policy_get_id(mgr_or_client, l7policy_id):
 
 # l7rule
 def l7rule_create(mgr_or_client, policy_id, **kwargs):
+    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     result = net_client.create_l7rule(policy_id, **kwargs)
     return _return_result(result, 'rule')

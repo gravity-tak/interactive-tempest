@@ -286,6 +286,9 @@ def subnet_update(mgr_or_client, subnet_id, **kwargs):
 # floatingip - support ip4 only
 def floatingip_create(mgr_or_client, public_network_id,
                       **kwargs):
+    net_list = network_list(mgr_or_client, name=public_network_id)
+    if len(net_list) == 1:
+        public_network_id = net_list[0].get('id')
     net_client = _g_floating_ip_client(mgr_or_client)
     result = net_client.create_floatingip(
         floating_network_id=public_network_id,
