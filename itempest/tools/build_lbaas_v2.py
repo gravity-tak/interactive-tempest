@@ -279,13 +279,14 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
                            'id', sp=8)
     for listener_dd in lb2.get('listeners', []):
         listener = cmgr.lbaas('listener-show', listener_dd.get('id'))
+        listener_id = listener.get('id')
         lb_tree += pack_fields('listener', listener, 'id', 'name',
                                'protocol', 'protocol_port', sp=4)
         pool_id = listener.get('default_pool_id', None)
         if pool_id:
             pool = cmgr.lbaas('pool-show', pool_id)
             lb_tree += show_pool_tree(cmgr, pool, 4)
-        for policy in listener.get('l7policies', []):
+        for policy in cmgr.lbaas('l7policy-list', listener_id=listener_id):
             lb_tree += show_policy_tree(cmgr, policy, 4)
 
     # show pools without listener
@@ -303,7 +304,7 @@ def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
 def show_policy_tree(cmgr, policy, ispace=4):
     policy_id = policy.get('id')
     lb_tree = pack_fields('l7policy', policy, 'id', 'name',
-                          'action', 'redirect_pool_id',
+                          'admin_state_up', 'action', 'redirect_pool_id',
                           'listener_id', sp=ispace + 4)
     for rule_id in policy.get('rules', []):
         rule = cmgr.lbaas('l7rule-show', policy_id, rule_id)
