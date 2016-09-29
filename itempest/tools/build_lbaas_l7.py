@@ -60,9 +60,10 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
 
 
 def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
-                       redirector_to_listener_id, l7_server_list,
+                       redirect_to_listener_id, l7_server_list,
                        protocol='HTTP', protocol_port=80,
-                       pool_l7='pool-7',
+                       pool_l7='l7sw-pool', l7sw_type='PATH',
+                       l7sw_compare_type='STARTS_WITH', l7sw_path="/api",
                        lb_timeout=900):
     # build_l7_pool(loadbalancer_id):
     pool2 = cmgr.lbaas('pool-create', name=pool_l7,
@@ -84,10 +85,10 @@ def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
                    timeout=lb_timeout)
     policy1 = cmgr.lbaas('l7policy-create', action="REDIRECT_TO_POOL",
                          redirect_pool_id=pool2.get('id'),
-                         listener_id=redirector_to_listener_id,
+                         listener_id=redirect_to_listener_id,
                          name='policy1')
-    cmgr.lbaas('l7rule-create', policy1.get('id'), type="PATH",
-               compare_type="STARTS_WITH", value="/api")
+    cmgr.lbaas('l7rule-create', policy1.get('id'), type=l7sw_type,
+               compare_type=l7sw_compare_type, value=l7sw_path)
 
     return dict(pool=pool2, members=member2_list, policy=policy1)
 
