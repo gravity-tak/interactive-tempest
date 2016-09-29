@@ -13,7 +13,6 @@
 #    under the License.
 
 import re
-import time
 import urllib3
 
 from itempest.lib import lib_networks as NET
@@ -245,6 +244,8 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     if lb is None: return None
     lb_id = lb.get('id')
     for listener in lb.get('listeners', []):
+        for policy in listener.get('l7policies'):
+            cmgr.lbaas('l7policy-delete', policy.get('id'))
         for pool in listener.get('pools', []):
             hm = pool.get('healthmonitor', None)
             if hm:
@@ -344,6 +345,9 @@ def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True,
 def delete_listener_tree(cmgr, lb_id, listener_id, waitfor_active=180,
                          pause_before_wait=2.0):
     listener = cmgr.lbaas('listener-show', listener_id)
+    # delete all policies attached to listeners
+    for policy in cmgr.lbaas('l7policy-list', listener_id=listener_id):
+        cmgr.lbaas('l7policy-delete', policy.get('id'))
     pool_id = listener.get('default_pool_id', None)
     if pool_id:
         delete_pool_tree(cmgr, lb_id, pool_id,

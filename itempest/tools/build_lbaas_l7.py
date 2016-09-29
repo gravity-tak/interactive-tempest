@@ -105,3 +105,11 @@ def url_responses_are_OK(resp_urls, target_server_list):
         if not url_resp in target_server_list:
             return False
     return True
+
+
+def delete_all_l7(cmgr, tenant_id=None, **filters):
+    if tenant_id:
+        filters['tenant_id'] = tenant_id
+    policy_list = cmgr.lbaas('l7policy-list', **filters)
+    for policy in policy_list:
+        cmgr.lbaas('l7policy-delete', policy.get('id'))
