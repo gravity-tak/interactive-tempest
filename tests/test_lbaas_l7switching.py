@@ -20,7 +20,7 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
     netaggr.show_toplogy(cmgr)
     lbaas2.show_lbaas_tree(cmgr, lb_name)
     cmgr.lbaas('loadbalancer-status', lb_name)
-    lb_vip_public_ip = lbaas2.get_loadbalancer_floatingip(
+    vip_public_ip = lbaas2.get_loadbalancer_floatingip(
         cmgr, lb_name)[1][u'floating_ip_address']
 
     net_name = venus_lb2['network']['network']['name']
@@ -42,20 +42,20 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
     redirect_to_listener_id = lb.get('listeners')[0].get('id')
     l7_server_list = [x for x in venus_lb2a['servers']]
 
-    venus_l7 = ll7.build_l7_switching(
+    l7_cfg = ll7.build_l7_switching(
         cmgr, vip_subnet_id, lb_id,
         redirect_to_listener_id, l7_server_list)
 
-    ll7.run_l7_switching(http_server_list, lb_vip_public_ip, '')
-    ll7.run_l7_switching(http_server_list, lb_vip_public_ip, 'v2/api')
-    ll7.run_l7_switching(l7_server_list, lb_vip_public_ip, 'api')
-    ll7.run_l7_switching(l7_server_list, lb_vip_public_ip, 'api/firewalls')
+    ll7.run_l7_switching(http_server_list, vip_public_ip, '')
+    ll7.run_l7_switching(http_server_list, vip_public_ip, 'v2/api')
+    ll7.run_l7_switching(l7_server_list, vip_public_ip, 'api')
+    ll7.run_l7_switching(l7_server_list, vip_public_ip, 'api/firewalls')
 
     return dict(
-        lb_name=lb_name, image_name=image_name,
-        lb_vip_public_ip=lb_vip_public_ip, keypair_name=keypair_name,
+        name=lb_name, image_name=image_name,
+        vip_public_ip=vip_public_ip, keypair_name=keypair_name,
         network_id=on_network_id, subnet_id=vip_subnet_id,
         security_group_id=sg_id,
         http_server_list=http_server_list,
-        l7_server_list=l7_server_list
+        l7_server_list=l7_server_list, l7_pool=l7_cfg.get('pool')
     )
