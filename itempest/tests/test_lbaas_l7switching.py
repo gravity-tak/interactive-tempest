@@ -1,6 +1,7 @@
 from itempest.tools import build_lbaas_l7 as ll7
 from itempest.tools import build_lbaas_v2 as lbaas2
 from itempest.lib import lib_net_aggr as netaggr
+from itempest.lib import lib_networks as NETS
 
 
 def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
@@ -8,14 +9,17 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
 
     if platform == 'nsx':
         image_name = image_name or u'cirros-0.3.3-x86_64-disk'
-        venus_lb2 = lbaas2.build_nsx_lbaas(cmgr, lb_name,
-                                           image_name=image_name)
+        lb2_config = lbaas2.build_nsx_lbaas(cmgr, lb_name,
+                                            image_name=image_name)
     else:
         image_name = image_name or "cirros-0.3.3-x86_64-ESX"
-        venus_lb2 = lbaas2.build_os_lbaas(cmgr, lb_name,
-                                          image_name=image_name)
+        lb2_config = lbaas2.build_os_lbaas(cmgr, lb_name,
+                                           image_name=image_name)
 
-    http_server_list = [x for x in venus_lb2['network']['servers']]
+    lbaas2.LB_NET.start_webservers(lb2_config)
+    private_key = lb2_config.get('keypair').get('private_key')
+
+    http_server_list = [x for x in lb2_config['network']['servers']]
 
     netaggr.show_toplogy(cmgr)
     lbaas2.show_lbaas_tree(cmgr, lb_name)
@@ -23,14 +27,14 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
     vip_public_ip = lbaas2.get_loadbalancer_floatingip(
         cmgr, lb_name)[1][u'floating_ip_address']
 
-    net_name = venus_lb2['network']['network']['name']
-    on_network_id = venus_lb2['network']['network']['id']
+    net_name = lb2_config['network']['network']['name']
+    on_network_id = lb2_config['network']['network']['id']
     # on_network_id = venus.qsvc('net-list', name=net_name)[0]['id']
 
-    sg_id = venus_lb2['network']['security_group']['id']
+    sg_id = lb2_config['network']['security_group']['id']
     # sg_id = venus.qsvc('security-group-list', name=net_name)[0]['id']
 
-    keypair_name = venus_lb2['network']['keypair_name']
+    keypair_name = lb2_config['network']['keypair_name']
 
     venus_lb2a = lbaas2.LB_NET.add_server_to_lb_network(
         cmgr, on_network_id, sg_id, ('A',),
@@ -52,10 +56,15 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os'):
     ll7.run_l7_switching(l7_server_list, vip_public_ip, 'api/firewalls')
 
     return dict(
-        name=lb_name, image_name=image_name,
+        name=lb_name, image_name=image_name, private_key=private_key,
         vip_public_ip=vip_public_ip, keypair_name=keypair_name,
         network_id=on_network_id, subnet_id=vip_subnet_id,
         security_group_id=sg_id,
         http_server_list=http_server_list,
         l7_server_list=l7_server_list, l7_pool=l7_cfg.get('pool')
     )
+
+
+def cleanup_lbaas_l7switching(adm_mgr, cmgr):
+    lbaas2.delete_all_lbaas(cmgr)
+    NETS.destroy_all_resources(adm_mgr, tenant_id=cmgr.tenant_id)

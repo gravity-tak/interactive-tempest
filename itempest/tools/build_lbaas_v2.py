@@ -337,7 +337,7 @@ def show_pool_tree(cmgr, pool, ispace=4):
     return lb_tree
 
 
-def delete_all_lbaas(cmgr, waitfor_active=60, pause_before_wait=2.0):
+def delete_all_lbaas(cmgr, waitfor_active=180, pause_before_wait=2.0):
     for lb in cmgr.lbaas('loadbalancer-list'):
         delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active)
 
