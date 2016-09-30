@@ -2,6 +2,7 @@ from itempest.lib import utils
 from itempest.tools import build_lbaas_v2 as lbaas2
 
 
+# this test needs rework - use tests/test_lbaas_l7switching.py now.
 def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
                   security_group_id, lb_name=None, lb_timeout=900,
                   protocol='HTTP', protocol_port=80, ip_version=4,
@@ -93,9 +94,9 @@ def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
     return dict(pool=pool2, members=member2_list, policy=policy1)
 
 
-def run_l7_switching(on_server_list, lb_vip_address, url_path=''):
+def run_l7_switching(on_server_name_list, lb_vip_address, url_path=''):
     resp_urls = lbaas2.count_http_servers(lb_vip_address, 2, url_path)
-    if not url_responses_are_OK(resp_urls, on_server_list):
+    if not url_responses_are_OK(resp_urls, on_server_name_list):
         utils.log_msg("http://%s/%s redirected to wrong pool" % (
             lb_vip_address, url_path), "LBaaS-L7 ERROR")
 

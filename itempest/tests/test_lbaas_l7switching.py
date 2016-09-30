@@ -21,6 +21,8 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os',
     security_group_id = lb2_config['network']['security_group'].get('id')
     http_server_id_list = lb2_config.get('group_server_id_list')
     l7_server_id_list = lb2_config.get('other_server_id_list')
+    http_server_name_list = lb2_config.get('group_server_name_list')
+    l7_server_name_list = lb2_config.get('other_server_name_list')
 
     netaggr.show_toplogy(cmgr)
     lbaas2.show_lbaas_tree(cmgr, lb_name)
@@ -37,10 +39,11 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os',
         cmgr, vip_subnet_id, lb_id,
         redirect_to_listener_id, l7_server_id_list)
 
-    ll7.run_l7_switching(http_server_id_list, vip_public_ip, '')
-    ll7.run_l7_switching(http_server_id_list, vip_public_ip, 'v2/api')
-    ll7.run_l7_switching(l7_server_id_list, vip_public_ip, 'api')
-    ll7.run_l7_switching(l7_server_id_list, vip_public_ip, 'api/firewalls')
+    # every server return its server-name upon http request
+    ll7.run_l7_switching(http_server_name_list, vip_public_ip, '')
+    ll7.run_l7_switching(http_server_name_list, vip_public_ip, 'v2/api')
+    ll7.run_l7_switching(l7_server_name_list, vip_public_ip, 'api')
+    ll7.run_l7_switching(l7_server_name_list, vip_public_ip, 'api/firewalls')
 
     return dict(
         name=lb_name, image_name=image_name, keypair=keypair,
