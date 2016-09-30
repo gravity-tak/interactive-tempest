@@ -35,6 +35,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     public_network_id = kwargs.pop('public_network_id', None)
     use_allinone = kwargs.pop('use_allinone', False)
     groupid = kwargs.pop('groupid', 1)
+    group_num_server = kwargs.pop('group_num_sever', 2)
     net_cfg = dict(
         num_servers=kwargs.pop('num_servers', 2),
         username=kwargs.pop('username', 'cirros'),
@@ -55,18 +56,20 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     if build_network_only:
         return {'network': lb2_network, 'lbaas': None}
 
-    if use_allinone:
-        lbaas = create_lbaasv2(cmgr, lb2_network, lb_name=lb_name, **kwargs)
-    else:
-        subnet_id = lb2_network['subnet']['id']
-        server_id_list = lb2_network['servers'].keys()
-        lbaas = build_lbaas(cmgr, subnet_id, server_id_list, groupid,
-                            lb_name=lb_name, **kwargs)
+    subnet_id = lb2_network['subnet']['id']
+    server_id_list = lb2_network['servers'].keys()
+    group_server_id_list = server_id_list[0:group_num_server]
+    other_server_id_list = server_id_list[group_num_server:]
+    lbaas = build_lbaas(cmgr, subnet_id, group_server_id_list, groupid,
+                        lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']
     assign_floatingip_to_vip(cmgr, lb_name,
                              public_network_id=public_network_id,
                              security_group_id=security_group_id)
-    return {'network': lb2_network, 'lbaas': lbaas}
+    return {'network': lb2_network, 'lbaas': lbaas,
+            'subnet_id': subnet_id,
+            'group_server_id_list': group_num_server,
+            'other_server_id_list': other_server_id_list}
 
 
 def setup_core_network(cmgr, name, start_servers=True, **kwargs):
@@ -91,7 +94,6 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
             "Client manager does not have LBaasV2 clients installed.")
     suffix_listener = "listener_%d" % groupid
     suffix_pool = "pool_%d" % groupid
-    no_healthmonitor = kwargs.pop('no_healthmonitory', False)
 
     # loadbalancer
     if loadbalancer:
@@ -130,6 +132,7 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
     pool = cmgr.lbaas('pool-create', **pool_body)
     cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     pool_id = pool.get('id')
+
     # pool's members
     member_list = []
     for server_id in server_list:
@@ -141,10 +144,9 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
                             protocol_port=protocol_port)
         member_list.append(member)
         cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+
     # healthmonitor
-    if no_healthmonitor:
-        healthmonitor = None
-    else:
+    if monitor_type in MONITOR_TYPES:
         healthmonitor = cmgr.lbaas('healthmonitor-create',
                                    pool_id=pool_id,
                                    delay=delay,
@@ -152,6 +154,9 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
                                    type=monitor_type,
                                    timeout=monitor_timeout)
         cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    else:
+        healthmonitor = None
+
     # summarize load-balancer
     return dict(
         name=lb_name,
