@@ -13,10 +13,12 @@
 #    under the License.
 
 import re
+import time
 import urllib3
 
 from itempest.lib import lib_networks as NET
 from itempest.tools import build_lbaas_networks as LB_NET
+from itempest.lib import utils
 from tempest.lib.common.utils import data_utils
 
 LB_ALGORITHMS = ('ROUND_ROBIN', 'LEAST_CONNECTIONS', 'SOURCE_IP')
@@ -323,8 +325,8 @@ def show_policy_tree(cmgr, policy, ispace=4):
 def show_pool_tree(cmgr, pool, ispace=4):
     pool_id = pool.get('id')
     lb_tree = pack_fields('pool', pool, 'id', 'name',
-                           'lb_algorithm', 'protocol',
-                           'session_persistence', sp=ispace + 4)
+                          'lb_algorithm', 'protocol',
+                          'session_persistence', sp=ispace + 4)
     hm_id = pool.get('healthmonitor_id', None)
     if hm_id:
         hm = cmgr.lbaas('healthmonitor-show', hm_id)
@@ -344,7 +346,8 @@ def show_pool_tree(cmgr, pool, ispace=4):
 
 def delete_all_lbaas(cmgr, waitfor_active=180, pause_before_wait=2.0):
     for lb in cmgr.lbaas('loadbalancer-list'):
-        delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active)
+        delete_lbaas_tree(cmgr, lb['id'], waitfor_active=waitfor_active,
+                          pause_before_wait=pause_before_wait)
 
 
 def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True,
@@ -361,8 +364,7 @@ def delete_lbaas_tree(cmgr, loadbalancer, delete_fip=True,
         delete_pool_tree(cmgr, lb_id, pool.get('id'),
                          waitfor_active=waitfor_active)
     # OK, we can delete the load-balancer
-    cmgr.lbaas("loadbalancer-delete", lb_id)
-    return cmgr.lbaas("loadbalancer-list", id=lb_id)
+    delete_the_loadbalancer(cmgr, lb_id)
 
 
 def delete_listener_tree(cmgr, lb_id, listener_id, waitfor_active=180,
@@ -399,6 +401,25 @@ def delete_pool_tree(cmgr, lb_id, pool_id, waitfor_active=800,
     cmgr.lbaas("loadbalancer-waitfor-provisioning-active",
                lb_id, pause_before_wait=pause_before_wait,
                timeout=waitfor_active)
+
+
+def delete_the_loadbalancer(cmgr, lb_id, waitfor_delete=800,
+                            pause_before_wait=2.0, interval=5.0):
+    cmgr.lbaas("loadbalancer-delete", lb_id)
+    time_start = time.time()
+    end_time = time.time() + waitfor_delete
+    time.sleep(pause_before_wait)
+
+    while (time.time() < end_time):
+        lb_list = cmgr.lbaas("loadbalancer-list", id=lb_id)
+        if len(lb_list) == 0:
+            break
+        time.sleep(interval)
+
+    etime = time.time() - time_start
+    utils.log_msg("elapse-time,delete-loadbalancer[%s]" % etime,
+                  "OS-Stats")
+    return cmgr.lbaas("loadbalancer-list", id=lb_id)
 
 
 def assign_floatingip_to_vip(cmgr, loadbalancer, public_network_id=None,

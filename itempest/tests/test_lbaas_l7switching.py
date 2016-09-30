@@ -12,13 +12,13 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os',
     if platform == 'nsx':
         image_name = image_name or u'cirros-0.3.3-x86_64-disk'
         lb2_config = lbaas2.build_nsx_lbaas(
-            cmgr, lb_name, image_name=image_name, **kwargs)
+            cmgr, lb_name, image_name=image_name, **build_cfg)
     else:
         image_name = image_name or "cirros-0.3.3-x86_64-ESX"
         lb2_config = lbaas2.build_os_lbaas(
-            cmgr, lb_name, image_name=image_name, **kwargs)
+            cmgr, lb_name, image_name=image_name, **build_cfg)
     keypair = lb2_config['network']['keypair']
-    security_group_id = lb2_config['network']['security_gropu'].get('id')
+    security_group_id = lb2_config['network']['security_group'].get('id')
     http_server_id_list = lb2_config.get('group_server_id_list')
     l7_server_id_list = lb2_config.get('other_server_id_list')
 
