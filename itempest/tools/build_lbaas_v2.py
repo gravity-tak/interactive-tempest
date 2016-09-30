@@ -63,10 +63,10 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     server_id_list = lb2_network['servers'].keys()
     group_server_id_list = server_id_list[0:group_num_server]
     other_server_id_list = server_id_list[group_num_server:]
-    group_server_name_list = [lb2_servers[s].get('name')
-                              for s in group_server_id_list]
-    other_server_name_list = [lb2_servers[s].get('name')
-                              for s in other_server_id_list]
+    group_server_name_list = [lb2_servers[x]['server'].get('name')
+                              for x in group_server_id_list]
+    other_server_name_list = [lb2_servers[x]['server'].get('name')
+                              for x in other_server_id_list]
     lbaas = build_lbaas(cmgr, subnet_id, group_server_id_list, groupid,
                         lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']

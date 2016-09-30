@@ -50,8 +50,11 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os',
         vip_public_ip=vip_public_ip,
         subnet_id=vip_subnet_id,
         security_group_id=security_group_id,
-        http_server_list=http_server_id_list,
-        l7_server_list=l7_server_id_list, l7_pool=l7_cfg.get('pool')
+        http_server_id_list=http_server_id_list,
+        http_server_name_list=http_server_name_list,
+        l7_server_id_list=l7_server_id_list,
+        l7_server_name_list=l7_server_name_list,
+        l7_pool=l7_cfg.get('pool')
     )
 
 
