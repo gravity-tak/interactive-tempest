@@ -70,6 +70,11 @@ class LoadBalancersClient(base.BaseNetworkClient):
             # octavia: when a resource is deleted, load-balancer does not get
             # into PENDING immediately. Pause 2 seconds is recommended
             time.sleep(pause_before_wait)
+            lb = self.show_load_balancer(load_balancer_id)
+            if lb.get('provisioning_status') == provisioning_status:
+                print("WARNING: LB[%s] is still in %s STATE" %
+                      (load_balancer_id, provisioning_status))
+                time.sleep(pause_before_wait)
         end_time = time.time() + timeout
         lb = None
         ignore_operating_status = filters.get('ignore_operating_status',

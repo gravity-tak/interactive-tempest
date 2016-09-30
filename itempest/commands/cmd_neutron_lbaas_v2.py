@@ -151,19 +151,22 @@ def loadbalancer_waitfor_provisioning_active(mgr_or_client, load_balancer_id,
                                              timeout=600, interval_time=1,
                                              **filters):
     filters['provisioning_status'] = 'ACTIVE'
-    return loadbalancer_waitfor_status(mgr_or_client, load_balancer_id,
-                                       timeout=timeout,
-                                       interval_time=interval_time,
-                                       ignore_operating_status=True,
-                                       **filters)
+    lb = loadbalancer_waitfor_status(mgr_or_client, load_balancer_id,
+                                     timeout=timeout,
+                                     interval_time=interval_time,
+                                     ignore_operating_status=True,
+                                     **filters)
+    if lb.get('provisioning_status') != 'ACTIVE':
+        print("LB-WARNING provisioning_status[%s] is not ACTIVE"
+              % lb.get('provisioning_status'))
+    return lb
 
 
 def loadbalancer_waitfor_status(mgr_or_client, load_balancer_id, **filters):
     net_client = _g_loadbalancers_client(mgr_or_client)
     load_balancer_id = loadbalancer_get_id(mgr_or_client, load_balancer_id)
-    lb = net_client.wait_for_load_balancer_status(load_balancer_id,
-                                                  **filters)
-    return lb
+    return net_client.wait_for_load_balancer_status(load_balancer_id,
+                                                    **filters)
 
 
 # listener
@@ -392,12 +395,12 @@ def l7rule_delete(mgr_or_client, policy_id, rule_id):
 def l7rule_show(mgr_or_client, policy_id, rule_id, **fields):
     policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
+    policy_id = pool_get_id(mgr_or_client, policy_id)
     result = net_client.show_l7rule(policy_id, rule_id, **fields)
     return _return_result(result, 'rule')
 
 
 def l7rule_list(mgr_or_client, policy_id, **filters):
-    policy_id = l7policy_get_id(mgr_or_client, policy_id)
     net_client = _g_l7rules_client(mgr_or_client)
     result = net_client.list_l7rules(policy_id, **filters)
     return _return_result(result, 'rules')

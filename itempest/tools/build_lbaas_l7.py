@@ -94,8 +94,11 @@ def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
     return dict(pool=pool2, members=member2_list, policy=policy1)
 
 
-def run_l7_switching(on_server_name_list, lb_vip_address, url_path=''):
-    resp_urls = lbaas2.count_http_servers(lb_vip_address, 2, url_path)
+def run_l7_switching(on_server_name_list, lb_vip_address, url_path='',
+                     count=4):
+    resp_urls = lbaas2.count_http_servers(lb_vip_address,
+                                          count=count,
+                                          url_path=url_path)
     if not url_responses_are_OK(resp_urls, on_server_name_list):
         utils.log_msg("http://%s/%s redirected to wrong pool" % (
             lb_vip_address, url_path), "LBaaS-L7 ERROR")

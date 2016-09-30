@@ -1,3 +1,5 @@
+import time
+
 from itempest.tools import build_lbaas_l7 as ll7
 from itempest.tools import build_lbaas_v2 as lbaas2
 from itempest.lib import lib_net_aggr as netaggr
@@ -42,6 +44,8 @@ def test_lbaas_l7switching(cmgr, lb_name, image_name=None, platform='os',
     # every server return its server-name upon http request
     ll7.run_l7_switching(http_server_name_list, vip_public_ip, '')
     ll7.run_l7_switching(http_server_name_list, vip_public_ip, 'v2/api')
+    # wait little bit before l7 switching kicked in?
+    time.sleep(5.0)
     ll7.run_l7_switching(l7_server_name_list, vip_public_ip, 'api')
     ll7.run_l7_switching(l7_server_name_list, vip_public_ip, 'api/firewalls')
 
