@@ -62,7 +62,8 @@ def node_if_stats(mgr_or_client, node_id, node_if='eth0', **kwargs):
 
 
 class NSXT(object):
-    def __init__(self, host, username, password, **kwargs):
+    def __init__(self, host, username='admin', password=u'Admin!23Admin',
+                 **kwargs):
         self.nsxt = nsxv3_client.NSXV3Client(host, username, password)
 
     def g_resource_uri(self, resource_path, resource_id=None):
@@ -200,7 +201,7 @@ class NSXT(object):
         return None
 
     def get_section_rules_by_security_group_id(self, os_security_group_id):
-        filters = {'os-neutron-secgr-id', os_security_group_id}
+        filters = {'os-neutron-secgr-id': os_security_group_id}
         fw_list = self.list_firewall_sections(**filters)
         if len(fw_list) == 1:
             section_id = fw_list[0].get('id')

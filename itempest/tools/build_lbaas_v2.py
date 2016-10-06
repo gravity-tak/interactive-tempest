@@ -55,8 +55,6 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     if 'TCP' in protocol.upper():
         start_servers = False
     lb2_network = setup_core_network(cmgr, name, start_servers, **net_cfg)
-    if build_network_only:
-        return {'network': lb2_network, 'lbaas': None}
 
     subnet_id = lb2_network['subnet']['id']
     lb2_servers = lb2_network['servers']
@@ -67,8 +65,17 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
                               for x in group_server_id_list]
     other_server_name_list = [lb2_servers[x]['server'].get('name')
                               for x in other_server_id_list]
-    lbaas = build_lbaas(cmgr, subnet_id, group_server_id_list, groupid,
-                        lb_name=lb_name, **kwargs)
+
+    if build_network_only:
+        return {'network': lb2_network, 'lbaas': None,
+                'subnet_id': subnet_id,
+                'group_server_id_list': group_server_id_list,
+                'group_server_name_list': group_server_name_list,
+                'other_server_id_list': other_server_id_list,
+                'other_server_name_list': other_server_name_list}
+
+    lbaas = build_lbaas(cmgr, subnet_id, group_server_id_list,
+                        groupid=groupid, lb_name=lb_name, **kwargs)
     security_group_id = lb2_network['security_group']['id']
     assign_floatingip_to_vip(cmgr, lb_name,
                              public_network_id=public_network_id,
@@ -117,21 +124,51 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
     loadbalancer_id = load_balancer['id']
     # listener
     listener_name = "%s-%s" % (lb_name, suffix_listener)
+    listener_port = kwargs.pop('listener_port', protocol_port)
     listener = cmgr.lbaas('listener-create', protocol=protocol,
-                          protocol_port=protocol_port,
+                          protocol_port=listener_port,
                           loadbalancer_id=loadbalancer_id,
                           name=listener_name)
     cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
     listener_id = listener.get('id')
+
+    lb2_conf = dict(
+        name=lb_name,
+        load_balancer=load_balancer,
+        listener=listener)
+
     # pool
     pool_name = "%s-%s" % (lb_name, suffix_pool)
+    pool_cfg = build_pool(cmgr, lb_name, pool_name, subnet_id, server_list,
+                          protocol=protocol, protocol_port=protocol_port,
+                          listener_id=listener_id, delay=delay,
+                          max_retries=max_retries, lb_timeout=lb_timeout,
+                          **kwargs)
+
+    # summarize load-balancer
+    lb2_conf.update(**pool_cfg)
+    return lb2_conf
+
+
+def build_pool(cmgr, lb_name, pool_name,
+               subnet_id, server_list,
+               protocol="HTTP", protocol_port=80,
+               listener_id=None, delay=4, max_retries=3,
+               monitor_type="PING", monitor_timeout=10,
+               lb_timeout=900, **kwargs):
+    load_balancer = cmgr.lbaas('loadbalancer-show', lb_name)
+    lb_id = load_balancer.get('id')
+    # pool
     lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
     persistence_type = kwargs.pop('persistence_type', None)
     cookie_name = kwargs.pop('cookie_name', None)
     pool_body = dict(lb_algorithm=lb_algorithm,
                      protocol=protocol,
-                     listener_id=listener_id,
                      name=pool_name)
+    if listener_id:
+        pool_body['listener_id'] = listener_id
+    else:
+        pool_body['loadbalancer_id'] = lb_id
     if persistence_type:
         pool_body.update(
             {'session_persistence': {'type': persistence_type}})
@@ -143,16 +180,9 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
     pool_id = pool.get('id')
 
     # pool's members
-    member_list = []
-    for server_id in server_list:
-        server = cmgr.nova('server-show', server_id)
-        fixed_ip_address = LB_NET.get_server_ip_address(server, 'fixed')
-        member = cmgr.lbaas('member-create', pool_id,
-                            subnet_id=subnet_id,
-                            address=fixed_ip_address,
-                            protocol_port=protocol_port)
-        member_list.append(member)
-        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+    server_port = kwargs.pop('server_port', protocol_port)
+    member_list = build_pool_members(cmgr, lb_name, subnet_id, pool_id,
+                                     server_list, server_port, lb_timeout)
 
     # healthmonitor
     if monitor_type in MONITOR_TYPES:
@@ -166,80 +196,26 @@ def build_lbaas(cmgr, subnet_id, server_list, groupid=1,
     else:
         healthmonitor = None
 
-    # summarize load-balancer
     return dict(
-        name=lb_name,
-        load_balancer=load_balancer,
-        listener=listener,
         pool=pool,
         member=member_list,
         health_monitor=healthmonitor)
 
 
-# old method
-def create_lbaasv2(cmgr, lb_core_network, lb_name=None, lb_timeout=600,
-                   protocol='HTTP', protocol_port=80, ip_version=4,
-                   delay=4, max_retries=3,
-                   monitor_type="PING", monitor_timeout=1, **kwargs):
-    lb_name = lb_name if lb_name else data_utils.rand_name('lb2')
-    # pool atrributes
-    lb_algorithm = kwargs.pop('lb_algorithm', 'ROUND_ROBIN')
-    persistence_type = kwargs.pop('persistence_type', None)
-    cookie_name = kwargs.pop('cookie_name', None)
-    no_healthmonitor = kwargs.pop('no_healthmonitory', False)
-    if cmgr.lbaas is None:
-        raise Exception(
-            "Client manager does not have LBaasV2 clients installed.")
-    subnet_id = lb_core_network['subnet']['id']
-    load_balancer = cmgr.lbaas('loadbalancer-create', subnet_id,
-                               name=lb_name)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
-    listener1 = cmgr.lbaas('listener-create', protocol=protocol,
-                           protocol_port=protocol_port,
-                           loadbalancer_id=load_balancer['id'],
-                           name=lb_name + "-listener1")
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
-    pool_body = dict(lb_algorithm=lb_algorithm,
-                     protocol=protocol,
-                     listener_id=listener1['id'],
-                     name=lb_name + "-pool1")
-    if persistence_type:
-        pool_body.update(
-            {'session_persistence': {'type': persistence_type}})
-    if cookie_name:
-        pool_body.update(
-            {'session_persistence': {'cookie_name': cookie_name}})
-    pool1 = cmgr.lbaas('pool-create', **pool_body)
-    cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+def build_pool_members(cmgr, lb_name, subnet_id, pool_id,
+                       server_list, server_port,
+                       lb_timeout=900):
     member_list = []
-    for server_id in lb_core_network['servers']:
-        server = lb_core_network['servers'][server_id]
-        fip = server['fip']
-        fixed_ip_address = fip['fixed_ip_address']
-        member = cmgr.lbaas('member-create', pool1['id'],
+    for server_id in server_list:
+        server = cmgr.nova('server-show', server_id)
+        fixed_ip_address = LB_NET.get_server_ip_address(server, 'fixed')
+        member = cmgr.lbaas('member-create', pool_id,
                             subnet_id=subnet_id,
                             address=fixed_ip_address,
-                            protocol_port=protocol_port)
+                            protocol_port=server_port)
         member_list.append(member)
         cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
-    if no_healthmonitor:
-        healthmonitor1 = None
-    else:
-        healthmonitor1 = cmgr.lbaas('healthmonitor-create',
-                                    pool_id=pool1['id'],
-                                    delay=delay,
-                                    max_retries=max_retries,
-                                    type=monitor_type,
-                                    timeout=monitor_timeout)
-        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
-
-    return dict(
-        name=lb_name,
-        load_balancer=load_balancer,
-        listener=listener1,
-        pool=pool1,
-        member=member_list,
-        health_monitor=healthmonitor1)
+    return member_list
 
 
 def delete_loadbalancer(cmgr, loadbalancer, quit=False):

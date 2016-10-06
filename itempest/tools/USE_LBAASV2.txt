@@ -17,7 +17,7 @@ venus_lb2_network = lb_net.setup_lb_network_and_servers(venus, 'lb2-V')
 lb_net.start_webservers(venus_lb2_network)
 
 from itempest.tools import build_lbaas_v2
-venus_lb2_env = build_lbaas_v2.create_lbaasv2(venus, venus_lb2_network, 'Venus-lb2')
+venus_lb2_env = build_lbaas_v2.build_lbaas(venus, venus_lb2_network, 'Venus-lb2')
 venus.lbaas('loadbalancer-statuses Venus-lb2')
 venus_lb2 = venus.lbaas('loadbalancer-show Venus-lb2')
 # venus.qsvc('port-list', fixed_ips='ip_address=10.199.88.5')
@@ -53,7 +53,7 @@ mars = osn.utils.get_mimic_manager_cli(osn.os_auth_url, "Mars", "itempest8@OS")
 mars_lb2_network = lb_net.setup_lb_network_and_servers(mars, 'mars-lb2')
 lb_net.start_webservers(mars_lb2_network)
 
-mars_lb2_env = build_lbaas_v2.create_lbaasv2(mars, mars_lb2_network, 'mars-lb2')
+mars_lb2_env = build_lbaas_v2.buld_lbaas(mars, mars_lb2_network, 'mars-lb2')
 mars.lbaas('loadbalancer-statuses mars-lb2')
 mars_lb2 = mars.lbaas('loadbalancer-show mars-lb2')
 
