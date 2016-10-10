@@ -118,6 +118,8 @@ def run_l7_switching(on_server_name_list, lb_vip_address, url_path='',
     if not url_responses_are_OK(resp_urls, on_server_name_list):
         utils.log_msg("http://%s/%s redirected to wrong pool" % (
             lb_vip_address, url_path), "LBaaS-L7 ERROR")
+        return False
+    return True
 
 
 # the servers in tests will resopnse its OpenStack Server's name
