@@ -21,7 +21,8 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
     lb_vip_address = fip.get('floating_ip_address')
     # create pool/listern/http_server_list for all http traffic
     listener1 = cmgr.lbaas('listener-create', name='listener1',
-                           loadbalancer_id=loadbalancer_id, protocol=protocol,
+                           loadbalancer_id=loadbalancer_id,
+                           protocol=protocol,
                            protocol_port=protocol_port)
     cmgr.lbaas('loadbalancer_waitfor_active', loadbalancer_id,
                timeout=lb_timeout)
@@ -50,7 +51,8 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
     if (not tot_cnt == run_cnt):
         raise Exception("Expect %d responses, got %d" % (run_cnt, tot_cnt))
 
-    build_l7_switching(cmgr, subnet_id, loadbalancer_id, listener1.get('id'),
+    build_l7_switching(cmgr, subnet_id, loadbalancer_id,
+                       listener1.get('id'),
                        l7_server_list, protocol=protocol,
                        protocol_port=protocol_port, lb_timeout=lb_timeout)
 
@@ -61,11 +63,11 @@ def test_lbaas_l7(cmgr, subnet_id, http_server_list, l7_server_list,
 
 
 def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
-                       redirect_to_listener_id, l7_server_list,
+                       redirect_to_listener_id, l7_server_id_list,
                        protocol='HTTP', protocol_port=80,
                        pool_l7='l7sw-pool', l7sw_type='PATH',
                        l7sw_compare_type='STARTS_WITH', l7sw_path="/api",
-                       lb_timeout=900):
+                       lb_timeout=900, **kwargs):
     # build_l7_pool(loadbalancer_id):
     pool2 = cmgr.lbaas('pool-create', name=pool_l7,
                        lb_algorithm='ROUND_ROBIN',
@@ -73,7 +75,7 @@ def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
     cmgr.lbaas('loadbalancer_waitfor_active', loadbalancer_id,
                timeout=lb_timeout)
     member2_list = []
-    for sv_id in l7_server_list:
+    for sv_id in l7_server_id_list:
         server = cmgr.nova('server-show', sv_id)
         fixed_ip_address = lbaas2.LB_NET.get_server_ip_address(server,
                                                                'fixed')
@@ -92,6 +94,20 @@ def build_l7_switching(cmgr, subnet_id, loadbalancer_id,
                compare_type=l7sw_compare_type, value=l7sw_path)
 
     return dict(pool=pool2, members=member2_list, policy=policy1)
+
+
+def get_build_l7_ids(lb2_conf):
+    subnet_id = lb2_conf.get('subnet_id')
+    loadbalancer_id = lb2_conf.get('lbaas').get('load_balancer').get('id')
+    listener_id = lb2_conf.get('lbaas').get('listener').get('id')
+    l7_server_id_list = lb2_conf.get('other_server_id_list')
+    l7_server_name_list = lb2_conf.get('other_server_name_list')
+    return dict(
+        subnet_id=subnet_id,
+        loadbalancer_id=loadbalancer_id,
+        redirect_to_listener_id=listener_id,
+        l7_server_id_list=l7_server_id_list,
+        l7_server_name_list=l7_server_name_list)
 
 
 def run_l7_switching(on_server_name_list, lb_vip_address, url_path='',

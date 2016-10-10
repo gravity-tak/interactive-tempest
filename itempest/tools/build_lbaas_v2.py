@@ -80,7 +80,8 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     assign_floatingip_to_vip(cmgr, lb_name,
                              public_network_id=public_network_id,
                              security_group_id=security_group_id)
-    return {'network': lb2_network, 'lbaas': lbaas,
+    return {'network': lb2_network,
+            'lbaas': lbaas,
             'subnet_id': subnet_id,
             'group_server_id_list': group_server_id_list,
             'group_server_name_list': group_server_name_list,
@@ -192,7 +193,8 @@ def build_pool(cmgr, lb_name, pool_name,
                                    max_retries=max_retries,
                                    type=monitor_type,
                                    timeout=monitor_timeout)
-        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name,
+                   timeout=lb_timeout)
     else:
         healthmonitor = None
 
@@ -214,7 +216,8 @@ def build_pool_members(cmgr, lb_name, subnet_id, pool_id,
                             address=fixed_ip_address,
                             protocol_port=server_port)
         member_list.append(member)
-        cmgr.lbaas('loadbalancer_waitfor_active', lb_name, timeout=lb_timeout)
+        cmgr.lbaas('loadbalancer_waitfor_active', lb_name,
+                   timeout=lb_timeout)
     return member_list
 
 
