@@ -99,10 +99,9 @@ from tempest.lib.services.network.subnetpools_client import SubnetpoolsClient
 from tempest.lib.services.network.subnets_client import SubnetsClient
 from tempest.services.baremetal.v1.json.baremetal_client import \
     BaremetalClient
+"""
 from tempest.services.data_processing.v1_1.data_processing_client import \
     DataProcessingClient
-
-"""
 from tempest.services.database.json.flavors_client import \
     DatabaseFlavorsClient
 from tempest.services.database.json.limits_client import \
