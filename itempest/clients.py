@@ -361,12 +361,14 @@ class Manager(manager.Manager):
             build_interval=CONF.orchestration.build_interval,
             build_timeout=CONF.orchestration.build_timeout,
             **self.default_params)
+        """
         self.data_processing_client = DataProcessingClient(
             self.auth_provider,
             CONF.data_processing.catalog_type,
             CONF.identity.region,
             endpoint_type=CONF.data_processing.endpoint_type,
             **self.default_params_with_timeout_values)
+        """
         self.negative_client = negative_rest_client.NegativeRestClient(
             self.auth_provider, service, **self.default_params)
 
