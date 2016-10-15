@@ -353,14 +353,7 @@ class Manager(manager.Manager):
                 build_interval=CONF.image.build_interval,
                 build_timeout=CONF.image.build_timeout,
                 **self.default_params)
-        self.orchestration_client = OrchestrationClient(
-            self.auth_provider,
-            CONF.orchestration.catalog_type,
-            CONF.orchestration.region or CONF.identity.region,
-            endpoint_type=CONF.orchestration.endpoint_type,
-            build_interval=CONF.orchestration.build_interval,
-            build_timeout=CONF.orchestration.build_timeout,
-            **self.default_params)
+
         """
         self.data_processing_client = DataProcessingClient(
             self.auth_provider,
@@ -372,6 +365,14 @@ class Manager(manager.Manager):
         self.negative_client = negative_rest_client.NegativeRestClient(
             self.auth_provider, service, **self.default_params)
         """
+        self.orchestration_client = OrchestrationClient(
+            self.auth_provider,
+            CONF.orchestration.catalog_type,
+            CONF.orchestration.region or CONF.identity.region,
+            endpoint_type=CONF.orchestration.endpoint_type,
+            build_interval=CONF.orchestration.build_interval,
+            build_timeout=CONF.orchestration.build_timeout,
+            **self.default_params)
 
     def _set_compute_clients(self):
         params = {
