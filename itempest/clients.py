@@ -368,9 +368,10 @@ class Manager(manager.Manager):
             CONF.identity.region,
             endpoint_type=CONF.data_processing.endpoint_type,
             **self.default_params_with_timeout_values)
-        """
+
         self.negative_client = negative_rest_client.NegativeRestClient(
             self.auth_provider, service, **self.default_params)
+        """
 
     def _set_compute_clients(self):
         params = {
