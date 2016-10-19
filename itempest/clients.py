@@ -99,10 +99,9 @@ from tempest.lib.services.network.subnetpools_client import SubnetpoolsClient
 from tempest.lib.services.network.subnets_client import SubnetsClient
 from tempest.services.baremetal.v1.json.baremetal_client import \
     BaremetalClient
+"""
 from tempest.services.data_processing.v1_1.data_processing_client import \
     DataProcessingClient
-
-"""
 from tempest.services.database.json.flavors_client import \
     DatabaseFlavorsClient
 from tempest.services.database.json.limits_client import \
@@ -354,6 +353,18 @@ class Manager(manager.Manager):
                 build_interval=CONF.image.build_interval,
                 build_timeout=CONF.image.build_timeout,
                 **self.default_params)
+
+        """
+        self.data_processing_client = DataProcessingClient(
+            self.auth_provider,
+            CONF.data_processing.catalog_type,
+            CONF.identity.region,
+            endpoint_type=CONF.data_processing.endpoint_type,
+            **self.default_params_with_timeout_values)
+
+        self.negative_client = negative_rest_client.NegativeRestClient(
+            self.auth_provider, service, **self.default_params)
+        """
         self.orchestration_client = OrchestrationClient(
             self.auth_provider,
             CONF.orchestration.catalog_type,
@@ -362,14 +373,6 @@ class Manager(manager.Manager):
             build_interval=CONF.orchestration.build_interval,
             build_timeout=CONF.orchestration.build_timeout,
             **self.default_params)
-        self.data_processing_client = DataProcessingClient(
-            self.auth_provider,
-            CONF.data_processing.catalog_type,
-            CONF.identity.region,
-            endpoint_type=CONF.data_processing.endpoint_type,
-            **self.default_params_with_timeout_values)
-        self.negative_client = negative_rest_client.NegativeRestClient(
-            self.auth_provider, service, **self.default_params)
 
     def _set_compute_clients(self):
         params = {
