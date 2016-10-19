@@ -240,16 +240,7 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
         for policy in listener.get('l7policies'):
             cmgr.lbaas('l7policy-delete', policy.get('id'))
         for pool in listener.get('pools', []):
-            hm = pool.get('healthmonitor', None)
-            if hm:
-                cmgr.lbaas("healthmonitor-delete", hm['id'])
-                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
-            member_list = pool.get('members', [])
-            for member in member_list:
-                cmgr.lbaas("member-delete", pool['id'], member['id'])
-                cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
-            cmgr.lbaas("pool-delete", pool['id'])
-            cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+            destroy_lb_pool(cmgr, lb_id, pool)
         cmgr.lbaas("listener-delete", listener['id'])
         cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
     cmgr.lbaas("loadbalancer-delete", lb_id)
@@ -258,6 +249,19 @@ def destroy_loadbalancer(cmgr, loadbalancer, delete_fip=True):
     except Exception:
         pass
     return None
+
+
+def destroy_lb_pool(cmgr, lb_id, pool):
+    hm = pool.get('healthmonitor', None)
+    if hm:
+        cmgr.lbaas("healthmonitor-delete", hm['id'])
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    member_list = pool.get('members', [])
+    for member in member_list:
+        cmgr.lbaas("member-delete", pool['id'], member['id'])
+        cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
+    cmgr.lbaas("pool-delete", pool['id'])
+    cmgr.lbaas("loadbalancer-waitfor-active", lb_id)
 
 
 def show_lbaas_tree(cmgr, loadbalancer, show_it=True):
@@ -448,9 +452,12 @@ def count_http_servers(web_ip, count=10, url_path='', show_progress=True):
     http = urllib3.PoolManager(retries=urllib3.Retry(total=20))
     for x in range(count):
         resp = http.request('GET', web_page)
-        data = resp.data
-        m = re.search("([^\s]+)", data)
-        s_ctx = m.group(1)
+        if resp.status == 200:
+            data = resp.data
+            m = re.search("([^\s]+)", data)
+            s_ctx = m.group(1)
+        else:
+            s_ctx = str(resp.status)
         if show_progress:
             print("%4d - %s" % (x, s_ctx))
         if s_ctx in ctx.keys():
