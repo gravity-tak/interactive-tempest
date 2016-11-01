@@ -38,7 +38,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     use_allinone = kwargs.pop('use_allinone', False)
     groupid = kwargs.pop('groupid', 1)
     group_num_server = kwargs.pop('group_num_sever', 2)
-    debug_start_server = kwargs.pop('halt_at_start_server', False)
+    halt_at_start_server = kwargs.pop('halt_at_start_server', False)
     net_cfg = dict(
         num_servers=kwargs.pop('num_servers', 2),
         username=kwargs.pop('username', 'cirros'),
@@ -56,7 +56,7 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
     if 'TCP' in protocol.upper():
         start_servers = False
     lb2_network = setup_core_network(cmgr, name, start_servers,
-                                     debug_start_server=debug_start_server,
+                                     halt_at_start_server=halt_at_start_server,
                                      **net_cfg)
 
     subnet_id = lb2_network['subnet']['id']
@@ -93,10 +93,10 @@ def build_nsx_lbaas(cmgr, name, **kwargs):
 
 
 def setup_core_network(cmgr, name, start_servers=True,
-                       debug_start_server=False, **kwargs):
+                       halt_at_start_server=False, **kwargs):
     lb2_network = LB_NET.setup_lb_network_and_servers(cmgr, name, **kwargs)
     if start_servers:
-        LB_NET.start_webservers(lb2_network, debug=debug_start_server)
+        LB_NET.start_webservers(lb2_network, debug=halt_at_start_server)
     return lb2_network
 
 
