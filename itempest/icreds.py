@@ -15,7 +15,7 @@
 
 from oslo_log import log as logging
 
-from tempest.common import cred_provider
+from tempest.lib.common import cred_provider
 from tempest.common.credentials_factory import \
     get_configured_admin_credentials  # get_configured_credentials
 from tempest.common.dynamic_creds import DynamicCredentialProvider

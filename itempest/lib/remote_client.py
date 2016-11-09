@@ -5,7 +5,7 @@ import subprocess
 
 from tempest.common.utils.linux import remote_client as os_linux_client
 from tempest import config
-from tempest import exceptions
+from tempest.lib import exceptions
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
