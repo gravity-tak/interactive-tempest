@@ -167,9 +167,10 @@ def keypair_delete_silent(mgr_or_client, key_name):
         pass
 
 
+# sun.nova('keypair-show', user=venus.tenant_id)
 def keypair_show(mgr_or_client, key_name, **kwargs):
     keypair_client = _g_keypairs_client(mgr_or_client)
-    keypair = keypair_client.show_keypair(key_name)
+    keypair = keypair_client.show_keypair(key_name, **kwargs)
     keypair = keypair['keypair'] if 'keypair' in keypair else keypair
     return keypair
 
