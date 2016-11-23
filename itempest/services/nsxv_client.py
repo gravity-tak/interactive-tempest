@@ -247,6 +247,14 @@ class VSMClient(object):
             LOG.debug('Found edge: %s' % edge)
         return edge
 
+    def get_security_policy(self, policy_id=None):
+        self.__set_api_version('2.0')
+        policy_id = policy_id if policy_id else "all"
+        self.__set_endpoint("/services/policy/securitypolicy/%s" % policy_id)
+        response = self.get()
+        j_son = response.json()
+        return j_son.get('policies', j_son)
+
     def get_vsm_version(self):
         """Get the VSM client version including major, minor, patch, & build#.
 

@@ -20,6 +20,7 @@ from itempest import icreds
 from itempest.lib import utils
 from itempest.tools import simple_tenant_networks as stn
 
+HALT_CREATE_TENANT = int(os.environ.get('HALT_CREATE_TENANT', 0))
 
 # import load_our_solar_system as osn
 # delete_tenants(osn.tenants)
@@ -39,8 +40,8 @@ def get_stn(mcli_mgr, jfile, prefix):
     return stn.SimpleTenantNetworks(mcli_mgr.manager, jfile, prefix=prefix)
 
 
-def create_solaris(halt=False):
-    if halt:
+def create_solaris():
+    if HALT_CREATE_TENANT:
         import pdb;
         pdb.set_trace()
 
