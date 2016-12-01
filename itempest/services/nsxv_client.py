@@ -247,6 +247,60 @@ class VSMClient(object):
             LOG.debug('Found edge: %s' % edge)
         return edge
 
+    def delete_edge(self, edge_id):
+        self.__set_api_version('4.0')
+        endpoint = '/edges/%s' % edge_id
+        response = self.delete(endpoint=endpoint)
+        if response.status_code != 204:
+            print("ERROR on deleteing edge[%s]: reponse status code %s" % (
+                edge_id, response.status_code))
+
+    def get_firewall_sections(self):
+        ds_layer3 = 'Default Section Layer3'
+        self.__set_api_version('4.0')
+        self.__set_endpoint("/firewall/globalroot-0/config")
+        response = self.get()
+        j_son = response.json()
+        if response.status_code == 200:
+            l3_sessions = j_son['layer3Sections']['layer3Sections']
+            firewall_sessions = [fs for fs in l3_sessions if
+                                 fs['name'] != ds_layer3]
+            return firewall_sessions
+        return []
+
+    def delete_firewall_section(self, section_id):
+        endpoint = "/firewall/globalroot-0/config/layer3sections/%s" % \
+                   section_id
+        self.__set_api_version('4.0')
+        response = self.delete(endpoint=endpoint)
+        if response.status_code != 204:
+            print(
+                "ERROR on deleteing firewall_session[%s]: reponse status "
+                "code "
+                "%s" % (
+                    section_id, response.status_code))
+
+    def get_security_groups(self):
+        self.__set_api_version('2.0')
+        endpoint = "/services/securitygroup/scope/globalroot-0"
+        self.__set_endpoint(endpoint)
+        response = self.get()
+        security_groups = response.json()
+        return security_groups
+
+    def delete_security_group(self, sg_object_id, force=False):
+        self.__set_api_version('2.0')
+        endpoint = "/services/securitygroup/%s" % sg_object_id
+        param = dict(force=force)
+        response = self.delete(endpoint=endpoint, params=param)
+
+        if response.status_code != 204:
+            print(
+                "ERROR on deleteing security_group[%s]: reponse status code "
+                "%s"
+                % (
+                    sg_object_id, response.status_code))
+
     def get_security_policy(self, policy_id=None):
         self.__set_api_version('2.0')
         policy_id = policy_id if policy_id else "all"
@@ -254,6 +308,15 @@ class VSMClient(object):
         response = self.get()
         j_son = response.json()
         return j_son.get('policies', j_son)
+
+    def get_security_actions(self, policy_id):
+        endpoint_url = "/services/policy/securitypolicy/%s/securityactions"
+        self.__set_api_version('2.0')
+        policy_id = policy_id if policy_id else "all"
+        self.__set_endpoint(endpoint_url % (policy_id))
+        response = self.get()
+        j_son = response.json()
+        return j_son.get('actionsByCategory', j_son)
 
     def get_vsm_version(self):
         """Get the VSM client version including major, minor, patch, & build#.
