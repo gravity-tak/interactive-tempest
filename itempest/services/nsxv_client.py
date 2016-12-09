@@ -255,7 +255,7 @@ class VSMClient(object):
             print("ERROR on deleteing edge[%s]: reponse status code %s" % (
                 edge_id, response.status_code))
 
-    def get_firewall_sections(self):
+    def get_firewall_l3_sections(self, include_default=False):
         ds_layer3 = 'Default Section Layer3'
         self.__set_api_version('4.0')
         self.__set_endpoint("/firewall/globalroot-0/config")
@@ -263,12 +263,14 @@ class VSMClient(object):
         j_son = response.json()
         if response.status_code == 200:
             l3_sessions = j_son['layer3Sections']['layer3Sections']
+            if include_default:
+                return l3_sessions
             firewall_sessions = [fs for fs in l3_sessions if
                                  fs['name'] != ds_layer3]
             return firewall_sessions
         return []
 
-    def delete_firewall_section(self, section_id):
+    def delete_firewall_l3_section(self, section_id):
         endpoint = "/firewall/globalroot-0/config/layer3sections/%s" % \
                    section_id
         self.__set_api_version('4.0')

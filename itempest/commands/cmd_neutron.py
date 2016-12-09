@@ -383,6 +383,7 @@ def security_group_create(mgr_or_client,
             kwargs.pop('description', None) or
             (name + " description"))
     sg_dict = dict(name=name, description=desc)
+    sg_dict.update(**kwargs)
     if tenant_id:
         sg_dict['tenant_id'] = tenant_id
     result = net_client.create_security_group(**sg_dict)
