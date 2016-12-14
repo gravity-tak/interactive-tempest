@@ -102,6 +102,32 @@ class VSMClient(XmlRestClient):
             "/api/2.0/services/policy/securitypolicy/%s" % sp_id)
         return policy
 
+    def get_security_actions(self, sp_id):
+        uri = "/api/2.0/services/policy/securitypolicy/%s/securityactions" \
+              % sp_id
+        actions = self.get(uri)
+        return actions
+
+    def import_security_policy(self, xml_body, suffix=None):
+        if suffix:
+            params = dict(suffix=suffix)
+        else:
+            params = None
+        uri = "/api/2.0/services/policy/securitypolicy/hierarchy"
+        policy = self.post(uri, xml_body, params=params)
+        return policy
+
+    def import_policy_from_file(self, file, suffix=None):
+        """
+        file_aa = "/Users/akang/Developer/admin
+        policy/nsx-policy/admin-policy-AA-0.blueprint"
+        AA = xnsx.import_policy_from_file(file_aa, 'AA')
+        If sucess, AA.status_code == 201
+        policy_id = AA.headers.get('location').split("/")[-1]
+        """
+        fd = open(file)
+        xml_body = fd.read()
+        return self.import_security_policy(xml_body, suffix)
 
 # folders2dict
 def folder2dict(content):
