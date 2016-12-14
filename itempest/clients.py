@@ -20,7 +20,7 @@ from oslo_log import log as logging
 from itempest import manager
 from itempest.services.routers_client import RoutersClient
 
-from tempest.common import negative_rest_client
+# from tempest.lib.common import negative_rest_client
 from tempest import config
 from tempest import exceptions
 from tempest.lib.services.compute.agents_client import AgentsClient
