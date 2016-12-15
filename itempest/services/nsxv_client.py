@@ -99,9 +99,9 @@ class VSMClient(object):
         headers['Accept'] = accept_type
         self.headers = headers
 
-    def get(self, endpoint=None, params=None):
+    def get(self, endpoint=None, params=None, version=None):
         """Basic query GET method for json API request."""
-        self.__set_url(endpoint=endpoint)
+        self.__set_url(endpoint=endpoint, version=version)
         response = requests.get(self.url, headers=self.headers,
                                 verify=self.verify, params=params)
         return response
