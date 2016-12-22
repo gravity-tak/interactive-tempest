@@ -19,7 +19,6 @@ import requests
 from tempest import config
 
 requests.packages.urllib3.disable_warnings()
-CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -134,7 +133,7 @@ class VSMClient(object):
         scopes = self.get_all_vdn_scopes()
         if len(scopes) == 0:
             return scopes[0]['objectId']
-        return CONF.nsxv.vdn_scope_id
+        return None
 
     def get_vdn_scope_by_id(self, scope_id):
         """Retrieve existing network scopes id"""
@@ -148,17 +147,12 @@ class VSMClient(object):
         nsxv_client.get_vdn_scope_id_by_name('TZ1')
         """
         scopes = self.get_all_vdn_scopes()
-        if name is None:
-            for scope in scopes:
-                if scope['objectId'] == CONF.nsxv.vdn_scope_id:
-                    return scope
-        else:
-            for scope in scopes:
-                if scope['name'] == name:
-                    return scope
+        for scope in scopes:
+            if scope['name'] == name:
+                return scope
         return None
 
-    def get_all_logical_switches(self, vdn_scope_id=None):
+    def get_all_logical_switches(self, vdn_scope_id='vdnscope-1'):
         lswitches = []
         self.__set_api_version('2.0')
         vdn_scope_id = vdn_scope_id or self.get_vdn_scope_id()
@@ -180,13 +174,13 @@ class VSMClient(object):
             lswitches += response.json()['dataPage']['data']
         return lswitches
 
-    def get_logical_switch(self, name):
+    def get_logical_switch(self, name, vdn_scope_id='vdnscope-1'):
         """Get the logical switch based on the name.
 
         The uuid of the OpenStack L2 network. Return ls if found,
         otherwise return None.
         """
-        lswitches = self.get_all_logical_switches()
+        lswitches = self.get_all_logical_switches(vdn_scope_id=vdn_scope_id)
         lswitch = [ls for ls in lswitches if ls['name'] == name]
         if len(lswitch) == 0:
             LOG.debug('logical switch %s NOT found!' % name)
@@ -196,13 +190,13 @@ class VSMClient(object):
             LOG.debug('Found lswitch: %s' % ls)
         return ls
 
-    def delete_logical_switch(self, name):
+    def delete_lsw_by_name(self, name, vdn_scope_id='vdnscope-1'):
         """Delete logical switch based on name.
 
         The name of the logical switch on NSX-v is the uuid
         of the openstack l2 network.
         """
-        ls = self.get_logical_switch(name)
+        ls = self.get_logical_switch(name, vdn_scope_id=vdn_scope_id)
         if ls is not None:
             endpoint = '/vdn/virtualwires/%s' % ls['objectId']
             response = self.delete(endpoint=endpoint)
@@ -211,6 +205,16 @@ class VSMClient(object):
             else:
                 LOG.debug('ERROR @delete ls=%s failed with reponse code %s' %
                           (name, response.status_code))
+
+    def delete_lsw_by_objectId(self, objectId):
+        # objectId = 'virtualwire-%s'
+        endpoint = '/vdn/virtualwires/%s' % objectId
+        response = self.delete(endpoint=endpoint)
+        if response.status_code == 200:
+            LOG.debug('Successfully deleted logical switch %s' % objectId)
+        else:
+            LOG.debug('ERROR @delete %s failed with reponse code %s' %
+                      (objectId, response.status_code))
 
     def get_all_edges(self):
         """Get all edges on NSX-v backend."""
@@ -296,7 +300,8 @@ class VSMClient(object):
         param = dict(force=force)
         response = self.delete(endpoint=endpoint, params=param)
 
-        if response.status_code != 204:
+        if response.status_code not in (200, 204):
+            # 200 if force=True
             print(
                 "ERROR on deleteing security_group[%s]: reponse status code "
                 "%s"
@@ -333,7 +338,43 @@ class VSMClient(object):
         return '.'.join([json_ver['majorVersion'], json_ver['minorVersion'],
                          json_ver['patchVersion'], json_ver['buildNumber']])
 
+    # list ressult to console
+    def list_vdn(self, columns=None):
+        columns = columns or ['id', 'name']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for vdn in self.get_all_vdn_scopes():
+            print(ofmt.format(**vdn))
 
+    def list_edge(self, columns=None):
+        columns = columns or ['objectId', 'name', 'datacenterName']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for edge in self.get_all_edges():
+            print(ofmt.format(**edge))
+
+    def list_lsw(self, columns=None, vdn_scope_id='vdnscope-1'):
+        columns = columns or ['objectId', 'vdnId:5', 'name']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for lsw in self.get_all_logical_switches(vdn_scope_id=vdn_scope_id):
+            print(ofmt.format(**lsw))
+
+    def list_security_group(self, columns=None):
+        columns = columns or ['objectId', 'name']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for sg in self.get_security_groups():
+            print(ofmt.format(**sg))
+
+    def list_security_policy(self, columns=None):
+        columns = columns or ['objectId', 'name']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for sp in self.get_security_policy():
+            print(ofmt.format(**sp))
+
+    def list_firewall_l3(self, columns=None):
+        columns = columns or ['id', 'type', 'name']
+        ofmt = " ".join(["{%s}" % x for x in columns])
+        for fw in self.get_firewall_l3_sections():
+            print(ofmt.format(**fw))
+            
 def ceil(a, b):
     if b == 0:
         return 0
