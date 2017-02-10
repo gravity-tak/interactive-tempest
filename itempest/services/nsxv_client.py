@@ -351,11 +351,18 @@ class VSMClient(object):
         for edge in self.get_all_edges():
             print(ofmt.format(**edge))
 
-    def list_lsw(self, columns=None, vdn_scope_id='vdnscope-1'):
-        columns = columns or ['objectId', 'vdnId:5', 'name']
+    def list_lsw(self, columns=None, vdn_scope_id=None):
+        vdn_list = self.get_all_vdn_scopes()
+        if vdn_scope_id:
+            vdn_id_list = [vdn_scope_id]
+        else:
+            vdn_id_list = [x['id'] for x in vdn_list]
+        columns = columns or ['objectId', 'vdnId:5', 'name', 'vdnScopeId']
         ofmt = " ".join(["{%s}" % x for x in columns])
-        for lsw in self.get_all_logical_switches(vdn_scope_id=vdn_scope_id):
-            print(ofmt.format(**lsw))
+        for vdn_scope_id in vdn_id_list:
+            for lsw in self.get_all_logical_switches(
+                    vdn_scope_id=vdn_scope_id):
+                print(ofmt.format(**lsw))
 
     def list_security_group(self, columns=None):
         columns = columns or ['objectId', 'name']
@@ -374,7 +381,8 @@ class VSMClient(object):
         ofmt = " ".join(["{%s}" % x for x in columns])
         for fw in self.get_firewall_l3_sections():
             print(ofmt.format(**fw))
-            
+
+
 def ceil(a, b):
     if b == 0:
         return 0
